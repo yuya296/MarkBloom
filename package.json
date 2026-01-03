@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint:core": "pnpm -C packages/editor-core lint",
+    "typecheck": "pnpm -r typecheck",
     "build:core": "pnpm -F editor-core build",
     "build": "pnpm -r build"
   },
