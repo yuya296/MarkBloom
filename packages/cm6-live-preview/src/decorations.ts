@@ -1,5 +1,10 @@
 import { RangeSetBuilder } from "@codemirror/state";
-import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  WidgetType,
+} from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import type { LivePreviewOptions } from "./index";
 
@@ -17,6 +22,41 @@ const blockMarkerPattern = {
 };
 
 const inlineMarkers = new Set(["*", "_", "[", "]", "(", ")", "`", "~"]);
+
+class MarkerWidget extends WidgetType {
+  constructor(
+    private readonly text: string,
+    private readonly className: string,
+    private readonly color: string
+  ) {
+    super();
+  }
+
+  eq(other: MarkerWidget): boolean {
+    return (
+      this.text === other.text &&
+      this.className === other.className &&
+      this.color === other.color
+    );
+  }
+
+  toDOM(): HTMLElement {
+    const span = document.createElement("span");
+    span.className = this.className;
+    span.style.color = this.color;
+    span.style.fontWeight = "400";
+    span.style.fontStyle = "normal";
+    span.textContent = this.text;
+    return span;
+  }
+}
+
+function markerReplace(text: string, className: string, color: string): Decoration {
+  return Decoration.replace({
+    widget: new MarkerWidget(text, className, color),
+    inclusive: false,
+  });
+}
 
 function inRanges(pos: number, ranges: Range[]): boolean {
   for (const range of ranges) {
@@ -101,7 +141,8 @@ function addInlineMarkerDecorations(
   lineText: string,
   revealPositions: Set<number>,
   excluded: ExcludeRanges,
-  decoration: Decoration
+  decoration: Decoration,
+  emphasisHiddenDecoration: Decoration
 ) {
   for (let offset = 0; offset < lineText.length; offset += 1) {
     const ch = lineText[offset];
@@ -111,11 +152,24 @@ function addInlineMarkerDecorations(
 
     const pos = lineFrom + offset;
 
-    if (revealPositions.has(pos)) {
+    if (inRanges(pos, excluded.block) || inRanges(pos, excluded.inline)) {
       continue;
     }
 
-    if (inRanges(pos, excluded.block) || inRanges(pos, excluded.inline)) {
+    if (ch === "*" || ch === "_") {
+      if (revealPositions.has(pos)) {
+        builder.add(
+          pos,
+          pos + 1,
+          markerReplace(ch, "cm-live-preview-inline-visible", "#8f8a7f")
+        );
+      } else {
+        builder.add(pos, pos + 1, emphasisHiddenDecoration);
+      }
+      continue;
+    }
+
+    if (revealPositions.has(pos)) {
       continue;
     }
 
@@ -259,6 +313,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
 
   const headingVisibleDecoration = Decoration.mark({
     class: "cm-live-preview-heading-visible",
+    attributes: { style: "color: var(--cm-live-preview-marker-color) !important" },
   });
 
   const inlineDecoration = Decoration.mark({
@@ -266,6 +321,9 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
       options.inlineStyle === "hide"
         ? "cm-live-preview-inline-hide"
         : "cm-live-preview-inline-dim",
+  });
+  const emphasisHiddenDecoration = Decoration.replace({
+    inclusive: false,
   });
 
   for (const range of view.visibleRanges) {
@@ -304,7 +362,8 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
         line.text,
         revealPositions,
         excluded,
-        inlineDecoration
+        inlineDecoration,
+        emphasisHiddenDecoration
       );
 
       pos = line.to + 1;
