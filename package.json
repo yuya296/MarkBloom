@@ -1,0 +1,9 @@
+{
+  "name": "mark-bloom",
+  "private": true,
+  "packageManager": "pnpm@10.24.0",
+  "scripts": {
+    "build:core": "pnpm -F editor-core build",
+    "build": "pnpm -r build"
+  }
+}
