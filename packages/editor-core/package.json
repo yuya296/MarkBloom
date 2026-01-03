@@ -1,0 +1,23 @@
+{
+  "name": "editor-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --max-warnings 0"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.10.1",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8"
+  },
+  "devDependencies": {
+    "sass": "^1.97.1",
+    "vite": "^7.3.0"
+  }
+}

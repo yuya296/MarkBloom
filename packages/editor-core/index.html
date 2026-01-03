@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>editor-core</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <div>
+          <div class="app-title">editor-core</div>
+          <div class="app-subtitle">CM6 Markdown Base Editor</div>
+        </div>
+        <div id="status" class="status">Ready</div>
+      </header>
+      <section class="controls">
+        <label class="control-item">
+          <input id="toggle-line-numbers" type="checkbox" checked />
+          Line numbers
+        </label>
+        <label class="control-item">
+          <input id="toggle-wrap" type="checkbox" checked />
+          Line wrapping
+        </label>
+        <label class="control-item">
+          Tab size
+          <input id="tab-size" type="number" min="2" max="8" value="4" />
+        </label>
+        <button id="apply" type="button">Apply</button>
+      </section>
+      <main>
+        <div id="editor" class="editor"></div>
+      </main>
+      <footer class="footer">
+        <span id="change-info">No changes yet.</span>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
