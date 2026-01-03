@@ -34,6 +34,11 @@
 - WebView内では`bridge-vscode`がcoreをマウントし、VS CodeのpostMessageチャネル以外の依存を持たない。
 - `codemirror-rich-markdoc` などのMarkdoc特化プラグインには依存しない（柔軟なテーブル拡張と将来の編集機能に備える）。
 
+## テスト戦略
+- Large: VS Code拡張を手動でE2E確認する。Markdownファイルを開いてWebView表示・再描画・エラーハンドリングをチェックし、受け入れ基準を満たすことを確認する（自動化対象外）。
+- Medium: coreの自動UIテストを含む。Playwright/React Testing LibraryでMarkdownサンプルを読み込み、CodeMirrorレンダリングやテーブルDOM、read-only属性、スクロール挙動を検証する。bridge-vscodeとextension間のメッセージ通信をモックして、`renderDocument`の受信からcore再描画までの結合テストを行う。
+- Small: core内部のMarkdown→表示変換ロジック、bridge-vscodeのメッセージハンドラ等をJestで単体テストする。Electron bridgeは今回のスコープ外なのでテスト対象から除外し、その旨をREADME/planへ記載しておく。
+
 ## リスク・懸念
 - Largeファイルのレンダリングに時間がかかる可能性。初期フェーズでは簡易実装でも可。
 - Markdown→HTML変換をWebView内で行うかExtension側で行うかの判断は別Featureで検討。
