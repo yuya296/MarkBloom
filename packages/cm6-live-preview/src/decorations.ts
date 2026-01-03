@@ -16,7 +16,7 @@ const blockMarkerPattern = {
   quote: /^\s{0,3}(>)(?=\s?)/,
 };
 
-const inlineMarkers = new Set(["*", "_", "[", "]", "(", ")", "`"]);
+const inlineMarkers = new Set(["*", "_", "[", "]", "(", ")", "`", "~"]);
 
 function inRanges(pos: number, ranges: Range[]): boolean {
   for (const range of ranges) {
@@ -45,7 +45,7 @@ function collectExcludedRanges(view: EditorView, options: LivePreviewOptions): E
   }
 
   const blockNames = new Set(["FencedCode", "CodeBlock"]);
-  const inlineNames = new Set(["InlineCode", "CodeText"]);
+  const inlineNames = new Set(["CodeText"]);
 
   syntaxTree(view.state).iterate({
     enter: (node) => {
@@ -154,52 +154,80 @@ function resolveBlockRevealRange(view: EditorView, options: LivePreviewOptions):
   return { from: line.from, to: line.to };
 }
 
-function resolveInlineRevealPositions(
-  lineText: string,
-  lineFrom: number,
-  selectionHead: number,
-  inlineRadiusBefore: number,
-  inlineRadiusAfter: number
+function collectInlineRevealPositions(
+  view: EditorView,
+  options: LivePreviewOptions
 ): Set<number> {
   const positions = new Set<number>();
-  const headOffset = selectionHead - lineFrom;
+  const selectionHead = view.state.selection.main.head;
+  const inlineRadius = options.inlineRadius ?? 1;
+  const inlineRadiusBefore = options.inlineRadiusBefore ?? inlineRadius;
+  const inlineRadiusAfter = options.inlineRadiusAfter ?? inlineRadius;
+  const tree = syntaxTree(view.state);
+  const candidates = [tree.resolve(selectionHead, -1), tree.resolve(selectionHead, 1)];
+  const inlineContainerNames = new Set([
+    "Emphasis",
+    "StrongEmphasis",
+    "Link",
+    "Image",
+    "InlineCode",
+    "Strikethrough",
+  ]);
+  const inlineMarkNames = new Set([
+    "EmphasisMark",
+    "LinkMark",
+    "CodeMark",
+    "StrikethroughMark",
+  ]);
 
-  if (headOffset < 0 || headOffset > lineText.length) {
-    return positions;
-  }
+  const selectionLine = view.state.doc.lineAt(selectionHead);
 
-  for (let distance = 1; distance <= inlineRadiusBefore; distance += 1) {
-    const pos = selectionHead - distance;
-    const offset = pos - lineFrom;
-    if (offset < 0) {
-      break;
-    }
-    if (!inlineMarkers.has(lineText[offset])) {
-      continue;
-    }
-    const between = lineText.slice(offset + 1, headOffset);
-    if (between.match(/\s/u)) {
-      break;
-    }
-    positions.add(pos);
-    break;
-  }
+  for (const candidate of candidates) {
+    let current: typeof candidate | null = candidate;
+    while (current) {
+      if (inlineContainerNames.has(current.name)) {
+        if (options.exclude?.code !== false && current.name === "InlineCode") {
+          break;
+        }
 
-  for (let distance = 0; distance < inlineRadiusAfter; distance += 1) {
-    const pos = selectionHead + distance;
-    const offset = pos - lineFrom;
-    if (offset >= lineText.length) {
-      break;
+        const nodeLine = view.state.doc.lineAt(current.from);
+        if (nodeLine.number !== selectionLine.number) {
+          break;
+        }
+
+        const isWithin = selectionHead >= current.from && selectionHead <= current.to;
+        const isBefore =
+          selectionHead < current.from &&
+          current.from - selectionHead <= inlineRadiusAfter &&
+          !selectionLine.text
+            .slice(selectionHead - selectionLine.from, current.from - selectionLine.from)
+            .match(/\s/u);
+        const isAfter =
+          selectionHead > current.to &&
+          selectionHead - current.to <= inlineRadiusBefore &&
+          !selectionLine.text
+            .slice(current.to - selectionLine.from, selectionHead - selectionLine.from)
+            .match(/\s/u);
+
+        if (isWithin || isBefore || isAfter) {
+          tree.iterate({
+            from: current.from,
+            to: current.to,
+            enter: (node) => {
+              if (!inlineMarkNames.has(node.name)) {
+                return;
+              }
+              for (let pos = node.from; pos < node.to; pos += 1) {
+                positions.add(pos);
+              }
+            },
+          });
+        }
+
+        break;
+      }
+      current = current.parent;
     }
-    if (!inlineMarkers.has(lineText[offset])) {
-      continue;
-    }
-    const between = lineText.slice(headOffset, offset);
-    if (between.match(/\s/u)) {
-      break;
-    }
-    positions.add(pos);
-    break;
   }
 
   return positions;
@@ -212,19 +240,8 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
 
   const builder = new RangeSetBuilder<Decoration>();
   const blockReveal = resolveBlockRevealRange(view, options);
-  const selectionHead = view.state.selection.main.head;
-  const inlineRadius = options.inlineRadius ?? 1;
-  const inlineRadiusBefore = options.inlineRadiusBefore ?? inlineRadius;
-  const inlineRadiusAfter = options.inlineRadiusAfter ?? inlineRadius;
   const excluded = collectExcludedRanges(view, options);
-  const headLine = view.state.doc.lineAt(selectionHead);
-  const revealPositions = resolveInlineRevealPositions(
-    headLine.text,
-    headLine.from,
-    selectionHead,
-    inlineRadiusBefore,
-    inlineRadiusAfter
-  );
+  const revealPositions = collectInlineRevealPositions(view, options);
 
   const blockDecoration = Decoration.mark({
     class:
