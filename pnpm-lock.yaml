@@ -60,6 +60,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.39.8
         version: 6.39.8
+      '@lezer/highlight':
+        specifier: ^1.2.3
+        version: 1.2.3
       cm6-live-preview:
         specifier: workspace:*
         version: link:../cm6-live-preview

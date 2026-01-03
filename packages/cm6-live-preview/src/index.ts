@@ -18,15 +18,17 @@ export type LivePreviewOptions = {
   exclude?: { code?: boolean };
 };
 
-const livePreviewTheme = EditorView.baseTheme({
-  ".cm-live-preview-inline-dim, .cm-live-preview-block-dim": {
-    opacity: "0.35",
-  },
-  ".cm-live-preview-inline-hide, .cm-live-preview-block-hide": {
-    opacity: "0",
-    pointerEvents: "none",
-  },
-});
+export function livePreviewBaseTheme(): Extension {
+  return EditorView.baseTheme({
+    ".cm-live-preview-inline-dim, .cm-live-preview-block-dim": {
+      opacity: "0.35",
+    },
+    ".cm-live-preview-inline-hide, .cm-live-preview-block-hide": {
+      opacity: "0",
+      pointerEvents: "none",
+    },
+  });
+}
 
 const defaultOptions: Required<LivePreviewOptions> = {
   inlineRadius: 1,
@@ -75,5 +77,5 @@ export function livePreview(options: LivePreviewOptions = {}): Extension {
     }
   );
 
-  return [livePreviewTheme, plugin];
+  return [livePreviewBaseTheme(), plugin];
 }

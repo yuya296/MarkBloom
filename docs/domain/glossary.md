@@ -5,6 +5,7 @@
 - Live Preview: Markdown を保持したまま記号の露出を抑制する編集体験。
 - Reveal Zones: 記号を露出させる範囲（Block/Inline）。
 - inlineRadius: インライン記号の露出判定に使うカーソル近傍距離。
+- Typography Theme: Markdown の見た目（見出し/強調/引用/リンクなど）を整えるテーマ。
 - CodeMirror 6 (CM6): 拡張可能なエディタライブラリ。
 - Extension: CM6 の機能単位。配列で合成する。
 - Compartment: runtime で extension 構成を差し替えるための CM6 機構。
