@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "CommonJS",
+        "lib": [
+            "ES2020",
+            "DOM"
+        ],
+        "moduleResolution": "node",
+        "outDir": "out",
+        "rootDir": "src",
+        "strict": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "jsx": "react-jsx",
+        "types": [
+            "node",
+            "vscode"
+        ]
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "media",
+        "out",
+        "tests"
+    ]
+}

@@ -1,0 +1,60 @@
+{
+    "name": "markbloom",
+    "displayName": "MarkBloom",
+    "description": "VS Code extension for rendering Markdown tables read-only in a WebView.",
+    "publisher": "yuya296",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "license": "MIT",
+    "main": "./out/extension.js",
+    "activationEvents": [
+        "onLanguage:markdown",
+        "onCommand:markbloom.showPreview"
+    ],
+    "categories": [
+        "Other"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "markbloom.showPreview",
+                "title": "MarkBloom: Show Read-only Preview"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p .",
+        "build:webview": "esbuild --bundle src/webview/main.tsx --format=iife --platform=browser --jsx=automatic --define:process.env.NODE_ENV=\\\"production\\\" --sourcemap --outfile=media/webview.js",
+        "build:core-test": "esbuild --bundle src/core/testHarness.tsx --format=iife --platform=browser --jsx=automatic --define:process.env.NODE_ENV=\\\"test\\\" --sourcemap --outfile=media/core-test.js",
+        "build": "npm run compile && npm run build:webview && npm run build:core-test",
+        "serve": "python3 -m http.server 4173",
+        "test:unit": "vitest run",
+        "test:e2e": "playwright test",
+        "test": "npm run build:core-test && npm run test:unit && npm run test:e2e"
+    },
+    "dependencies": {
+        "dompurify": "^3.1.6",
+        "marked": "^11.1.1",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.49.0",
+        "@types/dompurify": "^3.0.5",
+        "@types/node": "^20.11.30",
+        "@types/react": "^18.3.7",
+        "@types/react-dom": "^18.3.0",
+        "@types/vscode": "^1.85.0",
+        "esbuild": "^0.23.0",
+        "jsdom": "^24.1.0",
+        "tslib": "^2.6.2",
+        "typescript": "^5.4.5",
+        "vitest": "^2.1.3"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yuya296/MarkBloom.git"
+    }
+}

@@ -1,0 +1,7 @@
+node_modules/
+out/
+media/*.js
+media/*.js.map
+.vscode-test/
+.vscode-test-web/
+coverage/

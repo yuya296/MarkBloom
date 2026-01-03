@@ -9,6 +9,7 @@
 
 ## 技術メモ
 - Markdown変換は既存ライブラリ（例：`marked`）やCodeMirrorプラグインをcore内部で使い、テーブル要素へ専用クラスを付与する。
+- Markdown→HTMLは `marked` + DOMPurify でHTML化し、CodeMirrorによる編集系は後続Featureで検討する。
 - WebViewは`nonce`を使ってContent Security Policyを満たす。Electron向けBridgeは同じcore APIを呼べるよう、通信I/Fだけ定義する。
 - ロギングはVS Codeの `OutputChannel` とWebView上のconsole表示で最低限。
 

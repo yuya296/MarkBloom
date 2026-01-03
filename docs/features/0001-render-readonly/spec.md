@@ -25,7 +25,7 @@
 - ⛔ 設定UIやフォーマットルールのカスタマイズ。
 
 ## アーキテクチャ指針
-- `core`: React + CodeMirror 6を用いたホスト非依存のビュー。Markdownのレンダリングとread-only UIのみを担当する。
+- `core`: Reactベースのホスト非依存ビュー。Markdownのレンダリングとread-only UIのみを担当し、CodeMirrorによる編集系は後続Featureで拡張する。
 - `bridge`: ホストごとの通信・ライフサイクルを吸収する層。Feature 0001ではVS Code WebView向け(`bridge-vscode`)を実装し、Electron向け(`bridge-electron`)は将来同じAPIで追加できるようにする。
 - `extension`: VS Code拡張本体。Document管理、ファイルシステムアクセス、Bridgeへのメッセージ送信をまとめる。
 
