@@ -1,8 +1,7 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
+import initialText from "../assets/sample.md?raw";
 import { createEditor } from "./createEditor";
-
-const initialText = `# editor-core\n\n- Minimal CM6 Markdown editor\n- Runtime extension switching\n\n\`\`\`md\n| Col A | Col B |\n| --- | --- |\n| 1 | 2 |\n\`\`\``;
 
 type ExtensionOptions = {
   showLineNumbers: boolean;
