@@ -75,15 +75,22 @@ export function setupApp() {
     throw new Error("Missing control elements");
   }
 
+  const lineNumbersControl = controls.lineNumbers;
+  const wrapControl = controls.wrap;
+  const livePreviewControl = controls.livePreview;
+  const blockRevealControl = controls.blockReveal;
+  const tabSizeControl = controls.tabSize;
+  const applyControl = controls.apply;
+
   const editor = createEditor({
     parent: editorHost,
     initialText,
     extensions: buildExtensions({
-      showLineNumbers: controls.lineNumbers.checked,
-      wrapLines: controls.wrap.checked,
-      livePreviewEnabled: controls.livePreview.checked,
-      blockRevealEnabled: controls.blockReveal.checked,
-      tabSize: Number(controls.tabSize.value),
+      showLineNumbers: lineNumbersControl.checked,
+      wrapLines: wrapControl.checked,
+      livePreviewEnabled: livePreviewControl.checked,
+      blockRevealEnabled: blockRevealControl.checked,
+      tabSize: Number(tabSizeControl.value),
     }),
     onChange: (text) => {
       if (status) {
@@ -98,16 +105,16 @@ export function setupApp() {
   const applyExtensions = () => {
     editor.setExtensions(
       buildExtensions({
-        showLineNumbers: controls.lineNumbers.checked,
-        wrapLines: controls.wrap.checked,
-        livePreviewEnabled: controls.livePreview.checked,
-        blockRevealEnabled: controls.blockReveal.checked,
-        tabSize: Number(controls.tabSize.value),
+        showLineNumbers: lineNumbersControl.checked,
+        wrapLines: wrapControl.checked,
+        livePreviewEnabled: livePreviewControl.checked,
+        blockRevealEnabled: blockRevealControl.checked,
+        tabSize: Number(tabSizeControl.value),
       })
     );
   };
 
-  controls.apply.addEventListener("click", applyExtensions);
+  applyControl.addEventListener("click", applyExtensions);
 
   return editor;
 }
