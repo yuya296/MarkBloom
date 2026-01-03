@@ -14,7 +14,7 @@ export default [
     ],
   },
   {
-    files: ["**/*.{js,ts}"] ,
+    files: ["**/*.{js,ts}"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",

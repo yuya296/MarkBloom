@@ -37,13 +37,18 @@ export function setupApp() {
   }
 
   const controls = {
-    lineNumbers: document.getElementById("toggle-line-numbers") as HTMLInputElement | null,
-    wrap: document.getElementById("toggle-wrap") as HTMLInputElement | null,
-    tabSize: document.getElementById("tab-size") as HTMLInputElement | null,
-    apply: document.getElementById("apply") as HTMLButtonElement | null,
+    lineNumbers: document.getElementById("toggle-line-numbers"),
+    wrap: document.getElementById("toggle-wrap"),
+    tabSize: document.getElementById("tab-size"),
+    apply: document.getElementById("apply"),
   };
 
-  if (!controls.lineNumbers || !controls.wrap || !controls.tabSize || !controls.apply) {
+  if (
+    !(controls.lineNumbers instanceof HTMLInputElement) ||
+    !(controls.wrap instanceof HTMLInputElement) ||
+    !(controls.tabSize instanceof HTMLInputElement) ||
+    !(controls.apply instanceof HTMLButtonElement)
+  ) {
     throw new Error("Missing control elements");
   }
 
@@ -75,7 +80,7 @@ export function setupApp() {
     );
   };
 
-  controls.apply?.addEventListener("click", applyExtensions);
+  controls.apply.addEventListener("click", applyExtensions);
 
   return editor;
 }
