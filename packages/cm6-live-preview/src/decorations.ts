@@ -143,7 +143,7 @@ function resolveBlockRevealRange(view: EditorView, options: LivePreviewOptions):
   ]);
 
   const resolved = syntaxTree(view.state).resolve(line.from, -1);
-  let current = resolved;
+  let current: typeof resolved | null = resolved;
   while (current) {
     if (blockNodeNames.has(current.name)) {
       return { from: current.from, to: current.to };
