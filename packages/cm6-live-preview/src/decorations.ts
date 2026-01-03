@@ -65,14 +65,17 @@ function addBlockMarkerDecorations(
   builder: RangeSetBuilder<Decoration>,
   lineFrom: number,
   lineText: string,
-  decoration: Decoration
+  blockDecoration: Decoration,
+  headingDecoration: Decoration
 ) {
   const headingMatch = lineText.match(blockMarkerPattern.heading);
   if (headingMatch) {
     const markerIndex = lineText.indexOf(headingMatch[1]);
+    const hasSpaceAfter = lineText[markerIndex + headingMatch[1].length] === " ";
+    const markerLength = headingMatch[1].length + (hasSpaceAfter ? 1 : 0);
     const from = lineFrom + markerIndex;
-    const to = from + headingMatch[1].length;
-    builder.add(from, to, decoration);
+    const to = from + markerLength;
+    builder.add(from, to, headingDecoration);
   }
 
   const listMatch = lineText.match(blockMarkerPattern.list);
@@ -80,7 +83,7 @@ function addBlockMarkerDecorations(
     const markerIndex = lineText.indexOf(listMatch[1]);
     const from = lineFrom + markerIndex;
     const to = from + listMatch[1].length;
-    builder.add(from, to, decoration);
+    builder.add(from, to, blockDecoration);
   }
 
   const quoteMatch = lineText.match(blockMarkerPattern.quote);
@@ -88,7 +91,7 @@ function addBlockMarkerDecorations(
     const markerIndex = lineText.indexOf(quoteMatch[1]);
     const from = lineFrom + markerIndex;
     const to = from + quoteMatch[1].length;
-    builder.add(from, to, decoration);
+    builder.add(from, to, blockDecoration);
   }
 }
 
@@ -250,6 +253,10 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
         : "cm-live-preview-block-dim",
   });
 
+  const headingDecoration = Decoration.replace({
+    inclusive: false,
+  });
+
   const inlineDecoration = Decoration.mark({
     class:
       options.inlineStyle === "hide"
@@ -270,7 +277,13 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
         line.from >= blockReveal.from && line.to <= blockReveal.to;
 
       if (!lineWithinBlockReveal && !overlapsRange(line.from, line.to, excluded.block)) {
-        addBlockMarkerDecorations(builder, line.from, line.text, blockDecoration);
+        addBlockMarkerDecorations(
+          builder,
+          line.from,
+          line.text,
+          blockDecoration,
+          headingDecoration
+        );
       }
 
       addInlineMarkerDecorations(
