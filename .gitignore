@@ -7,3 +7,4 @@ media/*.js.map
 coverage/
 media/
 test-results/
+.DS_Store
