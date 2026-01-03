@@ -5,6 +5,7 @@ export default defineConfig({
         environment: 'jsdom',
         globals: true,
         include: ['tests/unit/**/*.spec.ts'],
-        watch: false
+        watch: false,
+        reporters: ['default', ['junit', { outputFile: 'out/test-results/vitest/junit.xml' }]]
     }
 });
