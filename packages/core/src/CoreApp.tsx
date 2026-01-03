@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MarkdownView } from './components/MarkdownView';
 import { ErrorView } from './components/ErrorView';
-import { renderMarkdownToHtml } from './markdown';
 
 export type CoreProps = {
     markdown: string;
@@ -12,25 +11,25 @@ export type CoreProps = {
 export function CoreApp({ markdown, updatedAt, onError }: CoreProps) {
     const [error, setError] = useState<string | null>(null);
 
-    const html = useMemo(() => {
-        try {
-            setError(null);
-            return renderMarkdownToHtml(markdown);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to render Markdown.';
-            setError(message);
-            onError?.(message);
-            return '';
-        }
-    }, [markdown, onError]);
+    useEffect(() => {
+        setError(null);
+    }, [markdown]);
 
-    if (error) {
-        return <ErrorView message={error} />;
-    }
+    const handleReady = () => {
+        setError(null);
+    };
+
+    const handleError = (message: string) => {
+        setError(message);
+        onError?.(message);
+    };
 
     return (
         <div className="mb-shell" data-updated-at={updatedAt ?? ''}>
-            <MarkdownView html={html} />
+            {error && <ErrorView message={error} />}
+            {!error && (
+                <MarkdownView markdown={markdown} onError={handleError} onReady={handleReady} />
+            )}
         </div>
     );
 }

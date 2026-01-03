@@ -26,4 +26,3 @@ export function renderCore(container: HTMLElement, props: CoreProps): CoreRender
 }
 
 export { CoreApp } from './CoreApp';
-export { renderMarkdownToHtml } from './markdown';

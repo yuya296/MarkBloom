@@ -25,7 +25,7 @@
 - ⛔ 設定UIやフォーマットルールのカスタマイズ。
 
 ## アーキテクチャ指針
-- `core`: Reactベースのホスト非依存ビュー。Markdownのレンダリングとread-only UIのみを担当し、CodeMirrorによる編集系は後続Featureで拡張する。
+- `core`: React + CodeMirror 6を用いたホスト非依存ビュー。Markdownのレンダリングとread-only UIのみを担当し、将来的な編集機能追加にも流用できる構造を保つ。
 - `bridge`: ホストごとの通信・ライフサイクルを吸収する層。Feature 0001ではVS Code WebView向け(`bridge-vscode`)を実装し、Electron向け(`bridge-electron`)は将来同じAPIで追加できるようにする。
 - `extension`: VS Code拡張本体。Document管理、ファイルシステムアクセス、Bridgeへのメッセージ送信をまとめる。
 
@@ -36,8 +36,8 @@
 
 ## テスト戦略
 - Large: VS Code拡張を手動でE2E確認する。Markdownファイルを開いてWebView表示・再描画・エラーハンドリングをチェックし、受け入れ基準を満たすことを確認する（自動化対象外）。
-- Medium: coreの自動UIテストを含む。Playwright/React Testing LibraryでMarkdownサンプルを読み込み、CodeMirrorレンダリングやテーブルDOM、read-only属性、スクロール挙動を検証する。bridge-vscodeとextension間のメッセージ通信をモックして、`renderDocument`の受信からcore再描画までの結合テストを行う。
-- Small: core内部のMarkdown→表示変換ロジック、bridge-vscodeのメッセージハンドラ等をJestで単体テストする。Electron bridgeは今回のスコープ外なのでテスト対象から除外し、その旨をREADME/planへ記載しておく。
+- Medium: coreの自動UIテストを含む。Playwright/React Testing LibraryでMarkdownサンプルを読み込み、CodeMirrorレンダリングやread-only属性、スクロール挙動を検証する。bridge-vscodeとextension間のメッセージ通信をモックして、`renderDocument`の受信からcore再描画までの結合テストを行う。
+- Small: CodeMirror状態の生成やbridge-vscodeのメッセージハンドラ等をJestで単体テストする。Electron bridgeは今回のスコープ外なのでテスト対象から除外し、その旨をREADME/planへ記載しておく。
 
 ## リスク・懸念
 - Largeファイルのレンダリングに時間がかかる可能性。初期フェーズでは簡易実装でも可。

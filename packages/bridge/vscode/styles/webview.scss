@@ -58,6 +58,48 @@ body {
     margin-top: 0;
 }
 
+.mb-markdown .cm-editor {
+    background: transparent;
+    border: none;
+    font-family: inherit;
+}
+
+.mb-markdown .cm-scroller {
+    font-family: inherit;
+    line-height: 1.6;
+    font-size: 15px;
+    padding: 0;
+}
+
+.mb-markdown .cm-content {
+    padding: 0;
+}
+
+.mb-markdown .cm-line {
+    padding: 0 0 0 8px;
+}
+
+.mb-markdown .cm-gutters {
+    display: none;
+}
+
+.mb-markdown .cm-line span.cm-quote {
+    position: relative;
+    padding-left: 12px;
+    color: var(--muted);
+}
+
+.mb-markdown .cm-line span.cm-quote::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.2em;
+    bottom: 0.2em;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0.4;
+}
+
 .mb-markdown h1,
 .mb-markdown h2,
 .mb-markdown h3,

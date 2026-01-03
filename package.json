@@ -36,8 +36,11 @@
         "test": "npm run build:core-test && npm run build:styles && npm run test:unit && npm run test:e2e"
     },
     "dependencies": {
-        "dompurify": "^3.1.6",
-        "marked": "^11.1.1",
+        "@codemirror/lang-markdown": "^6.5.0",
+        "@codemirror/language": "^6.12.1",
+        "@codemirror/state": "^6.5.3",
+        "@codemirror/view": "^6.39.8",
+        "@lezer/highlight": "^1.2.3",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
     },
