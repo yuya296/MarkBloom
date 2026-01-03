@@ -9,6 +9,8 @@ import { buildDecorations } from "./decorations";
 
 export type LivePreviewOptions = {
   inlineRadius?: number;
+  inlineRadiusBefore?: number;
+  inlineRadiusAfter?: number;
   inlineStyle?: "dim" | "hide";
   blockStyle?: "dim" | "hide";
   blockRevealMode?: "line" | "block";
@@ -28,6 +30,8 @@ const livePreviewTheme = EditorView.baseTheme({
 
 const defaultOptions: Required<LivePreviewOptions> = {
   inlineRadius: 1,
+  inlineRadiusBefore: 1,
+  inlineRadiusAfter: 1,
   inlineStyle: "dim",
   blockStyle: "dim",
   blockRevealMode: "line",

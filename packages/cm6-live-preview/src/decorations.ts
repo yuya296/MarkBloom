@@ -96,8 +96,7 @@ function addInlineMarkerDecorations(
   builder: RangeSetBuilder<Decoration>,
   lineFrom: number,
   lineText: string,
-  inlineRevealFrom: number,
-  inlineRevealTo: number,
+  revealPositions: Set<number>,
   excluded: ExcludeRanges,
   decoration: Decoration
 ) {
@@ -109,7 +108,7 @@ function addInlineMarkerDecorations(
 
     const pos = lineFrom + offset;
 
-    if (pos >= inlineRevealFrom && pos <= inlineRevealTo) {
+    if (revealPositions.has(pos)) {
       continue;
     }
 
@@ -155,6 +154,57 @@ function resolveBlockRevealRange(view: EditorView, options: LivePreviewOptions):
   return { from: line.from, to: line.to };
 }
 
+function resolveInlineRevealPositions(
+  lineText: string,
+  lineFrom: number,
+  selectionHead: number,
+  inlineRadiusBefore: number,
+  inlineRadiusAfter: number
+): Set<number> {
+  const positions = new Set<number>();
+  const headOffset = selectionHead - lineFrom;
+
+  if (headOffset < 0 || headOffset > lineText.length) {
+    return positions;
+  }
+
+  for (let distance = 1; distance <= inlineRadiusBefore; distance += 1) {
+    const pos = selectionHead - distance;
+    const offset = pos - lineFrom;
+    if (offset < 0) {
+      break;
+    }
+    if (!inlineMarkers.has(lineText[offset])) {
+      continue;
+    }
+    const between = lineText.slice(offset + 1, headOffset);
+    if (between.match(/\s/u)) {
+      break;
+    }
+    positions.add(pos);
+    break;
+  }
+
+  for (let distance = 0; distance < inlineRadiusAfter; distance += 1) {
+    const pos = selectionHead + distance;
+    const offset = pos - lineFrom;
+    if (offset >= lineText.length) {
+      break;
+    }
+    if (!inlineMarkers.has(lineText[offset])) {
+      continue;
+    }
+    const between = lineText.slice(headOffset, offset);
+    if (between.match(/\s/u)) {
+      break;
+    }
+    positions.add(pos);
+    break;
+  }
+
+  return positions;
+}
+
 export function buildDecorations(view: EditorView, options: LivePreviewOptions): DecorationSet {
   if (options.disableDuringIME && view.composing) {
     return Decoration.none;
@@ -162,11 +212,19 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
 
   const builder = new RangeSetBuilder<Decoration>();
   const blockReveal = resolveBlockRevealRange(view, options);
-  const inlineRadius = options.inlineRadius ?? 6;
   const selectionHead = view.state.selection.main.head;
-  const inlineRevealFrom = Math.max(0, selectionHead - inlineRadius);
-  const inlineRevealTo = Math.min(view.state.doc.length, selectionHead + inlineRadius);
+  const inlineRadius = options.inlineRadius ?? 1;
+  const inlineRadiusBefore = options.inlineRadiusBefore ?? inlineRadius;
+  const inlineRadiusAfter = options.inlineRadiusAfter ?? inlineRadius;
   const excluded = collectExcludedRanges(view, options);
+  const headLine = view.state.doc.lineAt(selectionHead);
+  const revealPositions = resolveInlineRevealPositions(
+    headLine.text,
+    headLine.from,
+    selectionHead,
+    inlineRadiusBefore,
+    inlineRadiusAfter
+  );
 
   const blockDecoration = Decoration.mark({
     class:
@@ -202,8 +260,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
         builder,
         line.from,
         line.text,
-        inlineRevealFrom,
-        inlineRevealTo,
+        revealPositions,
         excluded,
         inlineDecoration
       );

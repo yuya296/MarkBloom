@@ -36,6 +36,8 @@ function buildExtensions({
   if (livePreviewEnabled) {
     extensions.push(
       livePreview({
+        inlineRadiusBefore: 1,
+        inlineRadiusAfter: 1,
         blockRevealMode: blockRevealEnabled ? "block" : "line",
       })
     );
