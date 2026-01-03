@@ -25,14 +25,14 @@
         ]
     },
     "scripts": {
-        "compile": "tsc -p .",
-        "build:styles": "sass src/styles/webview.scss media/webview.css --style=expanded --no-source-map",
-        "build:webview": "esbuild --bundle src/webview/main.tsx --format=iife --platform=browser --jsx=automatic --sourcemap --outfile=media/webview.js",
-        "build:core-test": "esbuild --bundle src/core/testHarness.tsx --format=iife --platform=browser --jsx=automatic --sourcemap --outfile=media/core-test.js",
+        "compile": "tsc -p . && node scripts/post-compile.js",
+        "build:styles": "sass packages/bridge/vscode/styles/webview.scss media/webview.css --style=expanded --no-source-map",
+        "build:webview": "esbuild --bundle packages/bridge/vscode/src/main.tsx --format=iife --platform=browser --jsx=automatic --sourcemap --outfile=media/webview.js",
+        "build:core-test": "esbuild --bundle packages/core/src/testHarness.tsx --format=iife --platform=browser --jsx=automatic --sourcemap --outfile=media/core-test.js",
         "build": "npm run compile && npm run build:styles && npm run build:webview && npm run build:core-test",
         "serve": "python3 -m http.server 4173",
         "test:unit": "vitest run",
-        "test:e2e": "npm run build:styles && playwright test",
+        "test:e2e": "npm run build:core-test && npm run build:styles && playwright test",
         "test": "npm run build:core-test && npm run build:styles && npm run test:unit && npm run test:e2e"
     },
     "dependencies": {

@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { ExtensionToWebviewMessage, WebviewToExtensionMessage } from './shared/messages';
+import { ExtensionToWebviewMessage, WebviewToExtensionMessage } from '../../shared';
 import { generateNonce } from './utils/nonce';
 
 class MarkdownPreviewManager {

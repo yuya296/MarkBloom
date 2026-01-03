@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderMarkdownToHtml } from '../../src/core/markdown';
+import { renderMarkdownToHtml } from '../../index';
 
 describe('renderMarkdownToHtml', () => {
     it('converts markdown table into table html', () => {

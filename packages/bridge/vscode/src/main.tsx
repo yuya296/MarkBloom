@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CoreApp } from '../core';
-import {
-    ExtensionToWebviewMessage,
-    WebviewToExtensionMessage,
-    isRenderDocumentMessage
-} from '../shared/messages';
+import { CoreApp } from '../../../core';
+import { ExtensionToWebviewMessage, WebviewToExtensionMessage, isRenderDocumentMessage } from '../../../shared';
 
 type DocumentState = {
     markdown: string;
