@@ -16,7 +16,7 @@ Paragraph with **bold** and *italic* and `code` and [link](https://example.com) 
 
 ---
 
-```
+```javascript
 const answer = 42;
 console.log(answer);
 ```

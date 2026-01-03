@@ -1,12 +1,30 @@
 :root {
     color-scheme: light dark;
-    --bg: #0c1220;
-    --card: #111a2c;
-    --surface: #0d1628;
-    --border: #203049;
+    --bg: #070c14;
+    --bg-gradient: radial-gradient(circle at 20% 20%, #122036 0, #0c1424 40%, #0a0f1c 100%);
+    --surface: #101a2c;
+    --border: rgba(32, 48, 73, 0.45);
     --accent: #7dd3fc;
     --text: #e5e7eb;
     --muted: #9ca3af;
+    --table-head: rgba(26, 37, 63, 0.85);
+    --table-row-alt: rgba(255, 255, 255, 0.02);
+    --code-bg: rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #f3f6fb;
+        --bg-gradient: radial-gradient(circle at 20% 20%, #ffffff 0, #f0f4ff 60%, #e2e8f0 100%);
+        --surface: #ffffff;
+        --border: rgba(57, 72, 103, 0.18);
+        --accent: #2563eb;
+        --text: #1f2933;
+        --muted: #4b5563;
+        --table-head: rgba(226, 232, 240, 0.95);
+        --table-row-alt: rgba(15, 23, 42, 0.04);
+        --code-bg: rgba(15, 23, 42, 0.08);
+    }
 }
 
 * {
@@ -16,7 +34,7 @@
 body {
     margin: 0;
     min-height: 100vh;
-    background: radial-gradient(circle at 20% 20%, #122036 0, #0c1424 40%, #0a0f1c 100%);
+    background: var(--bg-gradient), var(--bg);
     color: var(--text);
     font-family: "SF Pro Display", "Segoe UI", "Helvetica Neue", "Fira Sans", system-ui, -apple-system, sans-serif;
 }
@@ -25,7 +43,7 @@ body {
     max-width: 960px;
     margin: 24px auto;
     padding: 24px 28px;
-    background: linear-gradient(145deg, var(--card), var(--surface));
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), var(--surface));
     border: 1px solid var(--border);
     border-radius: 16px;
     box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
@@ -34,6 +52,10 @@ body {
 .mb-markdown {
     line-height: 1.6;
     font-size: 15px;
+}
+
+.mb-markdown > *:first-child {
+    margin-top: 0;
 }
 
 .mb-markdown h1,
@@ -61,7 +83,7 @@ body {
 }
 
 .mb-markdown code {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--code-bg);
     padding: 0.2em 0.4em;
     border-radius: 6px;
     font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -69,11 +91,18 @@ body {
 }
 
 .mb-markdown pre {
-    background: #0a1220;
+    background: var(--code-bg);
     padding: 14px 16px;
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: auto;
+}
+
+.mb-markdown blockquote {
+    margin: 1em 0;
+    padding-left: 16px;
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
 }
 
 .mb-markdown a {
@@ -97,15 +126,15 @@ body {
     width: 100%;
     margin: 1em 0;
     border-collapse: collapse;
-    background: rgba(13, 22, 40, 0.7);
+    background: rgba(13, 22, 40, 0.04);
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
 }
 
 .mb-table thead {
-    background: rgba(26, 37, 63, 0.85);
-    color: #e6f0ff;
+    background: var(--table-head);
+    color: inherit;
 }
 
 .mb-table th,
@@ -117,7 +146,7 @@ body {
 }
 
 .mb-table tbody tr:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--table-row-alt);
 }
 
 .mb-error {
