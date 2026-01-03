@@ -5,3 +5,5 @@ media/*.js.map
 .vscode-test/
 .vscode-test-web/
 coverage/
+media/
+test-results/

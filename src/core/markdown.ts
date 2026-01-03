@@ -1,16 +1,18 @@
-import { marked } from 'marked';
+import { marked, type MarkedOptions } from 'marked';
 import createDOMPurify from 'dompurify';
 
 const renderer = new marked.Renderer();
 renderer.table = (header, body) => `<table class="mb-table"><thead>${header}</thead><tbody>${body}</tbody></table>`;
 
-marked.setOptions({
+const markedOptions = {
     gfm: true,
     breaks: true,
     mangle: false,
     headerIds: true,
     renderer
-});
+} satisfies MarkedOptions & { headerIds?: boolean; mangle: boolean };
+
+marked.setOptions(markedOptions);
 
 const domPurify = typeof window !== 'undefined' ? createDOMPurify(window) : undefined;
 
