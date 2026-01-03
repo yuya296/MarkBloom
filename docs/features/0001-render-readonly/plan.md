@@ -1,15 +1,15 @@
 # Plan: Feature 0001 (Read-only Render)
 
 ## 実装方針
-1. **Extension Activation**: Markdown Documentを開いたタイミングでWebViewパネルを生成し、Documentテキストを読み込む。複数エディタを開いても1ドキュメント1パネルを基本とする。
-2. **Messaging Contract**: postMessageで `ready`, `renderDocument`, `log` を実装。初期ロードはExtension→WebViewの一方向。
-3. **Markdown Transform**: MVPではExtension側でMarkdown→HTMLを変換し、テーブル部分のみ簡易的に装飾。将来の差分計算を見据えて変換処理を専用モジュールに分離する。
-4. **Table Rendering**: WebViewではCSS/軽量JSで整形表示。read-onlyの証拠としてDOM要素に `data-readonly="true"` を付与し、UIから編集操作を受け付けない。
-5. **Refresh Hooks**: VS Codeの `onDidSaveTextDocument` / `onDidChangeTextDocument` をフックし、Documentが対象ならWebViewへ最新内容を送り直す。
+1. **Extension Activation**: Markdown Documentを開いたタイミングでWebViewパネルを生成し、Documentテキストを読み込む。複数エディタを開いても1ドキュメント1パネルを基本とする。WebViewへは`bridge-vscode`のエントリを配信する。
+2. **Bridge-Messaging Contract**: Bridge層で `ready`, `renderDocument`, `log` を実装し、coreへのpropsとしてMarkdownやメタ情報を渡す。Extension→Bridgeの一方向から始め、Bridge→Extensionへの将来拡張を想定したAPI面を整理する。
+3. **Core Markdown Transform**: core内にMarkdown→HTML/CodeMirror state変換を持たせ、bridgeからはMarkdown文字列を渡す。テーブル描画はcoreの責務とし、他ホストでも流用可能にする。
+4. **Bridge Rendering Adapter**: `bridge-vscode`ではcoreをReactでマウントし、VS Code messagingとDOMの紐付け・nonce/CSP管理・read-only属性付与を担う。Feature 0001ではElectron向けBridgeのスケルトン(インターフェース)のみ用意する。
+5. **Refresh Hooks**: VS Codeの `onDidSaveTextDocument` / `onDidChangeTextDocument` をフックし、Documentが対象なら最新内容をBridgeに送る。Bridgeは受信するとcoreを再描画する。
 
 ## 技術メモ
-- Markdown変換は既存ライブラリ（例：`marked`）を使い、テーブル要素へ専用クラスを付与する。
-- WebViewは`nonce`を使ってContent Security Policyを満たす。
+- Markdown変換は既存ライブラリ（例：`marked`）やCodeMirrorプラグインをcore内部で使い、テーブル要素へ専用クラスを付与する。
+- WebViewは`nonce`を使ってContent Security Policyを満たす。Electron向けBridgeは同じcore APIを呼べるよう、通信I/Fだけ定義する。
 - ロギングはVS Codeの `OutputChannel` とWebView上のconsole表示で最低限。
 
 ## 設計上の配慮
