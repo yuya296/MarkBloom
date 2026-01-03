@@ -257,6 +257,10 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
     inclusive: false,
   });
 
+  const headingVisibleDecoration = Decoration.mark({
+    class: "cm-live-preview-heading-visible",
+  });
+
   const inlineDecoration = Decoration.mark({
     class:
       options.inlineStyle === "hide"
@@ -283,6 +287,14 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
           line.text,
           blockDecoration,
           headingDecoration
+        );
+      } else if (!overlapsRange(line.from, line.to, excluded.block)) {
+        addBlockMarkerDecorations(
+          builder,
+          line.from,
+          line.text,
+          blockDecoration,
+          headingVisibleDecoration
         );
       }
 

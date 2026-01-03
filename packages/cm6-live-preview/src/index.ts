@@ -27,6 +27,9 @@ export function livePreviewBaseTheme(): Extension {
       opacity: "0",
       pointerEvents: "none",
     },
+    ".cm-live-preview-heading-visible": {
+      color: "#8f8a7f",
+    },
   });
 }
 
