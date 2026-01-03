@@ -1,15 +1,24 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
+import { livePreview } from "cm6-live-preview";
 import { createEditor } from "./createEditor";
 
 type ExtensionOptions = {
   showLineNumbers: boolean;
   wrapLines: boolean;
   tabSize: number;
+  livePreviewEnabled: boolean;
+  blockRevealEnabled: boolean;
 };
 
-function buildExtensions({ showLineNumbers, wrapLines, tabSize }: ExtensionOptions): Extension[] {
+function buildExtensions({
+  showLineNumbers,
+  wrapLines,
+  tabSize,
+  livePreviewEnabled,
+  blockRevealEnabled,
+}: ExtensionOptions): Extension[] {
   const extensions: Extension[] = [];
 
   if (showLineNumbers) {
@@ -22,6 +31,14 @@ function buildExtensions({ showLineNumbers, wrapLines, tabSize }: ExtensionOptio
 
   if (Number.isFinite(tabSize)) {
     extensions.push(EditorState.tabSize.of(tabSize));
+  }
+
+  if (livePreviewEnabled) {
+    extensions.push(
+      livePreview({
+        blockRevealMode: blockRevealEnabled ? "block" : "line",
+      })
+    );
   }
 
   return extensions;
@@ -39,6 +56,8 @@ export function setupApp() {
   const controls = {
     lineNumbers: document.getElementById("toggle-line-numbers"),
     wrap: document.getElementById("toggle-wrap"),
+    livePreview: document.getElementById("toggle-live-preview"),
+    blockReveal: document.getElementById("toggle-block-reveal"),
     tabSize: document.getElementById("tab-size"),
     apply: document.getElementById("apply"),
   };
@@ -46,6 +65,8 @@ export function setupApp() {
   if (
     !(controls.lineNumbers instanceof HTMLInputElement) ||
     !(controls.wrap instanceof HTMLInputElement) ||
+    !(controls.livePreview instanceof HTMLInputElement) ||
+    !(controls.blockReveal instanceof HTMLInputElement) ||
     !(controls.tabSize instanceof HTMLInputElement) ||
     !(controls.apply instanceof HTMLButtonElement)
   ) {
@@ -58,6 +79,8 @@ export function setupApp() {
     extensions: buildExtensions({
       showLineNumbers: controls.lineNumbers.checked,
       wrapLines: controls.wrap.checked,
+      livePreviewEnabled: controls.livePreview.checked,
+      blockRevealEnabled: controls.blockReveal.checked,
       tabSize: Number(controls.tabSize.value),
     }),
     onChange: (text) => {
@@ -75,6 +98,8 @@ export function setupApp() {
       buildExtensions({
         showLineNumbers: controls.lineNumbers.checked,
         wrapLines: controls.wrap.checked,
+        livePreviewEnabled: controls.livePreview.checked,
+        blockRevealEnabled: controls.blockReveal.checked,
         tabSize: Number(controls.tabSize.value),
       })
     );
