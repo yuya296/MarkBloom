@@ -1,7 +1,6 @@
 import { syntaxTree } from "@codemirror/language";
 import { Decoration, EditorView } from "@codemirror/view";
 import type { Range } from "../core/types";
-import { cursorInsideRange, selectionOverlapsRange } from "../core/utils";
 import { hasNodeName } from "../core/syntaxNodeNames";
 import { markerReplace } from "../theme/markerWidgets";
 import {
@@ -11,6 +10,7 @@ import {
   type DisplayStyle,
   type TriggerId,
 } from "../config";
+import type { LivePreviewOptions } from "../index";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
@@ -27,8 +27,8 @@ type BlockMarker = {
 type PushDecoration = (from: number, to: number, decoration: Decoration) => void;
 
 type BlockRawState = {
-  isRawByRange: boolean;
-  isActiveLine: boolean;
+  isSelectionOverlap: boolean;
+  isBlockReveal: boolean;
 };
 
 function fenceLabel(lineText: string): string {
@@ -46,39 +46,36 @@ function isRawByTriggers(state: BlockRawState, triggers: TriggerId[]): boolean {
     return false;
   }
 
-  if (triggers.includes("selectionOverlap") || triggers.includes("cursorInside")) {
-    if (state.isRawByRange) {
-      return true;
-    }
+  if (triggers.includes("selection") && state.isSelectionOverlap) {
+    return true;
   }
 
-  if (triggers.includes("lineActive") && state.isActiveLine) {
+  if (triggers.includes("block") && state.isBlockReveal) {
     return true;
   }
 
   return false;
 }
 
-export function collectBlockRawRanges(view: EditorView): Range[] {
-  const rawRanges: Range[] = [];
-  const selection = view.state.selection;
+export function collectBlockRevealRange(
+  view: EditorView,
+  options: LivePreviewOptions
+): Range | null {
+  if (!options.blockRevealEnabled) {
+    return null;
+  }
 
-  syntaxTree(view.state).iterate({
-    enter: (node) => {
-      if (!hasNodeName(blockTriggerNodeNames, node.name)) {
-        return;
-      }
+  const head = view.state.selection.main.head;
+  const resolved = syntaxTree(view.state).resolve(head, -1);
+  let current: typeof resolved | null = resolved;
+  while (current) {
+    if (hasNodeName(blockTriggerNodeNames, current.name)) {
+      return { from: current.from, to: current.to };
+    }
+    current = current.parent;
+  }
 
-      if (
-        selectionOverlapsRange(selection.ranges, node.from, node.to) ||
-        cursorInsideRange(selection.ranges, node.from, node.to)
-      ) {
-        rawRanges.push({ from: node.from, to: node.to });
-      }
-    },
-  });
-
-  return rawRanges;
+  return null;
 }
 
 function collectBlockMarkers(lineFrom: number, lineText: string): BlockMarker[] {
@@ -155,7 +152,8 @@ export function addBlockMarkerDecorations(
 export function addFencedCodeDecorations(
   push: PushDecoration,
   view: EditorView,
-  rawRanges: Range[],
+  selectionRanges: Range[],
+  blockRevealRange: Range | null,
   hiddenDecoration: Decoration,
   colorDecoration: Decoration
 ) {
@@ -165,12 +163,16 @@ export function addFencedCodeDecorations(
         return;
       }
 
-      const isRawByRange = rawRanges.some((range) => node.from < range.to && node.to > range.from);
-      const state: BlockRawState = {
-        isRawByRange,
-        isActiveLine: false,
-      };
-      const style = isRawByTriggers(state, blockFenceConfig.triggers)
+      const isSelectionOverlap = selectionRanges.some(
+        (range) => node.from < range.to && node.to > range.from
+      );
+      const isBlockReveal = blockRevealRange
+        ? node.from < blockRevealRange.to && node.to > blockRevealRange.from
+        : false;
+      const style = isRawByTriggers(
+        { isSelectionOverlap, isBlockReveal },
+        blockFenceConfig.triggers
+      )
         ? blockFenceConfig.raw
         : blockFenceConfig.preview;
 

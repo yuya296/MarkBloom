@@ -4,7 +4,7 @@ import type { LivePreviewOptions } from "./index";
 import {
   addBlockMarkerDecorations,
   addFencedCodeDecorations,
-  collectBlockRawRanges,
+  collectBlockRevealRange,
 } from "./block/blockMarkers";
 import { addInlineMarkerDecorations } from "./inline/inlineDecorations";
 import { collectInlineMarkerRanges } from "./inline/inlineMarkerRanges";
@@ -14,9 +14,11 @@ import { overlapsRange } from "./core/utils";
 export function buildDecorations(view: EditorView, options: LivePreviewOptions): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
   const excluded = collectExcludedRanges(view, options);
-  const rawBlockRanges = collectBlockRawRanges(view);
   const inlineMarkerRanges = collectInlineMarkerRanges(view, options, excluded);
-  const activeLine = view.state.doc.lineAt(view.state.selection.main.head);
+  const blockRevealRange = collectBlockRevealRange(view, options);
+  const selectionRanges = view.state.selection.ranges
+    .filter((range) => range.from !== range.to)
+    .map((range) => ({ from: range.from, to: range.to }));
 
   const blockHiddenDecoration = Decoration.replace({
     inclusive: false,
@@ -36,7 +38,8 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   addFencedCodeDecorations(
     pushDecoration,
     view,
-    rawBlockRanges,
+    selectionRanges,
+    blockRevealRange,
     blockHiddenDecoration,
     secondaryColorDecoration
   );
@@ -50,16 +53,18 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
         break;
       }
 
-      const isActiveLine = line.number === activeLine.number;
-      const isRawByRange = overlapsRange(line.from, line.to, rawBlockRanges);
       const isExcluded = overlapsRange(line.from, line.to, excluded.block);
+      const isSelectionOverlap = overlapsRange(line.from, line.to, selectionRanges);
+      const isBlockReveal = blockRevealRange
+        ? overlapsRange(line.from, line.to, [blockRevealRange])
+        : false;
 
       if (!isExcluded) {
         addBlockMarkerDecorations(
           pushDecoration,
           line.from,
           line.text,
-          { isActiveLine, isRawByRange },
+          { isSelectionOverlap, isBlockReveal },
           blockHiddenDecoration,
           secondaryColorDecoration
         );

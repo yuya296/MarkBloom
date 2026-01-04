@@ -1,6 +1,6 @@
 import { NodeName } from "./core/syntaxNodeNames";
 
-export type TriggerId = "selectionOverlap" | "cursorInside" | "cursorAdjacent" | "lineActive" | "none";
+export type TriggerId = "selection" | "block" | "proximity" | "none";
 export type DisplayStyle = "hide" | "color-secondary" | "widgetLabel" | "none";
 
 export type InlineElementConfig = {
@@ -29,11 +29,7 @@ export type BlockFenceConfig = {
   raw: DisplayStyle;
 };
 
-const inlineTriggers: TriggerId[] = [
-  "selectionOverlap",
-  "cursorInside",
-  "cursorAdjacent",
-];
+const inlineTriggers: TriggerId[] = ["selection", "proximity"];
 
 export const inlineElementConfigs: InlineElementConfig[] = [
   {
@@ -96,7 +92,7 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
   {
     kind: "block-marker",
     id: "heading",
-    triggers: ["selectionOverlap", "cursorInside", "lineActive"],
+    triggers: ["selection", "block"],
     preview: "hide",
     raw: "color-secondary",
   },
@@ -110,7 +106,7 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
   {
     kind: "block-marker",
     id: "quote",
-    triggers: ["selectionOverlap", "cursorInside", "lineActive"],
+    triggers: ["selection", "block"],
     preview: "hide",
     raw: "color-secondary",
   },
@@ -119,7 +115,7 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
 export const blockFenceConfig: BlockFenceConfig = {
   kind: "block-fence",
   node: NodeName.FencedCode,
-  triggers: ["selectionOverlap", "cursorInside", "lineActive"],
+  triggers: ["selection", "block"],
   preview: "widgetLabel",
   raw: "color-secondary",
 };

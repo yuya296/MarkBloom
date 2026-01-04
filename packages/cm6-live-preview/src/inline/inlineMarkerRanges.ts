@@ -3,7 +3,7 @@ import type { EditorView } from "@codemirror/view";
 import type { Line } from "@codemirror/state";
 import type { ExcludeRanges, Range } from "../core/types";
 import type { LivePreviewOptions } from "../index";
-import { cursorInsideRange, inRangeSegment, selectionOverlapsRange } from "../core/utils";
+import { inRangeSegment, selectionOverlapsRange } from "../core/utils";
 import {
   INLINE_CONTAINER_NAMES,
   NodeName,
@@ -48,25 +48,22 @@ function isInlineRaw(
   options: LivePreviewOptions,
   triggers: InlineElementConfig["triggers"]
 ): boolean {
-  if (triggers.includes("selectionOverlap")) {
+  if (triggers.includes("selection")) {
     if (selectionOverlapsRange(view.state.selection.ranges, node.from, node.to)) {
       return true;
     }
   }
 
-  if (triggers.includes("cursorInside")) {
-    if (cursorInsideRange(view.state.selection.ranges, node.from, node.to)) {
-      return true;
-    }
-  }
-
-  if (triggers.includes("cursorAdjacent")) {
+  if (triggers.includes("proximity")) {
     const head = view.state.selection.main.head;
     const line = view.state.doc.lineAt(head);
     if (line.number === view.state.doc.lineAt(node.from).number) {
       const radius = options.inlineRadius ?? 1;
       const radiusBefore = options.inlineRadiusBefore ?? radius;
       const radiusAfter = options.inlineRadiusAfter ?? radius;
+      if (head >= node.from && head <= node.to) {
+        return true;
+      }
       if (isCursorAdjacent(line, head, node.from, node.to, radiusBefore, radiusAfter)) {
         return true;
       }
