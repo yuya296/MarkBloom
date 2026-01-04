@@ -1,6 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
 import type { LivePreviewOptions } from "./index";
+import { INLINE_CONTAINER_NAMES, INLINE_MARK_NAMES, NodeName, hasNodeName } from "./syntaxNodeNames";
 
 export function collectInlineRevealPositions(
   view: EditorView,
@@ -13,28 +14,13 @@ export function collectInlineRevealPositions(
   const inlineRadiusAfter = options.inlineRadiusAfter ?? inlineRadius;
   const tree = syntaxTree(view.state);
   const candidates = [tree.resolve(selectionHead, -1), tree.resolve(selectionHead, 1)];
-  const inlineContainerNames = new Set([
-    "Emphasis",
-    "StrongEmphasis",
-    "Link",
-    "Image",
-    "InlineCode",
-    "Strikethrough",
-  ]);
-  const inlineMarkNames = new Set([
-    "EmphasisMark",
-    "LinkMark",
-    "CodeMark",
-    "StrikethroughMark",
-  ]);
-
   const selectionLine = view.state.doc.lineAt(selectionHead);
 
   for (const candidate of candidates) {
     let current: typeof candidate | null = candidate;
     while (current) {
-      if (inlineContainerNames.has(current.name)) {
-        if (options.exclude?.code !== false && current.name === "InlineCode") {
+      if (hasNodeName(INLINE_CONTAINER_NAMES, current.name)) {
+        if (options.exclude?.code !== false && current.name === NodeName.InlineCode) {
           // Allow marker visibility but avoid hiding inline code content elsewhere.
         }
 
@@ -62,7 +48,7 @@ export function collectInlineRevealPositions(
             from: current.from,
             to: current.to,
             enter: (node) => {
-              if (!inlineMarkNames.has(node.name)) {
+              if (!hasNodeName(INLINE_MARK_NAMES, node.name)) {
                 return;
               }
               for (let pos = node.from; pos < node.to; pos += 1) {

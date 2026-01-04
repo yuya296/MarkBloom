@@ -2,6 +2,7 @@ import { syntaxTree } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
 import type { ExcludeRanges, InlineMarkRanges } from "./types";
 import { inRangeSegment } from "./utils";
+import { NodeName } from "./syntaxNodeNames";
 
 export function collectInlineMarkRanges(
   view: EditorView,
@@ -17,17 +18,17 @@ export function collectInlineMarkRanges(
         return;
       }
 
-      if (node.name === "CodeMark") {
+      if (node.name === NodeName.CodeMark) {
         codeMarks.push({ from: node.from, to: node.to });
         return;
       }
 
-      if (node.name === "EmphasisMark") {
+      if (node.name === NodeName.EmphasisMark) {
         emphasisMarks.push({ from: node.from, to: node.to });
         return;
       }
 
-      if (node.name === "StrikethroughMark") {
+      if (node.name === NodeName.StrikethroughMark) {
         strikethroughMarks.push({ from: node.from, to: node.to });
       }
     },

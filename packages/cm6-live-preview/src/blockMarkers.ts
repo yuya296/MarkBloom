@@ -2,6 +2,7 @@ import { syntaxTree } from "@codemirror/language";
 import { Decoration, EditorView } from "@codemirror/view";
 import type { Range } from "./types";
 import type { LivePreviewOptions } from "./index";
+import { BLOCK_NODE_NAMES, hasNodeName } from "./syntaxNodeNames";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
@@ -50,25 +51,10 @@ export function resolveBlockRevealRange(view: EditorView, options: LivePreviewOp
     return { from: line.from, to: line.to };
   }
 
-  const blockNodeNames = new Set([
-    "Blockquote",
-    "BulletList",
-    "OrderedList",
-    "ListItem",
-    "ATXHeading1",
-    "ATXHeading2",
-    "ATXHeading3",
-    "ATXHeading4",
-    "ATXHeading5",
-    "ATXHeading6",
-    "SetextHeading1",
-    "SetextHeading2",
-  ]);
-
   const resolved = syntaxTree(view.state).resolve(line.from, -1);
   let current: typeof resolved | null = resolved;
   while (current) {
-    if (blockNodeNames.has(current.name)) {
+    if (hasNodeName(BLOCK_NODE_NAMES, current.name)) {
       return { from: current.from, to: current.to };
     }
     current = current.parent;
