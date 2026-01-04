@@ -15,6 +15,12 @@ type ExcludeRanges = {
   inline: Range[];
 };
 
+type InlineMarkRanges = {
+  codeMarks: Range[];
+  emphasisMarks: Range[];
+  strikethroughMarks: Range[];
+};
+
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
   list: /^\s{0,3}([*+-]|\d+\.)(?=\s)/,
@@ -67,6 +73,15 @@ function inRanges(pos: number, ranges: Range[]): boolean {
   return false;
 }
 
+function inRangeSegment(from: number, to: number, ranges: Range[]): boolean {
+  for (const range of ranges) {
+    if (from >= range.from && to <= range.to) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function overlapsRange(from: number, to: number, ranges: Range[]): boolean {
   for (const range of ranges) {
     if (from < range.to && to > range.from) {
@@ -74,6 +89,36 @@ function overlapsRange(from: number, to: number, ranges: Range[]): boolean {
     }
   }
   return false;
+}
+
+function collectInlineMarkRanges(view: EditorView, excluded: ExcludeRanges): InlineMarkRanges {
+  const codeMarks: Range[] = [];
+  const emphasisMarks: Range[] = [];
+  const strikethroughMarks: Range[] = [];
+
+  syntaxTree(view.state).iterate({
+    enter: (node) => {
+      if (inRangeSegment(node.from, node.to, excluded.block)) {
+        return;
+      }
+
+      if (node.name === "CodeMark") {
+        codeMarks.push({ from: node.from, to: node.to });
+        return;
+      }
+
+      if (node.name === "EmphasisMark") {
+        emphasisMarks.push({ from: node.from, to: node.to });
+        return;
+      }
+
+      if (node.name === "StrikethroughMark") {
+        strikethroughMarks.push({ from: node.from, to: node.to });
+      }
+    },
+  });
+
+  return { codeMarks, emphasisMarks, strikethroughMarks };
 }
 
 function collectExcludedRanges(view: EditorView, options: LivePreviewOptions): ExcludeRanges {
@@ -142,7 +187,8 @@ function addInlineMarkerDecorations(
   revealPositions: Set<number>,
   excluded: ExcludeRanges,
   decoration: Decoration,
-  emphasisHiddenDecoration: Decoration
+  emphasisHiddenDecoration: Decoration,
+  markRanges: InlineMarkRanges
 ) {
   for (let offset = 0; offset < lineText.length; offset += 1) {
     const ch = lineText[offset];
@@ -156,6 +202,15 @@ function addInlineMarkerDecorations(
 
     if (ch === "*" || ch === "_" || ch === "~" || ch === "`") {
       if (inExcluded && ch !== "`") {
+        continue;
+      }
+      if (ch === "`" && !inRanges(pos, markRanges.codeMarks)) {
+        continue;
+      }
+      if ((ch === "*" || ch === "_") && !inRanges(pos, markRanges.emphasisMarks)) {
+        continue;
+      }
+      if (ch === "~" && !inRanges(pos, markRanges.strikethroughMarks)) {
         continue;
       }
       if (revealPositions.has(pos)) {
@@ -304,6 +359,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   const blockReveal = resolveBlockRevealRange(view, options);
   const excluded = collectExcludedRanges(view, options);
   const revealPositions = collectInlineRevealPositions(view, options);
+  const markRanges = collectInlineMarkRanges(view, excluded);
 
   const blockDecoration = Decoration.mark({
     class:
@@ -368,7 +424,8 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
         revealPositions,
         excluded,
         inlineDecoration,
-        emphasisHiddenDecoration
+        emphasisHiddenDecoration,
+        markRanges
       );
 
       pos = line.to + 1;
