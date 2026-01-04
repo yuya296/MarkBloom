@@ -63,6 +63,9 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@lezer/markdown':
+        specifier: ^1.6.2
+        version: 1.6.2
       cm6-live-preview:
         specifier: workspace:*
         version: link:../cm6-live-preview

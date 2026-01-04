@@ -152,11 +152,12 @@ function addInlineMarkerDecorations(
 
     const pos = lineFrom + offset;
 
-    if (inRanges(pos, excluded.block) || inRanges(pos, excluded.inline)) {
-      continue;
-    }
+    const inExcluded = inRanges(pos, excluded.block) || inRanges(pos, excluded.inline);
 
-    if (ch === "*" || ch === "_") {
+    if (ch === "*" || ch === "_" || ch === "~" || ch === "`") {
+      if (inExcluded && ch !== "`") {
+        continue;
+      }
       if (revealPositions.has(pos)) {
         builder.add(
           pos,
@@ -166,6 +167,10 @@ function addInlineMarkerDecorations(
       } else {
         builder.add(pos, pos + 1, emphasisHiddenDecoration);
       }
+      continue;
+    }
+
+    if (inExcluded) {
       continue;
     }
 
@@ -244,7 +249,7 @@ function collectInlineRevealPositions(
     while (current) {
       if (inlineContainerNames.has(current.name)) {
         if (options.exclude?.code !== false && current.name === "InlineCode") {
-          break;
+          // Allow marker visibility but avoid hiding inline code content elsewhere.
         }
 
         const nodeLine = view.state.doc.lineAt(current.from);

@@ -17,6 +17,7 @@
     "@codemirror/state": "^6.5.3",
     "@codemirror/view": "^6.39.8",
     "@lezer/highlight": "^1.2.3",
+    "@lezer/markdown": "^1.6.2",
     "cm6-live-preview": "workspace:*"
   },
   "devDependencies": {

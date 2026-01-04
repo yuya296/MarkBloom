@@ -2,6 +2,7 @@ import { EditorState, Compartment, Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
+import { Strikethrough } from "@lezer/markdown";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -31,7 +32,7 @@ export function createEditor({
 
   const baseExtensions = [
     keymap.of(defaultKeymap),
-    markdown(),
+    markdown({ extensions: [Strikethrough] }),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
         onChange?.(update.state.doc.toString());
