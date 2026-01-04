@@ -43,8 +43,18 @@ Obsidian の Live Preview 相当の体験（編集寄り）を提供する。
 | 表示形式ID | 何をするか | 主な用途 |
 | --- | --- | --- |
 | none | 通常表示 | ブロック本文/コード本文 |
-| replace | 元のテキスト範囲を別 DOM に置換 | inline 記号の非表示 |
+| hide | 置換で非表示 | inline 記号の非表示 |
+| color-secondary | サブカラーで表示 | 記号や境界の露出 |
 | widgetLabel | 置換でラベル表示 | ブロック境界（コードフェンスなど） |
+
+### 4.3 表示方針（要素ごとの設定）
+例（実装は `packages/cm6-live-preview/src/config.ts` で管理）:
+
+| 要素 | Trigger | Preview | Raw |
+| --- | --- | --- | --- |
+| 見出し | lineActive / selectionOverlap / cursorInside | hide | color-secondary |
+| 太字 | selectionOverlap / cursorInside / cursorAdjacent | hide | color-secondary |
+| 箇条書き/番号付き | none | color-secondary | color-secondary |
 
 ### 4.3 対象（第一段階）
 - Block：見出し `#`、引用 `>`、コードフェンス境界

@@ -7,7 +7,7 @@ import {
   collectBlockRawRanges,
 } from "./block/blockMarkers";
 import { addInlineMarkerDecorations } from "./inline/inlineDecorations";
-import { collectInlineHiddenRanges } from "./inline/inlineHiddenRanges";
+import { collectInlineMarkerRanges } from "./inline/inlineMarkerRanges";
 import { collectExcludedRanges } from "./core/excludedRanges";
 import { overlapsRange } from "./core/utils";
 
@@ -15,7 +15,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   const builder = new RangeSetBuilder<Decoration>();
   const excluded = collectExcludedRanges(view, options);
   const rawBlockRanges = collectBlockRawRanges(view);
-  const inlineHiddenRanges = collectInlineHiddenRanges(view, options, excluded);
+  const inlineMarkerRanges = collectInlineMarkerRanges(view, options, excluded);
   const activeLine = view.state.doc.lineAt(view.state.selection.main.head);
 
   const blockHiddenDecoration = Decoration.replace({
@@ -24,13 +24,22 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   const inlineHiddenDecoration = Decoration.replace({
     inclusive: false,
   });
+  const secondaryColorDecoration = Decoration.mark({
+    attributes: { style: "color: var(--editor-secondary-color, #8f8a7f) !important" },
+  });
 
   const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
   const pushDecoration = (from: number, to: number, decoration: Decoration) => {
     pending.push({ from, to, decoration });
   };
 
-  addFencedCodeDecorations(pushDecoration, view, rawBlockRanges, blockHiddenDecoration);
+  addFencedCodeDecorations(
+    pushDecoration,
+    view,
+    rawBlockRanges,
+    blockHiddenDecoration,
+    secondaryColorDecoration
+  );
 
   for (const range of view.visibleRanges) {
     let pos = range.from;
@@ -42,14 +51,17 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
       }
 
       const isActiveLine = line.number === activeLine.number;
-      const isRawBlock = overlapsRange(line.from, line.to, rawBlockRanges);
+      const isRawByRange = overlapsRange(line.from, line.to, rawBlockRanges);
+      const isExcluded = overlapsRange(line.from, line.to, excluded.block);
 
-      if (!isActiveLine && !isRawBlock && !overlapsRange(line.from, line.to, excluded.block)) {
+      if (!isExcluded) {
         addBlockMarkerDecorations(
           pushDecoration,
           line.from,
           line.text,
-          blockHiddenDecoration
+          { isActiveLine, isRawByRange },
+          blockHiddenDecoration,
+          secondaryColorDecoration
         );
       }
 
@@ -57,7 +69,13 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
     }
   }
 
-  addInlineMarkerDecorations(pushDecoration, inlineHiddenRanges, inlineHiddenDecoration);
+  addInlineMarkerDecorations(
+    pushDecoration,
+    inlineMarkerRanges.hidden,
+    inlineHiddenDecoration,
+    inlineMarkerRanges.colored,
+    secondaryColorDecoration
+  );
 
   pending.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));
   for (const item of pending) {
