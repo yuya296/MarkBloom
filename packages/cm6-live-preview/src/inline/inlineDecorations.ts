@@ -55,7 +55,11 @@ export function addInlineMarkerDecorations(
         builder.add(
           pos,
           pos + 1,
-          markerReplace(ch, "cm-live-preview-inline-visible", "#8f8a7f")
+          markerReplace(
+            ch,
+            "cm-live-preview-inline-visible",
+            "var(--editor-secondary-color, #8f8a7f)"
+          )
         );
       } else {
         builder.add(pos, pos + 1, emphasisHiddenDecoration);

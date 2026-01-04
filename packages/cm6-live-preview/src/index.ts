@@ -20,9 +20,6 @@ export type LivePreviewOptions = {
 
 export function livePreviewBaseTheme(): Extension {
   return EditorView.baseTheme({
-    ".cm-editor": {
-      "--cm-live-preview-marker-color": "#8f8a7f",
-    },
     ".cm-live-preview-inline-dim, .cm-live-preview-block-dim": {
       opacity: "0.35",
     },

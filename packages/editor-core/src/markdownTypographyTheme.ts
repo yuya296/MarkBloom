@@ -53,7 +53,7 @@ const typographyTheme = EditorView.theme({
     textDecoration: "line-through",
   },
   ".cm-link": {
-    color: "#0f5b9e",
+    color: "var(--editor-primary-color, #0f5b9e)",
     textDecoration: "underline",
   },
   ".cm-quote": {

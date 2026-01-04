@@ -32,7 +32,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
 
   const headingVisibleDecoration = Decoration.mark({
     class: "cm-live-preview-heading-visible",
-    attributes: { style: "color: var(--cm-live-preview-marker-color) !important" },
+    attributes: { style: "color: var(--editor-secondary-color, #8f8a7f) !important" },
   });
 
   const inlineDecoration = Decoration.mark({
