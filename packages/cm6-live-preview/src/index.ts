@@ -16,11 +16,7 @@ export type LivePreviewOptions = {
 };
 
 export function livePreviewBaseTheme(): Extension {
-  return EditorView.baseTheme({
-    ".cm-live-preview-block-label": {
-      fontStyle: "italic",
-    },
-  });
+  return EditorView.baseTheme({});
 }
 
 const defaultOptions: Required<LivePreviewOptions> = {

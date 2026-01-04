@@ -30,8 +30,8 @@ Priority: Selection > Block > Proximity
 ## Display styles
 
 - hide: replace tokens to hide them (view-only)
-- color-secondary: show tokens using secondary color
-- widgetLabel: replace with a label (used for code fences)
+- color-secondary: add `mb-syntax-secondary` class for theme styling
+- widgetLabel: replace with a label and `mb-preview-widget` class
 - none: no change
 
 ## Configuration
@@ -63,4 +63,4 @@ export type LivePreviewOptions = {
 ## Notes
 
 - Decorations and Widgets are view-only and do not affect undo/redo.
-- For theme compatibility, widgets should include classes and use CSS variables.
+- cm6-live-preview does not define colors; themes should style classes such as `mb-syntax-secondary` and `mb-preview-widget`.

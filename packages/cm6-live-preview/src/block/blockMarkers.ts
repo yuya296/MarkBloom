@@ -184,7 +184,7 @@ export function addFencedCodeDecorations(
         push(
           startLine.from,
           startLine.to,
-          markerReplace(label, "cm-live-preview-block-label", "var(--editor-secondary-color, #8f8a7f)")
+          markerReplace(label, "mb-preview-widget mb-syntax-secondary")
         );
         push(endLine.from, endLine.to, hiddenDecoration);
         return;

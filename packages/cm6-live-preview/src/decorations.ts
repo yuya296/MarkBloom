@@ -27,7 +27,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
     inclusive: false,
   });
   const secondaryColorDecoration = Decoration.mark({
-    attributes: { style: "color: var(--editor-secondary-color, #8f8a7f) !important" },
+    class: "mb-syntax-secondary",
   });
 
   const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];

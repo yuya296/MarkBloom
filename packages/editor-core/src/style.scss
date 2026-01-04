@@ -106,3 +106,12 @@ footer.footer {
 .cm-editor .cm-content {
   padding: 12px;
 }
+
+.cm-editor .mb-syntax-secondary {
+  color: var(--editor-secondary-color);
+}
+
+.cm-editor .mb-preview-widget {
+  color: var(--editor-secondary-color);
+  font-style: italic;
+}
