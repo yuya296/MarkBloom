@@ -1,49 +1,36 @@
 import { RangeSetBuilder } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import type { LivePreviewOptions } from "./index";
-import { addBlockMarkerDecorations, resolveBlockRevealRange } from "./block/blockMarkers";
+import {
+  addBlockMarkerDecorations,
+  addFencedCodeDecorations,
+  collectBlockRawRanges,
+} from "./block/blockMarkers";
 import { addInlineMarkerDecorations } from "./inline/inlineDecorations";
-import { collectInlineRevealPositions } from "./inline/inlineReveal";
-import { collectInlineMarkRanges } from "./inline/inlineMarks";
+import { collectInlineHiddenRanges } from "./inline/inlineHiddenRanges";
 import { collectExcludedRanges } from "./core/excludedRanges";
 import { overlapsRange } from "./core/utils";
 
 export function buildDecorations(view: EditorView, options: LivePreviewOptions): DecorationSet {
-  if (options.disableDuringIME && view.composing) {
-    return Decoration.none;
-  }
-
   const builder = new RangeSetBuilder<Decoration>();
-  const blockReveal = resolveBlockRevealRange(view, options);
   const excluded = collectExcludedRanges(view, options);
-  const revealPositions = collectInlineRevealPositions(view, options);
-  const markRanges = collectInlineMarkRanges(view, excluded);
+  const rawBlockRanges = collectBlockRawRanges(view);
+  const inlineHiddenRanges = collectInlineHiddenRanges(view, options, excluded);
+  const activeLine = view.state.doc.lineAt(view.state.selection.main.head);
 
-  const blockDecoration = Decoration.mark({
-    class:
-      options.blockStyle === "hide"
-        ? "cm-live-preview-block-hide"
-        : "cm-live-preview-block-dim",
+  const blockHiddenDecoration = Decoration.replace({
+    inclusive: false,
   });
-
-  const headingDecoration = Decoration.replace({
+  const inlineHiddenDecoration = Decoration.replace({
     inclusive: false,
   });
 
-  const headingVisibleDecoration = Decoration.mark({
-    class: "cm-live-preview-heading-visible",
-    attributes: { style: "color: var(--editor-secondary-color, #8f8a7f) !important" },
-  });
+  const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
+  const pushDecoration = (from: number, to: number, decoration: Decoration) => {
+    pending.push({ from, to, decoration });
+  };
 
-  const inlineDecoration = Decoration.mark({
-    class:
-      options.inlineStyle === "hide"
-        ? "cm-live-preview-inline-hide"
-        : "cm-live-preview-inline-dim",
-  });
-  const emphasisHiddenDecoration = Decoration.replace({
-    inclusive: false,
-  });
+  addFencedCodeDecorations(pushDecoration, view, rawBlockRanges, blockHiddenDecoration);
 
   for (const range of view.visibleRanges) {
     let pos = range.from;
@@ -54,40 +41,27 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
         break;
       }
 
-      const lineWithinBlockReveal =
-        line.from >= blockReveal.from && line.to <= blockReveal.to;
+      const isActiveLine = line.number === activeLine.number;
+      const isRawBlock = overlapsRange(line.from, line.to, rawBlockRanges);
 
-      if (!lineWithinBlockReveal && !overlapsRange(line.from, line.to, excluded.block)) {
+      if (!isActiveLine && !isRawBlock && !overlapsRange(line.from, line.to, excluded.block)) {
         addBlockMarkerDecorations(
-          builder,
+          pushDecoration,
           line.from,
           line.text,
-          blockDecoration,
-          headingDecoration
-        );
-      } else if (!overlapsRange(line.from, line.to, excluded.block)) {
-        addBlockMarkerDecorations(
-          builder,
-          line.from,
-          line.text,
-          blockDecoration,
-          headingVisibleDecoration
+          blockHiddenDecoration
         );
       }
 
-      addInlineMarkerDecorations(
-        builder,
-        view,
-        line,
-        revealPositions,
-        excluded,
-        inlineDecoration,
-        emphasisHiddenDecoration,
-        markRanges
-      );
-
       pos = line.to + 1;
     }
+  }
+
+  addInlineMarkerDecorations(pushDecoration, inlineHiddenRanges, inlineHiddenDecoration);
+
+  pending.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));
+  for (const item of pending) {
+    builder.add(item.from, item.to, item.decoration);
   }
 
   return builder.finish();

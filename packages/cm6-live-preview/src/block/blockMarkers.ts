@@ -1,21 +1,71 @@
 import { syntaxTree } from "@codemirror/language";
 import { Decoration, EditorView } from "@codemirror/view";
 import type { Range } from "../core/types";
-import type { LivePreviewOptions } from "../index";
-import { BLOCK_NODE_NAMES, hasNodeName } from "../core/syntaxNodeNames";
+import { cursorInsideRange, selectionOverlapsRange } from "../core/utils";
+import { NodeName, hasNodeName } from "../core/syntaxNodeNames";
+import { markerReplace } from "../theme/markerWidgets";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
-  list: /^\s{0,3}([*+-]|\d+\.)(?=\s)/,
   quote: /^\s{0,3}(>)(?=\s?)/,
 };
 
+const blockTriggerNames: ReadonlySet<NodeName> = new Set<NodeName>([
+  NodeName.Blockquote,
+  NodeName.BulletList,
+  NodeName.OrderedList,
+  NodeName.ListItem,
+  NodeName.ATXHeading1,
+  NodeName.ATXHeading2,
+  NodeName.ATXHeading3,
+  NodeName.ATXHeading4,
+  NodeName.ATXHeading5,
+  NodeName.ATXHeading6,
+  NodeName.SetextHeading1,
+  NodeName.SetextHeading2,
+  NodeName.FencedCode,
+  NodeName.CodeBlock,
+]);
+
+function fenceLabel(lineText: string): string {
+  const match = lineText.match(/^\s*([`~]{3,})\s*(\S+)?/u);
+  if (!match) {
+    return "</> code";
+  }
+
+  const language = match[2];
+  return language ? `</> ${language}` : "</> code";
+}
+
+export function collectBlockRawRanges(view: EditorView): Range[] {
+  const rawRanges: Range[] = [];
+  const selection = view.state.selection;
+
+  syntaxTree(view.state).iterate({
+    enter: (node) => {
+      if (!hasNodeName(blockTriggerNames, node.name)) {
+        return;
+      }
+
+      if (
+        selectionOverlapsRange(selection.ranges, node.from, node.to) ||
+        cursorInsideRange(selection.ranges, node.from, node.to)
+      ) {
+        rawRanges.push({ from: node.from, to: node.to });
+      }
+    },
+  });
+
+  return rawRanges;
+}
+
+type PushDecoration = (from: number, to: number, decoration: Decoration) => void;
+
 export function addBlockMarkerDecorations(
-  builder: import("@codemirror/state").RangeSetBuilder<Decoration>,
+  push: PushDecoration,
   lineFrom: number,
   lineText: string,
-  blockDecoration: Decoration,
-  headingDecoration: Decoration
+  hiddenDecoration: Decoration
 ) {
   const headingMatch = lineText.match(blockMarkerPattern.heading);
   if (headingMatch) {
@@ -24,15 +74,7 @@ export function addBlockMarkerDecorations(
     const markerLength = headingMatch[1].length + (hasSpaceAfter ? 1 : 0);
     const from = lineFrom + markerIndex;
     const to = from + markerLength;
-    builder.add(from, to, headingDecoration);
-  }
-
-  const listMatch = lineText.match(blockMarkerPattern.list);
-  if (listMatch) {
-    const markerIndex = lineText.indexOf(listMatch[1]);
-    const from = lineFrom + markerIndex;
-    const to = from + listMatch[1].length;
-    builder.add(from, to, blockDecoration);
+    push(from, to, hiddenDecoration);
   }
 
   const quoteMatch = lineText.match(blockMarkerPattern.quote);
@@ -40,25 +82,36 @@ export function addBlockMarkerDecorations(
     const markerIndex = lineText.indexOf(quoteMatch[1]);
     const from = lineFrom + markerIndex;
     const to = from + quoteMatch[1].length;
-    builder.add(from, to, blockDecoration);
+    push(from, to, hiddenDecoration);
   }
 }
 
-export function resolveBlockRevealRange(view: EditorView, options: LivePreviewOptions): Range {
-  const line = view.state.doc.lineAt(view.state.selection.main.head);
+export function addFencedCodeDecorations(
+  push: PushDecoration,
+  view: EditorView,
+  rawRanges: Range[],
+  hiddenDecoration: Decoration
+) {
+  syntaxTree(view.state).iterate({
+    enter: (node) => {
+      if (node.name !== NodeName.FencedCode) {
+        return;
+      }
 
-  if (options.blockRevealMode !== "block") {
-    return { from: line.from, to: line.to };
-  }
+      if (rawRanges.some((range) => node.from < range.to && node.to > range.from)) {
+        return;
+      }
 
-  const resolved = syntaxTree(view.state).resolve(line.from, -1);
-  let current: typeof resolved | null = resolved;
-  while (current) {
-    if (hasNodeName(BLOCK_NODE_NAMES, current.name)) {
-      return { from: current.from, to: current.to };
-    }
-    current = current.parent;
-  }
+      const startLine = view.state.doc.lineAt(node.from);
+      const endLine = view.state.doc.lineAt(node.to);
 
-  return { from: line.from, to: line.to };
+      const label = fenceLabel(startLine.text);
+      push(
+        startLine.from,
+        startLine.to,
+        markerReplace(label, "cm-live-preview-block-label", "var(--editor-secondary-color, #8f8a7f)")
+      );
+      push(endLine.from, endLine.to, hiddenDecoration);
+    },
+  });
 }

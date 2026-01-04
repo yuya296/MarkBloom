@@ -26,32 +26,38 @@ Obsidian の Live Preview 相当の体験（編集寄り）を提供する。
   - 最低限のテーマ（dim用のCSS）を同梱
 
 ## 4. 主要要件（仕様）
-### 4.1 可視化ゾーン（Reveal Zones）
-- Block zone：
-  - デフォルトは「カーソルがある行」
-  - 将来拡張で「ブロック範囲（同一リスト/引用/フェンス等）」に拡張可能にする
-- Inline zone：
-  - `selection.head` 前後 ±N（`inlineRadius`）をゾーンとする
+### 4.1 preview → raw のトリガー
+| トリガーID | 発火条件 | 対象スコープ | 用途/狙い |
+| --- | --- | --- | --- |
+| selectionOverlap | 選択範囲がその要素（または要素の範囲）にかかった | inline / block 共通 | コピペ・削除・置換事故を防ぐ（最優先） |
+| cursorInside | カーソルが要素の内部に入った | inline / block 共通 | 編集中の要素は raw |
+| cursorAdjacent | カーソルが要素の前後 N 文字以内（N=1〜2） | 主に inline | マーカー編集を自然にする |
+| lineActive | アクティブ行に要素が含まれる | 主に block/行頭構文 | 行頭記号の編集を安全にする |
 
-### 4.2 対象（第一段階）
-- Block（優先）：見出し `#`、リストマーカー（`-` / `*` / `1.`）、引用 `>`
-- Inline（優先）：強調 `*`/`_`、リンク `[]()`、インラインコード `` ` ``
-- 除外：コードブロック/インラインコード内は原則対象外（少なくともブロックは除外）
+基本方針
+- inline は `selectionOverlap` / `cursorInside` / `cursorAdjacent` で raw
+- block は `selectionOverlap` / `cursorInsideBlock` / `lineActive` で raw
+- リストマーカー（箇条書き/番号付き）は常に raw（トリガーなし）
 
-### 4.3 表示モード
-- 初期推奨：インラインは **dim（薄くする）** 中心（replace/hideは慎重に）
-- ブロックは dim から開始し、必要なら hide を追加
+### 4.2 preview の表示形式（表現パターン）
+| 表示形式ID | 何をするか | 主な用途 |
+| --- | --- | --- |
+| none | 通常表示 | ブロック本文/コード本文 |
+| replace | 元のテキスト範囲を別 DOM に置換 | inline 記号の非表示 |
+| widgetLabel | 置換でラベル表示 | ブロック境界（コードフェンスなど） |
 
-### 4.4 IME 方針
-- `view.composing` 中は装飾更新を抑制、または露出寄りに倒す（オプション化）
+### 4.3 対象（第一段階）
+- Block：見出し `#`、引用 `>`、コードフェンス境界
+- Inline：強調 `*`/`_`、リンク `[]()`、インラインコード `` ` ``
+- 除外：コードブロック/インラインコード内は原則対象外
+
 
 ## 5. 公開API（案）
 ```ts
 export type LivePreviewOptions = {
   inlineRadius?: number;
-  inlineStyle?: "dim" | "hide";
-  blockStyle?: "dim" | "hide";
-  blockRevealMode?: "line" | "block";
+  inlineRadiusBefore?: number;
+  inlineRadiusAfter?: number;
   disableDuringIME?: boolean;
   exclude?: { code?: boolean };
 };
@@ -60,10 +66,11 @@ export function livePreview(options?: LivePreviewOptions): Extension;
 ```
 
 ## 6. 受け入れ条件（Acceptance Criteria）
-- ブロック記号が「カーソル行で露出 / それ以外で抑制」される
-- インライン記号が「隣接で露出 / それ以外で抑制」される
-- IME入力中に致命的なカーソルジャンプ/入力欠落が発生しない（少なくとも既知の破綻を回避）
-- 大きめの文書でも極端に重くならない（visibleRanges限定が効いている）
+- inline 記号が `selectionOverlap` / `cursorInside` / `cursorAdjacent` で raw に戻る
+- block 記号が `selectionOverlap` / `cursorInsideBlock` / `lineActive` で raw に戻る
+- リストマーカーは常に raw
+- コードフェンス境界は raw 以外で `widgetLabel` 表示になる
+- IME入力中に致命的なカーソルジャンプ/入力欠落が発生しない
 
 ## 7. 依存
 - CM6 core + `@codemirror/lang-markdown`（構文木利用）

@@ -14,21 +14,13 @@ export type LivePreviewOptions = {
   inlineStyle?: "dim" | "hide";
   blockStyle?: "dim" | "hide";
   blockRevealMode?: "line" | "block";
-  disableDuringIME?: boolean;
   exclude?: { code?: boolean };
 };
 
 export function livePreviewBaseTheme(): Extension {
   return EditorView.baseTheme({
-    ".cm-live-preview-inline-dim, .cm-live-preview-block-dim": {
-      opacity: "0.35",
-    },
-    ".cm-live-preview-inline-hide, .cm-live-preview-block-hide": {
-      opacity: "0",
-      pointerEvents: "none",
-    },
-    ".cm-editor .cm-live-preview-heading-visible": {
-      color: "var(--cm-live-preview-marker-color)",
+    ".cm-live-preview-block-label": {
+      fontStyle: "italic",
     },
   });
 }
@@ -40,7 +32,6 @@ const defaultOptions: Required<LivePreviewOptions> = {
   inlineStyle: "dim",
   blockStyle: "dim",
   blockRevealMode: "line",
-  disableDuringIME: true,
   exclude: { code: true },
 };
 
@@ -57,20 +48,13 @@ export function livePreview(options: LivePreviewOptions = {}): Extension {
   const plugin = ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
-      private composing: boolean;
 
       constructor(view: EditorView) {
-        this.composing = view.composing;
         this.decorations = buildDecorations(view, resolved);
       }
 
       update(update: ViewUpdate) {
-        const composingChanged = update.view.composing !== this.composing;
-        if (composingChanged) {
-          this.composing = update.view.composing;
-        }
-
-        if (update.docChanged || update.selectionSet || update.viewportChanged || composingChanged) {
+        if (update.docChanged || update.selectionSet || update.viewportChanged) {
           this.decorations = buildDecorations(update.view, resolved);
         }
       }

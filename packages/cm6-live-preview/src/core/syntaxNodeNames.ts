@@ -17,10 +17,13 @@ export const NodeName = {
   Image: "Image",
   InlineCode: "InlineCode",
   Strikethrough: "Strikethrough",
+  FencedCode: "FencedCode",
+  CodeBlock: "CodeBlock",
   CodeMark: "CodeMark",
   EmphasisMark: "EmphasisMark",
   LinkMark: "LinkMark",
   StrikethroughMark: "StrikethroughMark",
+  URL: "URL",
 } as const;
 
 export type NodeName = (typeof NodeName)[keyof typeof NodeName];
