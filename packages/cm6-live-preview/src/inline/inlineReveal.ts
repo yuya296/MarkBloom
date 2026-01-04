@@ -1,7 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
-import type { LivePreviewOptions } from "./index";
-import { INLINE_CONTAINER_NAMES, INLINE_MARK_NAMES, NodeName, hasNodeName } from "./syntaxNodeNames";
+import type { LivePreviewOptions } from "../index";
+import { INLINE_CONTAINER_NAMES, INLINE_MARK_NAMES, NodeName, hasNodeName } from "../core/syntaxNodeNames";
 
 export function collectInlineRevealPositions(
   view: EditorView,

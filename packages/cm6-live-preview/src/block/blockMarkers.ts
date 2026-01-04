@@ -1,8 +1,8 @@
 import { syntaxTree } from "@codemirror/language";
 import { Decoration, EditorView } from "@codemirror/view";
-import type { Range } from "./types";
-import type { LivePreviewOptions } from "./index";
-import { BLOCK_NODE_NAMES, hasNodeName } from "./syntaxNodeNames";
+import type { Range } from "../core/types";
+import type { LivePreviewOptions } from "../index";
+import { BLOCK_NODE_NAMES, hasNodeName } from "../core/syntaxNodeNames";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,

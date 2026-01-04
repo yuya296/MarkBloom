@@ -1,7 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
 import type { ExcludeRanges } from "./types";
-import type { LivePreviewOptions } from "./index";
+import type { LivePreviewOptions } from "../index";
 
 export function collectExcludedRanges(view: EditorView, options: LivePreviewOptions): ExcludeRanges {
   const block: ExcludeRanges["block"] = [];

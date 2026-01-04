@@ -1,12 +1,12 @@
 import { RangeSetBuilder } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import type { LivePreviewOptions } from "./index";
-import { addBlockMarkerDecorations, resolveBlockRevealRange } from "./blockMarkers";
-import { addInlineMarkerDecorations } from "./inlineDecorations";
-import { collectInlineRevealPositions } from "./inlineReveal";
-import { collectInlineMarkRanges } from "./inlineMarks";
-import { collectExcludedRanges } from "./excludedRanges";
-import { overlapsRange } from "./utils";
+import { addBlockMarkerDecorations, resolveBlockRevealRange } from "./block/blockMarkers";
+import { addInlineMarkerDecorations } from "./inline/inlineDecorations";
+import { collectInlineRevealPositions } from "./inline/inlineReveal";
+import { collectInlineMarkRanges } from "./inline/inlineMarks";
+import { collectExcludedRanges } from "./core/excludedRanges";
+import { overlapsRange } from "./core/utils";
 
 export function buildDecorations(view: EditorView, options: LivePreviewOptions): DecorationSet {
   if (options.disableDuringIME && view.composing) {

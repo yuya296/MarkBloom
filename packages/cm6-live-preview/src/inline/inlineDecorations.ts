@@ -1,8 +1,8 @@
 import { Decoration, type EditorView } from "@codemirror/view";
 import type { Line, RangeSetBuilder } from "@codemirror/state";
-import type { ExcludeRanges, InlineMarkRanges } from "./types";
-import { inRanges } from "./utils";
-import { markerReplace } from "./markerWidgets";
+import type { ExcludeRanges, InlineMarkRanges } from "../core/types";
+import { inRanges } from "../core/utils";
+import { markerReplace } from "../theme/markerWidgets";
 
 const inlineMarkers = new Set(["*", "_", "[", "]", "(", ")", "`", "~"]);
 

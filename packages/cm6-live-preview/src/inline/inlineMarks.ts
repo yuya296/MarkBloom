@@ -1,8 +1,8 @@
 import { syntaxTree } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
-import type { ExcludeRanges, InlineMarkRanges } from "./types";
-import { inRangeSegment } from "./utils";
-import { NodeName } from "./syntaxNodeNames";
+import type { ExcludeRanges, InlineMarkRanges } from "../core/types";
+import { inRangeSegment } from "../core/utils";
+import { NodeName } from "../core/syntaxNodeNames";
 
 export function collectInlineMarkRanges(
   view: EditorView,
