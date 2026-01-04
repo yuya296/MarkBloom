@@ -1,6 +1,6 @@
 import { NodeName } from "./core/syntaxNodeNames";
 
-export type TriggerId = "selection" | "block" | "proximity" | "none";
+export type TriggerId = "selection" | "block" | "proximity" | "always";
 export type DisplayStyle = "hide" | "color-secondary" | "widgetLabel" | "none";
 
 export type InlineElementConfig = {
@@ -99,7 +99,7 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
   {
     kind: "block-marker",
     id: "list",
-    triggers: ["none"],
+    triggers: ["always"],
     preview: "color-secondary",
     raw: "color-secondary",
   },

@@ -42,8 +42,8 @@ function fenceLabel(lineText: string): string {
 }
 
 function isRawByTriggers(state: BlockRawState, triggers: TriggerId[]): boolean {
-  if (triggers.includes("none")) {
-    return false;
+  if (triggers.includes("always")) {
+    return true;
   }
 
   if (triggers.includes("selection") && state.isSelectionOverlap) {

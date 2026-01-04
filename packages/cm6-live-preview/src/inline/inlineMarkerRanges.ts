@@ -48,6 +48,10 @@ function isInlineRaw(
   options: LivePreviewOptions,
   triggers: InlineElementConfig["triggers"]
 ): boolean {
+  if (triggers.includes("always")) {
+    return true;
+  }
+
   if (triggers.includes("selection")) {
     if (selectionOverlapsRange(view.state.selection.ranges, node.from, node.to)) {
       return true;

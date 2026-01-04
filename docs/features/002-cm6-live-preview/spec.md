@@ -121,4 +121,4 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 | --- | --- | --- | --- |
 | 見出し | selection / block | hide | color-secondary |
 | 太字 | selection / proximity | hide | color-secondary |
-| 箇条書き/番号付き | none | color-secondary | color-secondary |
+| 箇条書き/番号付き | always | color-secondary | color-secondary |
