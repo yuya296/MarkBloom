@@ -66,13 +66,17 @@ export function collectBlockRevealRange(
   }
 
   const head = view.state.selection.main.head;
-  const resolved = syntaxTree(view.state).resolve(head, -1);
-  let current: typeof resolved | null = resolved;
-  while (current) {
-    if (hasNodeName(blockTriggerNodeNames, current.name)) {
-      return { from: current.from, to: current.to };
+  const tree = syntaxTree(view.state);
+  const candidates = [tree.resolve(head, 1), tree.resolve(head, -1)];
+
+  for (const resolved of candidates) {
+    let current: typeof resolved | null = resolved;
+    while (current) {
+      if (hasNodeName(blockTriggerNodeNames, current.name)) {
+        return { from: current.from, to: current.to };
+      }
+      current = current.parent;
     }
-    current = current.parent;
   }
 
   return null;

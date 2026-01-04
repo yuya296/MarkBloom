@@ -3,7 +3,6 @@ import { lineNumbers, EditorView } from "@codemirror/view";
 import { basicSetup } from "@codemirror/basic-setup";
 import initialText from "../assets/sample.md?raw";
 import { livePreview } from "cm6-live-preview";
-import { markdownTypographyTheme } from "./markdownTypographyTheme";
 import { createEditor } from "./createEditor";
 
 type ExtensionOptions = {
@@ -46,8 +45,6 @@ function buildExtensions({
   }
 
   extensions.push(basicSetup);
-  extensions.push(markdownTypographyTheme());
-
   return extensions;
 }
 
