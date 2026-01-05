@@ -3,7 +3,6 @@ import { Decoration, EditorView } from "@codemirror/view";
 import type { Range } from "../core/types";
 import { hasNodeName } from "../core/syntaxNodeNames";
 import {
-  blockFenceConfig,
   blockMarkerConfigs,
   blockTriggerNodeNames,
   type DisplayStyle,
@@ -18,7 +17,7 @@ const blockMarkerPattern = {
 };
 
 type BlockMarker = {
-  id: "heading" | "list" | "quote";
+  id: "heading" | "list" | "quote" | "fence";
   from: number;
   to: number;
 };
@@ -77,7 +76,11 @@ export function collectBlockRevealRange(
   return null;
 }
 
-function collectBlockMarkers(lineFrom: number, lineText: string): BlockMarker[] {
+function collectBlockMarkers(
+  lineFrom: number,
+  lineText: string,
+  fenceMarkersByLine: Map<number, BlockMarker[]>
+): BlockMarker[] {
   const markers: BlockMarker[] = [];
 
   const headingMatch = lineText.match(blockMarkerPattern.heading);
@@ -106,6 +109,11 @@ function collectBlockMarkers(lineFrom: number, lineText: string): BlockMarker[] 
     markers.push({ id: "quote", from, to });
   }
 
+  const fenceMarkers = fenceMarkersByLine.get(lineFrom);
+  if (fenceMarkers) {
+    markers.push(...fenceMarkers);
+  }
+
   return markers;
 }
 
@@ -113,8 +121,7 @@ function pushBlockMarkerDecoration(
   push: PushDecoration,
   marker: BlockMarker,
   state: BlockRawState,
-  hiddenDecoration: Decoration,
-  colorDecoration: Decoration
+  hiddenDecoration: Decoration
 ) {
   const config = blockMarkerConfigs.find((entry) => entry.id === marker.id);
   if (!config) {
@@ -136,25 +143,24 @@ export function addBlockMarkerDecorations(
   lineText: string,
   state: BlockRawState,
   hiddenDecoration: Decoration,
-  colorDecoration: Decoration
+  fenceMarkersByLine: Map<number, BlockMarker[]>
 ) {
-  const markers = collectBlockMarkers(lineFrom, lineText);
+  const markers = collectBlockMarkers(lineFrom, lineText, fenceMarkersByLine);
   for (const marker of markers) {
-    pushBlockMarkerDecoration(push, marker, state, hiddenDecoration, colorDecoration);
+    pushBlockMarkerDecoration(push, marker, state, hiddenDecoration);
   }
 }
 
-export function addFencedCodeDecorations(
-  push: PushDecoration,
+export function collectFenceMarkersByLine(
   view: EditorView,
   selectionRanges: Range[],
-  blockRevealRange: Range | null,
-  hiddenDecoration: Decoration,
-  colorDecoration: Decoration
-) {
+  blockRevealRange: Range | null
+): Map<number, BlockMarker[]> {
+  const markersByLine = new Map<number, BlockMarker[]>();
+
   syntaxTree(view.state).iterate({
     enter: (node) => {
-      if (node.name !== blockFenceConfig.node) {
+      if (node.name !== "FencedCode") {
         return;
       }
 
@@ -166,19 +172,27 @@ export function addFencedCodeDecorations(
         : false;
       const style = isRawByTriggers(
         { isSelectionOverlap, isBlockReveal },
-        blockFenceConfig.rawModeTrigger
+        ["nearby", "block"]
       )
         ? "none"
-        : blockFenceConfig.richDisplayStyle;
+        : "hide";
+
+      if (style !== "hide") {
+        return;
+      }
 
       const startLine = view.state.doc.lineAt(node.from);
       const endLine = view.state.doc.lineAt(node.to);
 
-      if (style === "hide") {
-        push(startLine.from, startLine.to, hiddenDecoration);
-        push(endLine.from, endLine.to, hiddenDecoration);
-        return;
-      }
+      const startMarkers = markersByLine.get(startLine.from) ?? [];
+      startMarkers.push({ id: "fence", from: startLine.from, to: startLine.to });
+      markersByLine.set(startLine.from, startMarkers);
+
+      const endMarkers = markersByLine.get(endLine.from) ?? [];
+      endMarkers.push({ id: "fence", from: endLine.from, to: endLine.to });
+      markersByLine.set(endLine.from, endMarkers);
     },
   });
+
+  return markersByLine;
 }

@@ -3,8 +3,8 @@ import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import type { LivePreviewOptions } from "./index";
 import {
   addBlockMarkerDecorations,
-  addFencedCodeDecorations,
   collectBlockRevealRange,
+  collectFenceMarkersByLine,
 } from "./block/blockMarkers";
 import { addInlineMarkerDecorations } from "./inline/inlineDecorations";
 import { collectInlineMarkerRanges } from "./inline/inlineMarkerRanges";
@@ -26,20 +26,16 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   const inlineHiddenDecoration = Decoration.replace({
     inclusive: false,
   });
-  const blockColorDecoration = Decoration.mark({});
 
   const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
   const pushDecoration = (from: number, to: number, decoration: Decoration) => {
     pending.push({ from, to, decoration });
   };
 
-  addFencedCodeDecorations(
-    pushDecoration,
+  const fenceMarkersByLine = collectFenceMarkersByLine(
     view,
     selectionRanges,
-    blockRevealRange,
-    blockHiddenDecoration,
-    blockColorDecoration
+    blockRevealRange
   );
 
   for (const range of view.visibleRanges) {
@@ -52,19 +48,20 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
       }
 
       const isExcluded = overlapsRange(line.from, line.to, excluded.block);
+      const hasFenceMarkers = fenceMarkersByLine.has(line.from);
       const isSelectionOverlap = overlapsRange(line.from, line.to, selectionRanges);
       const isBlockReveal = blockRevealRange
         ? overlapsRange(line.from, line.to, [blockRevealRange])
         : false;
 
-      if (!isExcluded) {
+      if (!isExcluded || hasFenceMarkers) {
         addBlockMarkerDecorations(
           pushDecoration,
           line.from,
           line.text,
           { isSelectionOverlap, isBlockReveal },
           blockHiddenDecoration,
-          blockColorDecoration
+          fenceMarkersByLine
         );
       }
 

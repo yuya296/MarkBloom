@@ -12,14 +12,7 @@ export type InlineElementConfig = {
 
 export type BlockMarkerConfig = {
   kind: "block-marker";
-  id: "heading" | "list" | "quote";
-  rawModeTrigger: RawModeTrigger | RawModeTrigger[];
-  richDisplayStyle: DisplayStyle;
-};
-
-export type BlockFenceConfig = {
-  kind: "block-fence";
-  node: NodeName;
+  id: "heading" | "list" | "quote" | "fence";
   rawModeTrigger: RawModeTrigger | RawModeTrigger[];
   richDisplayStyle: DisplayStyle;
 };
@@ -84,14 +77,13 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
     rawModeTrigger: ["nearby", "block"],
     richDisplayStyle: "hide",
   },
+  {
+    kind: "block-marker",
+    id: "fence",
+    rawModeTrigger: ["nearby", "block"],
+    richDisplayStyle: "hide",
+  },
 ];
-
-export const blockFenceConfig: BlockFenceConfig = {
-  kind: "block-fence",
-  node: NodeName.FencedCode,
-  rawModeTrigger: ["nearby", "block"],
-  richDisplayStyle: "hide",
-};
 
 export const blockTriggerNodeNames: ReadonlySet<NodeName> = new Set<NodeName>([
   NodeName.Blockquote,
