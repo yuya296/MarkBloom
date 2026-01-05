@@ -8,9 +8,6 @@ import {
 import { buildDecorations } from "./decorations";
 
 export type LivePreviewOptions = {
-  inlineRadius?: number;
-  inlineRadiusBefore?: number;
-  inlineRadiusAfter?: number;
   blockRevealEnabled?: boolean;
   exclude?: { code?: boolean };
 };
@@ -20,9 +17,6 @@ export function livePreviewBaseTheme(): Extension {
 }
 
 const defaultOptions: Required<LivePreviewOptions> = {
-  inlineRadius: 1,
-  inlineRadiusBefore: 1,
-  inlineRadiusAfter: 1,
   blockRevealEnabled: false,
   exclude: { code: true },
 };

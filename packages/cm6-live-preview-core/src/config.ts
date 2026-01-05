@@ -1,83 +1,83 @@
 import { NodeName } from "./core/syntaxNodeNames";
 
-export type TriggerId = "selection" | "block" | "proximity" | "always";
+export type RawModeTrigger = "never" | "always" | "block" | "nearby";
 export type DisplayStyle = "hide" | "none";
 
 export type InlineElementConfig = {
   kind: "inline";
   node: NodeName;
-  triggers: TriggerId[];
-  preview: DisplayStyle;
+  rawModeTrigger: RawModeTrigger | RawModeTrigger[];
+  rich: DisplayStyle;
   raw: DisplayStyle;
-  previewHideNodes: NodeName[];
+  richHideNodes: NodeName[];
 };
 
 export type BlockMarkerConfig = {
   kind: "block-marker";
   id: "heading" | "list" | "quote";
-  triggers: TriggerId[];
-  preview: DisplayStyle;
+  rawModeTrigger: RawModeTrigger | RawModeTrigger[];
+  rich: DisplayStyle;
   raw: DisplayStyle;
 };
 
 export type BlockFenceConfig = {
   kind: "block-fence";
   node: NodeName;
-  triggers: TriggerId[];
-  preview: DisplayStyle;
+  rawModeTrigger: RawModeTrigger | RawModeTrigger[];
+  rich: DisplayStyle;
   raw: DisplayStyle;
 };
 
-const inlineTriggers: TriggerId[] = ["selection", "proximity"];
+const inlineTrigger: RawModeTrigger = "nearby";
 
 export const inlineElementConfigs: InlineElementConfig[] = [
   {
     kind: "inline",
     node: NodeName.Emphasis,
-    triggers: inlineTriggers,
-    preview: "hide",
+    rawModeTrigger: inlineTrigger,
+    rich: "hide",
     raw: "none",
-    previewHideNodes: [NodeName.EmphasisMark],
+    richHideNodes: [NodeName.EmphasisMark],
   },
   {
     kind: "inline",
     node: NodeName.StrongEmphasis,
-    triggers: inlineTriggers,
-    preview: "hide",
+    rawModeTrigger: inlineTrigger,
+    rich: "hide",
     raw: "none",
-    previewHideNodes: [NodeName.EmphasisMark],
+    richHideNodes: [NodeName.EmphasisMark],
   },
   {
     kind: "inline",
     node: NodeName.Strikethrough,
-    triggers: inlineTriggers,
-    preview: "hide",
+    rawModeTrigger: inlineTrigger,
+    rich: "hide",
     raw: "none",
-    previewHideNodes: [NodeName.StrikethroughMark],
+    richHideNodes: [NodeName.StrikethroughMark],
   },
   {
     kind: "inline",
     node: NodeName.InlineCode,
-    triggers: inlineTriggers,
-    preview: "hide",
+    rawModeTrigger: inlineTrigger,
+    rich: "hide",
     raw: "none",
-    previewHideNodes: [NodeName.CodeMark],
+    richHideNodes: [NodeName.CodeMark],
   },
   {
     kind: "inline",
     node: NodeName.Link,
-    triggers: inlineTriggers,
-    preview: "hide",
+    rawModeTrigger: inlineTrigger,
+    rich: "hide",
     raw: "none",
-    previewHideNodes: [NodeName.LinkMark, NodeName.URL],
+    richHideNodes: [NodeName.LinkMark, NodeName.URL],
   },
   {
     kind: "inline",
     node: NodeName.Image,
-    triggers: inlineTriggers,
-    preview: "hide",
+    rawModeTrigger: inlineTrigger,
+    rich: "hide",
     raw: "none",
-    previewHideNodes: [NodeName.LinkMark, NodeName.URL],
+    richHideNodes: [NodeName.LinkMark, NodeName.URL],
   },
 ];
 
@@ -85,22 +85,22 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
   {
     kind: "block-marker",
     id: "heading",
-    triggers: ["selection", "block"],
-    preview: "hide",
+    rawModeTrigger: ["nearby", "block"],
+    rich: "hide",
     raw: "none",
   },
   {
     kind: "block-marker",
     id: "list",
-    triggers: ["always"],
-    preview: "none",
+    rawModeTrigger: "always",
+    rich: "none",
     raw: "none",
   },
   {
     kind: "block-marker",
     id: "quote",
-    triggers: ["selection", "block"],
-    preview: "hide",
+    rawModeTrigger: ["nearby", "block"],
+    rich: "hide",
     raw: "none",
   },
 ];
@@ -108,8 +108,8 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
 export const blockFenceConfig: BlockFenceConfig = {
   kind: "block-fence",
   node: NodeName.FencedCode,
-  triggers: ["selection", "block"],
-  preview: "hide",
+  rawModeTrigger: ["nearby", "block"],
+  rich: "hide",
   raw: "none",
 };
 

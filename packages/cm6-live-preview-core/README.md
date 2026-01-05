@@ -13,24 +13,23 @@ Live Preview never mutates doc; it only changes view.
 
 ## Render states
 
-- preview: hide syntax tokens or render labels for a richer appearance
-- edit: show raw Markdown for safe editing
+- rich: hide syntax tokens for a richer appearance
+- raw: show raw Markdown for safe editing
 
 Render state is evaluated per element (inline/block), not globally.
 
-## Triggers (preview -> edit)
+## Triggers (rich -> raw)
 
-Priority: Selection > Block > Proximity
+Priority: Nearby > Block
 
-- selection: any element intersecting a selection range
+- nearby: selection overlap or cursor near the element (N=1)
 - block: block element containing the cursor (requires blockRevealEnabled)
-- proximity: inline element near the cursor (within N characters)
-- always: always edit
+- always: always raw
+- never: always rich
 
 ## Display styles
 
 - hide: replace tokens to hide them (view-only)
-- color-secondary: add `mb-syntax-secondary` class for theme styling
 - none: no change
 
 ## Configuration
@@ -39,11 +38,11 @@ Element rules are defined in `src/config.ts`.
 
 Example (simplified):
 
-| Element | Trigger | Preview | Edit |
+| Element | rawModeTrigger | rich | raw |
 | --- | --- | --- | --- |
-| Headings | selection / block | hide | color-secondary |
-| Bold | selection / proximity | hide | color-secondary |
-| List markers | always | color-secondary | color-secondary |
+| Headings | nearby / block | hide | none |
+| Bold | nearby | hide | none |
+| List markers | always | none | none |
 
 ## Options
 
@@ -51,9 +50,6 @@ Example (simplified):
 
 ```ts
 export type LivePreviewOptions = {
-  inlineRadius?: number;
-  inlineRadiusBefore?: number;
-  inlineRadiusAfter?: number;
   blockRevealEnabled?: boolean;
   exclude?: { code?: boolean };
 };

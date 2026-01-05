@@ -7,15 +7,14 @@
 - cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
-- Preview: `renderState` が `preview` の表示状態。
-- Edit: `renderState` が `edit` の表示状態。
+- Rich: `renderState` が `rich` の表示状態。
+- Raw: `renderState` が `raw` の表示状態。
 - doc: Markdown ソース文字列（真実）。
 - state: doc + 設定 + 解析結果（EditorState）。
 - view: state を DOM として描画したもの（EditorView）。
-- renderState: 要素単位の表示状態。`preview` と `edit` を持つ。
+- renderState: 要素単位の表示状態。`rich` と `raw` を持つ。
 - Trigger: `renderState` を切り替える判定条件。
 - Reveal Zones: 記号を露出させる範囲（Block/Inline）。
-- inlineRadius: インライン記号の露出判定に使うカーソル近傍距離。
 - Typography Theme: Markdown の見た目（見出し/強調/引用/リンクなど）を整えるテーマ。
 - CodeMirror 6 (CM6): 拡張可能なエディタライブラリ。
 - Extension: CM6 の機能単位。配列で合成する。

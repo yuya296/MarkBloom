@@ -37,8 +37,6 @@ function buildExtensions({
     extensions.push(
       livePreviewPreset({
         livePreview: {
-          inlineRadiusBefore: 1,
-          inlineRadiusAfter: 1,
           blockRevealEnabled,
         },
       })

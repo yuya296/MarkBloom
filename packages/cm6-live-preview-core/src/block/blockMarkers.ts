@@ -7,7 +7,7 @@ import {
   blockMarkerConfigs,
   blockTriggerNodeNames,
   type DisplayStyle,
-  type TriggerId,
+  type RawModeTrigger,
 } from "../config";
 import type { LivePreviewOptions } from "../index";
 
@@ -30,12 +30,18 @@ type BlockRawState = {
   isBlockReveal: boolean;
 };
 
-function isRawByTriggers(state: BlockRawState, triggers: TriggerId[]): boolean {
+function normalizeTriggers(rawModeTrigger: RawModeTrigger | RawModeTrigger[]): RawModeTrigger[] {
+  return Array.isArray(rawModeTrigger) ? rawModeTrigger : [rawModeTrigger];
+}
+
+function isRawByTriggers(state: BlockRawState, rawModeTrigger: RawModeTrigger | RawModeTrigger[]): boolean {
+  const triggers = normalizeTriggers(rawModeTrigger);
+
   if (triggers.includes("always")) {
     return true;
   }
 
-  if (triggers.includes("selection") && state.isSelectionOverlap) {
+  if (triggers.includes("nearby") && state.isSelectionOverlap) {
     return true;
   }
 
@@ -115,8 +121,8 @@ function pushBlockMarkerDecoration(
     return;
   }
 
-  const isRaw = isRawByTriggers(state, config.triggers);
-  const style: DisplayStyle = isRaw ? config.raw : config.preview;
+  const isRaw = isRawByTriggers(state, config.rawModeTrigger);
+  const style: DisplayStyle = isRaw ? config.raw : config.rich;
 
   if (style === "hide") {
     push(marker.from, marker.to, hiddenDecoration);
@@ -160,10 +166,10 @@ export function addFencedCodeDecorations(
         : false;
       const style = isRawByTriggers(
         { isSelectionOverlap, isBlockReveal },
-        blockFenceConfig.triggers
+        blockFenceConfig.rawModeTrigger
       )
         ? blockFenceConfig.raw
-        : blockFenceConfig.preview;
+        : blockFenceConfig.rich;
 
       const startLine = view.state.doc.lineAt(node.from);
       const endLine = view.state.doc.lineAt(node.to);

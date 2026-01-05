@@ -9,7 +9,7 @@ import {
   NodeName,
   hasNodeName,
 } from "../core/syntaxNodeNames";
-import { inlineElementConfigs, type InlineElementConfig } from "../config";
+import { inlineElementConfigs, type InlineElementConfig, type RawModeTrigger } from "../config";
 
 const inlineConfigByNode = new Map(
   inlineElementConfigs.map((config) => [config.node, config])
@@ -42,32 +42,34 @@ function isCursorAdjacent(
   return false;
 }
 
+function normalizeTriggers(rawModeTrigger: RawModeTrigger | RawModeTrigger[]): RawModeTrigger[] {
+  return Array.isArray(rawModeTrigger) ? rawModeTrigger : [rawModeTrigger];
+}
+
 function isInlineRaw(
   view: EditorView,
   node: { from: number; to: number },
   options: LivePreviewOptions,
-  triggers: InlineElementConfig["triggers"]
+  rawModeTrigger: InlineElementConfig["rawModeTrigger"]
 ): boolean {
+  const triggers = normalizeTriggers(rawModeTrigger);
+
   if (triggers.includes("always")) {
     return true;
   }
 
-  if (triggers.includes("selection")) {
+  if (triggers.includes("nearby")) {
     if (selectionOverlapsRange(view.state.selection.ranges, node.from, node.to)) {
       return true;
     }
-  }
-
-  if (triggers.includes("proximity")) {
     const head = view.state.selection.main.head;
-    const line = view.state.doc.lineAt(head);
-    if (line.number === view.state.doc.lineAt(node.from).number) {
-      const radius = options.inlineRadius ?? 1;
-      const radiusBefore = options.inlineRadiusBefore ?? radius;
-      const radiusAfter = options.inlineRadiusAfter ?? radius;
-      if (head >= node.from && head <= node.to) {
-        return true;
-      }
+  const line = view.state.doc.lineAt(head);
+  if (line.number === view.state.doc.lineAt(node.from).number) {
+    const radiusBefore = 1;
+    const radiusAfter = 1;
+    if (head >= node.from && head <= node.to) {
+      return true;
+    }
       if (isCursorAdjacent(line, head, node.from, node.to, radiusBefore, radiusAfter)) {
         return true;
       }
@@ -126,9 +128,9 @@ export function collectInlineMarkerRanges(
         return;
       }
 
-      const raw = isInlineRaw(view, node, options, config.triggers);
-      if (!raw && config.preview === "hide") {
-        hidden.push(...collectChildRanges(view, node.from, node.to, new Set(config.previewHideNodes)));
+      const raw = isInlineRaw(view, node, options, config.rawModeTrigger);
+      if (!raw && config.rich === "hide") {
+        hidden.push(...collectChildRanges(view, node.from, node.to, new Set(config.richHideNodes)));
       }
     },
   });

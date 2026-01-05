@@ -19,10 +19,10 @@ Live Preview は **docを変更せず view を変える**。
 ### 2.2 Render State (per element)
 Markdownの構文要素（inline/block）単位で、表示状態 `renderState` を持つ。
 
-- `preview`: 記号（syntax）非表示やリッチ表示を適用
-- `edit`: 生Markdown（または編集向けカスタム表示）を適用
+- `rich`: 記号（syntax）非表示やリッチ表示を適用
+- `raw`: 生Markdown（または編集向けカスタム表示）を適用
 
-注: UI上の呼称として Preview/Edit を用いてよいが、仕様上は **グローバルモードではなく「要素ごとの状態」**とする。
+注: UI上の呼称として Raw/Rich を用い、仕様上は **グローバルモードではなく「要素ごとの状態」**とする。
 
 ## 3. User-facing Behaviors
 
@@ -50,41 +50,40 @@ Markdownの構文要素（inline/block）単位で、表示状態 `renderState` 
 
 ## 5. Live Preview Mode Requirements
 
-### 5.1 Preview display (default behavior)
+### 5.1 Rich display (default behavior)
 Live Preview Mode では、対象要素に対して次を適用できること。
 
 - **syntax token の非表示（hide）**が基本
   - 例: `**`, `#`, `` ` ``, `[]()`, list marker など
 - 表示変換は view-only（Decoration.mark / Decoration.replace / Widget）で行う
 
-#### Preview renderer levels
+#### Rich renderer levels
 - Inline要素:
   - 既定は syntax token を hide し、内容（content）を装飾して表示
 - Block要素:
   - 既定は syntax token を hide し、blockとしてのスタイルを適用
   - 任意で block 全体を Widget によりリッチ表示へ置換できる（opt-in）
 
-### 5.2 Edit display (default behavior)
-- `edit` 状態の要素は、原則 **生Markdown（source）表示**に戻ること
-- 要素ごとに `EditRenderer` を定義できる拡張点を持つこと（将来要件）
+### 5.2 Raw display (default behavior)
+- `raw` 状態の要素は、原則 **生Markdown（source）表示**に戻ること
+- 要素ごとに `RawRenderer` を定義できる拡張点を持つこと（将来要件）
 
-## 6. Reveal / Switching Rules (Preview ⇄ Edit)
+## 6. Reveal / Switching Rules (Rich ⇄ Raw)
 
 ### 6.1 Transition triggers
-要素が `edit` に切り替わる条件は以下。
+要素が `raw` に切り替わる条件は以下。
 
-- **Selection reveal**: 選択範囲に交差する要素は `edit`
-- **Block reveal**（`blockRevealEnabled=true`）: カーソルが属する block は `edit`
-- **Proximity reveal**: カーソル近傍（N文字以内）の inline は `edit`
+- **Nearby**: 選択範囲に交差、またはカーソル近傍（N=1）
+- **Block reveal**（`blockRevealEnabled=true`）: カーソルが属する block は `raw`
 
 ### 6.2 Priority
 競合時の優先順位は次で固定する。
 
-`Selection` > `Block` > `Proximity`
+`Nearby` > `Block`
 
 ### 6.3 Scope of switching
 - 切替は **要素単位（inline/block）**で行い、ドキュメント全体を一律に切り替えない
-- 同一要素内でも必要に応じて「syntax token のみ edit」など細粒度を許容する（実装裁量）
+- 同一要素内でも必要に応じて「syntax token のみ raw」など細粒度を許容する（実装裁量）
 
 ## 7. Element-specific Requirements (initial)
 PH1 の対象要素は少なく定義し、順次追加可能とする（この一覧は feature spec で確定する）。
@@ -119,8 +118,8 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 ## 10. Live Preview Configuration (implementation)
 `packages/cm6-live-preview-core/src/config.ts` で要素ごとの `renderState` を定義する。
 
-| 要素 | Trigger | Preview | Edit |
+| 要素 | rawModeTrigger | rich | raw |
 | --- | --- | --- | --- |
-| 見出し | selection / block | hide | color-secondary |
-| 太字 | selection / proximity | hide | color-secondary |
-| 箇条書き/番号付き | always | color-secondary | color-secondary |
+| 見出し | nearby / block | hide | none |
+| 太字 | nearby | hide | none |
+| 箇条書き/番号付き | always | none | none |
