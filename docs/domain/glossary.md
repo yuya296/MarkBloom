@@ -3,6 +3,10 @@
 - Base Editor: CM6 を使った最小の Markdown 編集 Webapp。以降の機能の土台。
 - editor-core: Feature 001 のプロダクト名。Base Editor の実装パッケージ名として扱う。
 - Live Preview: Markdown を保持したまま記号の露出を抑制する編集体験。
+- cm6-live-preview-core: 記号の表示切替ロジックのみを提供するパッケージ。
+- cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
+- cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
+- cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
 - Preview: `renderState` が `preview` の表示状態。
 - Edit: `renderState` が `edit` の表示状態。
 - doc: Markdown ソース文字列（真実）。

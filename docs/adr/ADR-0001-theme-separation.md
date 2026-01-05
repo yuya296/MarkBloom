@@ -1,7 +1,7 @@
 # ADR-0001: Separate Live Preview Base Theme and Typography Theme
 
 ## Status
-Accepted
+Superseded by ADR-0002
 
 ## Context
 Live Preview needs minimal styling for dim/hide behavior. At the same time, Markdown typography (headings, bold, links, quotes, etc.) should be customizable per host (editor-core, VS Code webview). Mixing these concerns in a single extension makes it harder to swap themes and align with host color systems.

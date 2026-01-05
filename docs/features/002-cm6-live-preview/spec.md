@@ -5,6 +5,7 @@ CM6（CodeMirror 6）上で Markdown を **source of truth（docは常にMarkdow
 
 - doc（文字列）を HTML にレンダリングする “別プレビューペイン” は本機能の対象外
 - 表示変換は CM6 の Decoration（mark/replace）および Widget を用いて view を加工する
+- semantic class 付与やタイポグラフィは別パッケージで扱う
 
 ## 2. Definitions
 
