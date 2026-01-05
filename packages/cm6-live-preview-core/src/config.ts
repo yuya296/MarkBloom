@@ -1,7 +1,7 @@
 import { NodeName } from "./core/syntaxNodeNames";
 
 export type TriggerId = "selection" | "block" | "proximity" | "always";
-export type DisplayStyle = "hide" | "color-secondary" | "widgetLabel" | "none";
+export type DisplayStyle = "hide" | "none";
 
 export type InlineElementConfig = {
   kind: "inline";
@@ -10,7 +10,6 @@ export type InlineElementConfig = {
   preview: DisplayStyle;
   raw: DisplayStyle;
   previewHideNodes: NodeName[];
-  rawColorNodes: NodeName[];
 };
 
 export type BlockMarkerConfig = {
@@ -37,54 +36,48 @@ export const inlineElementConfigs: InlineElementConfig[] = [
     node: NodeName.Emphasis,
     triggers: inlineTriggers,
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
     previewHideNodes: [NodeName.EmphasisMark],
-    rawColorNodes: [NodeName.EmphasisMark],
   },
   {
     kind: "inline",
     node: NodeName.StrongEmphasis,
     triggers: inlineTriggers,
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
     previewHideNodes: [NodeName.EmphasisMark],
-    rawColorNodes: [NodeName.EmphasisMark],
   },
   {
     kind: "inline",
     node: NodeName.Strikethrough,
     triggers: inlineTriggers,
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
     previewHideNodes: [NodeName.StrikethroughMark],
-    rawColorNodes: [NodeName.StrikethroughMark],
   },
   {
     kind: "inline",
     node: NodeName.InlineCode,
     triggers: inlineTriggers,
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
     previewHideNodes: [NodeName.CodeMark],
-    rawColorNodes: [NodeName.CodeMark],
   },
   {
     kind: "inline",
     node: NodeName.Link,
     triggers: inlineTriggers,
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
     previewHideNodes: [NodeName.LinkMark, NodeName.URL],
-    rawColorNodes: [NodeName.LinkMark],
   },
   {
     kind: "inline",
     node: NodeName.Image,
     triggers: inlineTriggers,
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
     previewHideNodes: [NodeName.LinkMark, NodeName.URL],
-    rawColorNodes: [NodeName.LinkMark],
   },
 ];
 
@@ -94,21 +87,21 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
     id: "heading",
     triggers: ["selection", "block"],
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
   },
   {
     kind: "block-marker",
     id: "list",
     triggers: ["always"],
-    preview: "color-secondary",
-    raw: "color-secondary",
+    preview: "none",
+    raw: "none",
   },
   {
     kind: "block-marker",
     id: "quote",
     triggers: ["selection", "block"],
     preview: "hide",
-    raw: "color-secondary",
+    raw: "none",
   },
 ];
 
@@ -116,8 +109,8 @@ export const blockFenceConfig: BlockFenceConfig = {
   kind: "block-fence",
   node: NodeName.FencedCode,
   triggers: ["selection", "block"],
-  preview: "widgetLabel",
-  raw: "color-secondary",
+  preview: "hide",
+  raw: "none",
 };
 
 export const blockTriggerNodeNames: ReadonlySet<NodeName> = new Set<NodeName>([

@@ -2,7 +2,6 @@ import { syntaxTree } from "@codemirror/language";
 import { Decoration, EditorView } from "@codemirror/view";
 import type { Range } from "../core/types";
 import { hasNodeName } from "../core/syntaxNodeNames";
-import { markerReplace } from "../theme/markerWidgets";
 import {
   blockFenceConfig,
   blockMarkerConfigs,
@@ -30,16 +29,6 @@ type BlockRawState = {
   isSelectionOverlap: boolean;
   isBlockReveal: boolean;
 };
-
-function fenceLabel(lineText: string): string {
-  const match = lineText.match(/^\s*([`~]{3,})\s*(\S+)?/u);
-  if (!match) {
-    return "</> code";
-  }
-
-  const language = match[2];
-  return language ? `</> ${language}` : "</> code";
-}
 
 function isRawByTriggers(state: BlockRawState, triggers: TriggerId[]): boolean {
   if (triggers.includes("always")) {
@@ -133,10 +122,6 @@ function pushBlockMarkerDecoration(
     push(marker.from, marker.to, hiddenDecoration);
     return;
   }
-
-  if (style === "color-secondary") {
-    push(marker.from, marker.to, colorDecoration);
-  }
 }
 
 export function addBlockMarkerDecorations(
@@ -183,26 +168,10 @@ export function addFencedCodeDecorations(
       const startLine = view.state.doc.lineAt(node.from);
       const endLine = view.state.doc.lineAt(node.to);
 
-      if (style === "widgetLabel") {
-        const label = fenceLabel(startLine.text);
-        push(
-          startLine.from,
-          startLine.to,
-          markerReplace(label, "mb-preview-widget mb-syntax-secondary")
-        );
-        push(endLine.from, endLine.to, hiddenDecoration);
-        return;
-      }
-
       if (style === "hide") {
         push(startLine.from, startLine.to, hiddenDecoration);
         push(endLine.from, endLine.to, hiddenDecoration);
         return;
-      }
-
-      if (style === "color-secondary") {
-        push(startLine.from, startLine.to, colorDecoration);
-        push(endLine.from, endLine.to, colorDecoration);
       }
     },
   });

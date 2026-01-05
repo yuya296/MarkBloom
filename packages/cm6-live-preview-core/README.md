@@ -31,7 +31,6 @@ Priority: Selection > Block > Proximity
 
 - hide: replace tokens to hide them (view-only)
 - color-secondary: add `mb-syntax-secondary` class for theme styling
-- widgetLabel: replace with a label and `mb-preview-widget` class
 - none: no change
 
 ## Configuration

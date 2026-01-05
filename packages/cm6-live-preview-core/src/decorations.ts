@@ -26,9 +26,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   const inlineHiddenDecoration = Decoration.replace({
     inclusive: false,
   });
-  const secondaryColorDecoration = Decoration.mark({
-    class: "mb-syntax-secondary",
-  });
+  const blockColorDecoration = Decoration.mark({});
 
   const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
   const pushDecoration = (from: number, to: number, decoration: Decoration) => {
@@ -41,7 +39,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
     selectionRanges,
     blockRevealRange,
     blockHiddenDecoration,
-    secondaryColorDecoration
+    blockColorDecoration
   );
 
   for (const range of view.visibleRanges) {
@@ -66,7 +64,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
           line.text,
           { isSelectionOverlap, isBlockReveal },
           blockHiddenDecoration,
-          secondaryColorDecoration
+          blockColorDecoration
         );
       }
 
@@ -74,13 +72,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
     }
   }
 
-  addInlineMarkerDecorations(
-    pushDecoration,
-    inlineMarkerRanges.hidden,
-    inlineHiddenDecoration,
-    inlineMarkerRanges.colored,
-    secondaryColorDecoration
-  );
+  addInlineMarkerDecorations(pushDecoration, inlineMarkerRanges.hidden, inlineHiddenDecoration);
 
   pending.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));
   for (const item of pending) {

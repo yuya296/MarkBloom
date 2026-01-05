@@ -100,9 +100,8 @@ export function collectInlineMarkerRanges(
   view: EditorView,
   options: LivePreviewOptions,
   excluded: ExcludeRanges
-): { hidden: Range[]; colored: Range[] } {
+): { hidden: Range[] } {
   const hidden: Range[] = [];
-  const colored: Range[] = [];
   const tree = syntaxTree(view.state);
 
   tree.iterate({
@@ -128,22 +127,11 @@ export function collectInlineMarkerRanges(
       }
 
       const raw = isInlineRaw(view, node, options, config.triggers);
-      const previewTargets = new Set(config.previewHideNodes);
-      const rawTargets = new Set(config.rawColorNodes);
-
       if (!raw && config.preview === "hide") {
-        hidden.push(...collectChildRanges(view, node.from, node.to, previewTargets));
-      }
-
-      if (raw && config.raw === "color-secondary") {
-        colored.push(...collectChildRanges(view, node.from, node.to, rawTargets));
-      }
-
-      if (!raw && config.preview === "color-secondary") {
-        colored.push(...collectChildRanges(view, node.from, node.to, previewTargets));
+        hidden.push(...collectChildRanges(view, node.from, node.to, new Set(config.previewHideNodes)));
       }
     },
   });
 
-  return { hidden, colored };
+  return { hidden };
 }
