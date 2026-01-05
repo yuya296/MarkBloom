@@ -39,7 +39,7 @@ Element rules are defined in `src/config.ts`.
 Example (simplified):
 
 | Element | rawModeTrigger | richDisplayStyle |
-| --- | --- | --- | --- |
+| --- | --- | --- |
 | Headings | nearby / block | hide |
 | Bold | nearby | hide |
 | List markers | always | none |
@@ -58,4 +58,4 @@ export type LivePreviewOptions = {
 ## Notes
 
 - Decorations and Widgets are view-only and do not affect undo/redo.
-- cm6-live-preview-core does not define colors; themes should style classes such as `mb-syntax-secondary` and `mb-preview-widget`.
+- cm6-live-preview-core does not define colors; themes are handled in other packages.

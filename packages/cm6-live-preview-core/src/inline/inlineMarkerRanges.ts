@@ -14,6 +14,14 @@ import { inlineElementConfigs, type InlineElementConfig, type RawModeTrigger } f
 const inlineConfigByNode = new Map(
   inlineElementConfigs.map((config) => [config.node, config])
 );
+const inlineHideTargets = new Map<NodeName, NodeName[]>([
+  [NodeName.Emphasis, [NodeName.EmphasisMark]],
+  [NodeName.StrongEmphasis, [NodeName.EmphasisMark]],
+  [NodeName.Strikethrough, [NodeName.StrikethroughMark]],
+  [NodeName.InlineCode, [NodeName.CodeMark]],
+  [NodeName.Link, [NodeName.LinkMark, NodeName.URL]],
+  [NodeName.Image, [NodeName.LinkMark, NodeName.URL]],
+]);
 
 function isCursorAdjacent(
   line: Line,
@@ -130,7 +138,10 @@ export function collectInlineMarkerRanges(
 
       const raw = isInlineRaw(view, node, options, config.rawModeTrigger);
       if (!raw && config.richDisplayStyle === "hide") {
-        hidden.push(...collectChildRanges(view, node.from, node.to, new Set(config.richHideNodes)));
+        const targets = inlineHideTargets.get(config.node);
+        if (targets) {
+          hidden.push(...collectChildRanges(view, node.from, node.to, new Set(targets)));
+        }
       }
     },
   });

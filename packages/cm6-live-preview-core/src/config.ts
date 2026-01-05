@@ -8,7 +8,6 @@ export type InlineElementConfig = {
   node: NodeName;
   rawModeTrigger: RawModeTrigger | RawModeTrigger[];
   richDisplayStyle: DisplayStyle;
-  richHideNodes: NodeName[];
 };
 
 export type BlockMarkerConfig = {
@@ -33,42 +32,36 @@ export const inlineElementConfigs: InlineElementConfig[] = [
     node: NodeName.Emphasis,
     rawModeTrigger: inlineTrigger,
     richDisplayStyle: "hide",
-    richHideNodes: [NodeName.EmphasisMark],
   },
   {
     kind: "inline",
     node: NodeName.StrongEmphasis,
     rawModeTrigger: inlineTrigger,
     richDisplayStyle: "hide",
-    richHideNodes: [NodeName.EmphasisMark],
   },
   {
     kind: "inline",
     node: NodeName.Strikethrough,
     rawModeTrigger: inlineTrigger,
     richDisplayStyle: "hide",
-    richHideNodes: [NodeName.StrikethroughMark],
   },
   {
     kind: "inline",
     node: NodeName.InlineCode,
     rawModeTrigger: inlineTrigger,
     richDisplayStyle: "hide",
-    richHideNodes: [NodeName.CodeMark],
   },
   {
     kind: "inline",
     node: NodeName.Link,
     rawModeTrigger: inlineTrigger,
     richDisplayStyle: "hide",
-    richHideNodes: [NodeName.LinkMark, NodeName.URL],
   },
   {
     kind: "inline",
     node: NodeName.Image,
     rawModeTrigger: inlineTrigger,
     richDisplayStyle: "hide",
-    richHideNodes: [NodeName.LinkMark, NodeName.URL],
   },
 ];
 
