@@ -1,5 +1,6 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
+import { defaultHighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import initialText from "../assets/sample.md?raw";
 import { livePreviewPreset } from "cm6-live-preview";
 import { createEditor } from "./createEditor";
@@ -32,6 +33,8 @@ function buildExtensions({
   if (Number.isFinite(tabSize)) {
     extensions.push(EditorState.tabSize.of(tabSize));
   }
+
+  extensions.push(syntaxHighlighting(defaultHighlightStyle));
 
   if (livePreviewEnabled) {
     extensions.push(
