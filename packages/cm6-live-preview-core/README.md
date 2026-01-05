@@ -1,4 +1,4 @@
-# cm6-live-preview
+# cm6-live-preview-core
 
 Live Preview for CodeMirror 6 that keeps Markdown as the source of truth and transforms only the view using Decorations/Widgets.
 
@@ -63,4 +63,4 @@ export type LivePreviewOptions = {
 ## Notes
 
 - Decorations and Widgets are view-only and do not affect undo/redo.
-- cm6-live-preview does not define colors; themes should style classes such as `mb-syntax-secondary` and `mb-preview-widget`.
+- cm6-live-preview-core does not define colors; themes should style classes such as `mb-syntax-secondary` and `mb-preview-widget`.

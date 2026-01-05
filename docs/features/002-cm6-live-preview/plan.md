@@ -1,4 +1,4 @@
-# Plan: Feature 002 cm6-live-preview
+# Plan: Feature 002 cm6-live-preview-core
 
 ## 方針
 - CM6 Extension として提供し、VS Code 非依存で完結させる
@@ -7,17 +7,17 @@
 - IME 中は装飾更新を抑制し、入力安定性を優先する
 
 ## 構成案
-- `packages/cm6-live-preview/src/index.ts`
+- `packages/cm6-live-preview-core/src/index.ts`
   - `livePreview(options?): Extension`
   - `LivePreviewOptions`
-- `packages/cm6-live-preview/src/decorations.ts`
+- `packages/cm6-live-preview-core/src/decorations.ts`
   - `visibleRanges` に限定した装飾生成
   - Block/Inline の対象判定
-- `packages/cm6-live-preview/src/theme.css`（または `theme.ts`）
+- `packages/cm6-live-preview-core/src/theme.css`（または `theme.ts`）
   - dim/hide の最小テーマ
 
 ## 変更点（想定）
-- 新規パッケージ `packages/cm6-live-preview` 追加
+- 新規パッケージ `packages/cm6-live-preview-core` 追加
 - `@codemirror/state/view/language` への依存追加
 - `@codemirror/lang-markdown` の構文木を利用
 

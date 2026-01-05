@@ -1,7 +1,7 @@
-# Tasks: Feature 002 cm6-live-preview
+# Tasks: Feature 002 cm6-live-preview-core
 
 ## 実装タスク
-- `packages/cm6-live-preview` 作成
+- `packages/cm6-live-preview-core` 作成
 - `livePreview(options?): Extension` を実装
 - `LivePreviewOptions` 型を定義
 - Block/Inline の露出ゾーン算出

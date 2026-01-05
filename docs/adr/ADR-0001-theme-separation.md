@@ -7,7 +7,7 @@ Accepted
 Live Preview needs minimal styling for dim/hide behavior. At the same time, Markdown typography (headings, bold, links, quotes, etc.) should be customizable per host (editor-core, VS Code webview). Mixing these concerns in a single extension makes it harder to swap themes and align with host color systems.
 
 ## Decision
-- `cm6-live-preview` will export `livePreview()` and `livePreviewBaseTheme()` for dim/hide styling only.
+- `cm6-live-preview-core` will export `livePreview()` and `livePreviewBaseTheme()` for dim/hide styling only.
 - `editor-core` will own the Markdown typography theme (`markdownTypographyTheme()`), including heading sizes, emphasis, link/quote styles, and host color strategy.
 
 ## Consequences

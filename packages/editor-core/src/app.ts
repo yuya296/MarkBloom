@@ -2,7 +2,7 @@ import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import { basicSetup } from "@codemirror/basic-setup";
 import initialText from "../assets/sample.md?raw";
-import { livePreview } from "cm6-live-preview";
+import { livePreview } from "cm6-live-preview-core";
 import { createEditor } from "./createEditor";
 
 type ExtensionOptions = {

@@ -1,4 +1,4 @@
-# Feature 002: cm6-live-preview (Live Preview)
+# Feature 002: cm6-live-preview-core (Live Preview)
 
 ## 1. Purpose
 CM6（CodeMirror 6）上で Markdown を **source of truth（docは常にMarkdownソース）**のまま保持しつつ、表示を "プレビュー寄り" に変換する **Live Preview（WYSIWYG風）**を提供する。
@@ -33,7 +33,7 @@ Markdownの構文要素（inline/block）単位で、表示状態 `renderState` 
 ### 3.2 Theme compatibility
 - 既存の theme（別Plugin等）が提供する見た目は、可能な限り維持されること
 - Widget を用いる場合、必要に応じて class を付与し、全体テーマと整合する見た目を実現すること
-  - cm6-live-preview は色を定義せず、class を付与するだけに留める
+  - cm6-live-preview-core は色を定義せず、class を付与するだけに留める
 
 ## 4. Configuration API
 
@@ -116,7 +116,7 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 - 切替のために extensions は compartment により再構成可能な設計を推奨する
 
 ## 10. Live Preview Configuration (implementation)
-`packages/cm6-live-preview/src/config.ts` で要素ごとの `renderState` を定義する。
+`packages/cm6-live-preview-core/src/config.ts` で要素ごとの `renderState` を定義する。
 
 | 要素 | Trigger | Preview | Edit |
 | --- | --- | --- | --- |
