@@ -38,11 +38,11 @@ Element rules are defined in `src/config.ts`.
 
 Example (simplified):
 
-| Element | rawModeTrigger | rich | raw |
+| Element | rawModeTrigger | richDisplayStyle |
 | --- | --- | --- | --- |
-| Headings | nearby / block | hide | none |
-| Bold | nearby | hide | none |
-| List markers | always | none | none |
+| Headings | nearby / block | hide |
+| Bold | nearby | hide |
+| List markers | always | none |
 
 ## Options
 

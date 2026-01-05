@@ -118,8 +118,8 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 ## 10. Live Preview Configuration (implementation)
 `packages/cm6-live-preview-core/src/config.ts` で要素ごとの `renderState` を定義する。
 
-| 要素 | rawModeTrigger | rich | raw |
-| --- | --- | --- | --- |
-| 見出し | nearby / block | hide | none |
-| 太字 | nearby | hide | none |
-| 箇条書き/番号付き | always | none | none |
+| 要素 | rawModeTrigger | richDisplayStyle |
+| --- | --- | --- |
+| 見出し | nearby / block | hide |
+| 太字 | nearby | hide |
+| 箇条書き/番号付き | always | none |

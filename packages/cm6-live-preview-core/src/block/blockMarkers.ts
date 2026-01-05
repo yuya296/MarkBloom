@@ -122,7 +122,7 @@ function pushBlockMarkerDecoration(
   }
 
   const isRaw = isRawByTriggers(state, config.rawModeTrigger);
-  const style: DisplayStyle = isRaw ? config.raw : config.rich;
+  const style: DisplayStyle = isRaw ? "none" : config.richDisplayStyle;
 
   if (style === "hide") {
     push(marker.from, marker.to, hiddenDecoration);
@@ -168,8 +168,8 @@ export function addFencedCodeDecorations(
         { isSelectionOverlap, isBlockReveal },
         blockFenceConfig.rawModeTrigger
       )
-        ? blockFenceConfig.raw
-        : blockFenceConfig.rich;
+        ? "none"
+        : blockFenceConfig.richDisplayStyle;
 
       const startLine = view.state.doc.lineAt(node.from);
       const endLine = view.state.doc.lineAt(node.to);

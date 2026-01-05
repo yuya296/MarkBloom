@@ -129,7 +129,7 @@ export function collectInlineMarkerRanges(
       }
 
       const raw = isInlineRaw(view, node, options, config.rawModeTrigger);
-      if (!raw && config.rich === "hide") {
+      if (!raw && config.richDisplayStyle === "hide") {
         hidden.push(...collectChildRanges(view, node.from, node.to, new Set(config.richHideNodes)));
       }
     },
