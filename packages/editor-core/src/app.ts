@@ -1,18 +1,23 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
+import { livePreviewPreset } from "cm6-live-preview";
 import { createEditor } from "./createEditor";
 
 type ExtensionOptions = {
   showLineNumbers: boolean;
   wrapLines: boolean;
   tabSize: number;
+  livePreviewEnabled: boolean;
+  blockRevealEnabled: boolean;
 };
 
 function buildExtensions({
   showLineNumbers,
   wrapLines,
   tabSize,
+  livePreviewEnabled,
+  blockRevealEnabled,
 }: ExtensionOptions): Extension[] {
   const extensions: Extension[] = [];
 
@@ -26,6 +31,18 @@ function buildExtensions({
 
   if (Number.isFinite(tabSize)) {
     extensions.push(EditorState.tabSize.of(tabSize));
+  }
+
+  if (livePreviewEnabled) {
+    extensions.push(
+      livePreviewPreset({
+        livePreview: {
+          inlineRadiusBefore: 1,
+          inlineRadiusAfter: 1,
+          blockRevealEnabled,
+        },
+      })
+    );
   }
 
   return extensions;
@@ -43,6 +60,8 @@ export function setupApp() {
   const controls = {
     lineNumbers: document.getElementById("toggle-line-numbers"),
     wrap: document.getElementById("toggle-wrap"),
+    livePreview: document.getElementById("toggle-live-preview"),
+    blockReveal: document.getElementById("toggle-block-reveal"),
     tabSize: document.getElementById("tab-size"),
     apply: document.getElementById("apply"),
   };
@@ -50,6 +69,8 @@ export function setupApp() {
   if (
     !(controls.lineNumbers instanceof HTMLInputElement) ||
     !(controls.wrap instanceof HTMLInputElement) ||
+    !(controls.livePreview instanceof HTMLInputElement) ||
+    !(controls.blockReveal instanceof HTMLInputElement) ||
     !(controls.tabSize instanceof HTMLInputElement) ||
     !(controls.apply instanceof HTMLButtonElement)
   ) {
@@ -58,6 +79,8 @@ export function setupApp() {
 
   const lineNumbersControl = controls.lineNumbers;
   const wrapControl = controls.wrap;
+  const livePreviewControl = controls.livePreview;
+  const blockRevealControl = controls.blockReveal;
   const tabSizeControl = controls.tabSize;
   const applyControl = controls.apply;
 
@@ -67,6 +90,8 @@ export function setupApp() {
     extensions: buildExtensions({
       showLineNumbers: lineNumbersControl.checked,
       wrapLines: wrapControl.checked,
+      livePreviewEnabled: livePreviewControl.checked,
+      blockRevealEnabled: blockRevealControl.checked,
       tabSize: Number(tabSizeControl.value),
     }),
     onChange: (text) => {
@@ -84,6 +109,8 @@ export function setupApp() {
       buildExtensions({
         showLineNumbers: lineNumbersControl.checked,
         wrapLines: wrapControl.checked,
+        livePreviewEnabled: livePreviewControl.checked,
+        blockRevealEnabled: blockRevealControl.checked,
         tabSize: Number(tabSizeControl.value),
       })
     );
