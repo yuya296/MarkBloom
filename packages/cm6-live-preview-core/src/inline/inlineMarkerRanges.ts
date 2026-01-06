@@ -57,7 +57,6 @@ function normalizeTriggers(rawModeTrigger: RawModeTrigger | RawModeTrigger[]): R
 function isInlineRaw(
   view: EditorView,
   node: { from: number; to: number },
-  options: LivePreviewOptions,
   rawModeTrigger: InlineElementConfig["rawModeTrigger"]
 ): boolean {
   const triggers = normalizeTriggers(rawModeTrigger);
@@ -136,7 +135,7 @@ export function collectInlineMarkerRanges(
         return;
       }
 
-      const raw = isInlineRaw(view, node, options, config.rawModeTrigger);
+      const raw = isInlineRaw(view, node, config.rawModeTrigger);
       if (!raw && config.richDisplayStyle === "hide") {
         const targets = inlineHideTargets.get(config.node);
         if (targets) {

@@ -53,6 +53,11 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
     },
     [`.${prefix}blockquote`]: {
       fontStyle: "italic",
+      borderLeft: "3px solid currentColor",
+      paddingLeft: "0.75rem",
+      marginLeft: "0",
+      opacity: "0.85",
+      lineHeight: "inherit",
     },
     [`.${prefix}list-item`]: {
       paddingLeft: "0.1rem",
