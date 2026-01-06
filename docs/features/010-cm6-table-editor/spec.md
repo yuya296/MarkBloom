@@ -1,4 +1,4 @@
-# Feature 003: cm6-table-editor (テーブル描画・編集)
+# Feature 010: cm6-table-editor (テーブル描画・編集)
 
 ## 1. 目的
 Markdown テーブルを、CM6 上で **リッチ表示（グリッド）**し、段階的に **編集**できるようにする。

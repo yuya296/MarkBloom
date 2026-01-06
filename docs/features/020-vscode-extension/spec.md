@@ -1,4 +1,4 @@
-# Feature 004: VS Code Extension (MarkBloom)
+# Feature 020: VS Code Extension (MarkBloom)
 
 ## 1. 目的
 VS Code 拡張として Webview を提供し、CM6 ベースのエディタ（feature/001〜003）を統合する。
