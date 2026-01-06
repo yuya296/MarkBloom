@@ -4,6 +4,13 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@codemirror/commands': 6.10.1
+  '@codemirror/lang-markdown': 6.5.0
+  '@codemirror/language': 6.12.1
+  '@codemirror/state': 6.5.3
+  '@codemirror/view': 6.39.8
+
 importers:
 
   .:
@@ -24,23 +31,102 @@ importers:
         specifier: ^8.51.0
         version: 8.51.0(eslint@9.39.2)(typescript@5.9.3)
 
+  packages/cm6-live-preview:
+    dependencies:
+      '@codemirror/state':
+        specifier: 6.5.3
+        version: 6.5.3
+      cm6-live-preview-core:
+        specifier: workspace:*
+        version: link:../cm6-live-preview-core
+      cm6-markdown-semantics:
+        specifier: workspace:*
+        version: link:../cm6-markdown-semantics
+      cm6-typography-theme:
+        specifier: workspace:*
+        version: link:../cm6-typography-theme
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/cm6-live-preview-core:
+    dependencies:
+      '@codemirror/lang-markdown':
+        specifier: 6.5.0
+        version: 6.5.0
+      '@codemirror/language':
+        specifier: 6.12.1
+        version: 6.12.1
+      '@codemirror/state':
+        specifier: 6.5.3
+        version: 6.5.3
+      '@codemirror/view':
+        specifier: 6.39.8
+        version: 6.39.8
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/cm6-markdown-semantics:
+    dependencies:
+      '@codemirror/lang-markdown':
+        specifier: 6.5.0
+        version: 6.5.0
+      '@codemirror/language':
+        specifier: 6.12.1
+        version: 6.12.1
+      '@codemirror/state':
+        specifier: 6.5.3
+        version: 6.5.3
+      '@codemirror/view':
+        specifier: 6.39.8
+        version: 6.39.8
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/cm6-typography-theme:
+    dependencies:
+      '@codemirror/state':
+        specifier: 6.5.3
+        version: 6.5.3
+      '@codemirror/view':
+        specifier: 6.39.8
+        version: 6.39.8
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/editor-core:
     dependencies:
       '@codemirror/commands':
-        specifier: ^6.10.1
+        specifier: 6.10.1
         version: 6.10.1
       '@codemirror/lang-markdown':
-        specifier: ^6.5.0
+        specifier: 6.5.0
         version: 6.5.0
       '@codemirror/language':
-        specifier: ^6.12.1
+        specifier: 6.12.1
         version: 6.12.1
       '@codemirror/state':
-        specifier: ^6.5.3
+        specifier: 6.5.3
         version: 6.5.3
       '@codemirror/view':
-        specifier: ^6.39.8
+        specifier: 6.39.8
         version: 6.39.8
+      '@lezer/highlight':
+        specifier: ^1.2.3
+        version: 1.2.3
+      '@lezer/markdown':
+        specifier: ^1.6.2
+        version: 1.6.2
+      cm6-live-preview:
+        specifier: workspace:*
+        version: link:../cm6-live-preview
     devDependencies:
       sass:
         specifier: ^1.97.1

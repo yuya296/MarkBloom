@@ -1,69 +1,125 @@
-# Feature 002: cm6-live-preview (記号の露出制御)
+# Feature 002: cm6-live-preview-core (Live Preview)
 
-## 1. 目的
-Markdown を source-of-truth のまま保持しつつ、**記号の露出制御**により
-Obsidian の Live Preview 相当の体験（編集寄り）を提供する。
+## 1. Purpose
+CM6（CodeMirror 6）上で Markdown を **source of truth（docは常にMarkdownソース）**のまま保持しつつ、表示を "プレビュー寄り" に変換する **Live Preview（WYSIWYG風）**を提供する。
 
-- ブロック要素：カーソル行（またはブロック）にいる時だけ識別子を可視化
-- インライン要素：識別子（`*`, `[`, `]`, `(`, `)` 等）にカーソルが隣接した時だけ可視化
+- doc（文字列）を HTML にレンダリングする “別プレビューペイン” は本機能の対象外
+- 表示変換は CM6 の Decoration（mark/replace）および Widget を用いて view を加工する
+- semantic class 付与やタイポグラフィは別パッケージで扱う
 
-## 2. スコープ
-### In scope
-- CM6 Extension として提供（VS Code 非依存）
-- ブロック/インラインの露出制御（dim/hide）
-- IME 安定性を重視（`view.composing` 対応）
-- 性能：`visibleRanges` 範囲に限定した計算
+## 2. Definitions
 
-### Out of scope
-- テーブルのリッチ表示・編集（feature/003）
-- 完全な WYSIWYG（内部モデルの置換）
-- 100% Obsidian 同等の見た目再現
+### 2.1 Document / State / View
+- **doc**: Markdown ソース文字列（真実）
+- **state**: doc + 設定 + 解析結果（EditorState）
+- **view**: state を DOM として描画したもの（EditorView）
 
-## 3. 成果物
-- `packages/cm6-live-preview`
-  - 公開 API：`livePreview(options?): Extension`
-  - オプション型：`LivePreviewOptions`
-  - 最低限のテーマ（dim用のCSS）を同梱
+Live Preview は **docを変更せず view を変える**。
 
-## 4. 主要要件（仕様）
-### 4.1 可視化ゾーン（Reveal Zones）
-- Block zone：
-  - デフォルトは「カーソルがある行」
-  - 将来拡張で「ブロック範囲（同一リスト/引用/フェンス等）」に拡張可能にする
-- Inline zone：
-  - `selection.head` 前後 ±N（`inlineRadius`）をゾーンとする
+### 2.2 Render State (per element)
+Markdownの構文要素（inline/block）単位で、表示状態 `renderState` を持つ。
 
-### 4.2 対象（第一段階）
-- Block（優先）：見出し `#`、リストマーカー（`-` / `*` / `1.`）、引用 `>`
-- Inline（優先）：強調 `*`/`_`、リンク `[]()`、インラインコード `` ` ``
-- 除外：コードブロック/インラインコード内は原則対象外（少なくともブロックは除外）
+- `rich`: 記号（syntax）非表示やリッチ表示を適用
+- `raw`: 生Markdown（または編集向けカスタム表示）を適用
 
-### 4.3 表示モード
-- 初期推奨：インラインは **dim（薄くする）** 中心（replace/hideは慎重に）
-- ブロックは dim から開始し、必要なら hide を追加
+注: UI上の呼称として Raw/Rich を用い、仕様上は **グローバルモードではなく「要素ごとの状態」**とする。
 
-### 4.4 IME 方針
-- `view.composing` 中は装飾更新を抑制、または露出寄りに倒す（オプション化）
+## 3. User-facing Behaviors
 
-## 5. 公開API（案）
-```ts
-export type LivePreviewOptions = {
-  inlineRadius?: number;
-  inlineStyle?: "dim" | "hide";
-  blockStyle?: "dim" | "hide";
-  blockRevealMode?: "line" | "block";
-  disableDuringIME?: boolean;
-  exclude?: { code?: boolean };
-};
+### 3.1 Source of truth / Undo
+- Live Preview 有効時でも、doc は常に Markdown ソースである
+- Undo/Redo は doc への transaction を基準に動作する
+- View-only の差し替え（Decoration/Widgetの変更）は Undo 対象外
 
-export function livePreview(options?: LivePreviewOptions): Extension;
-```
+### 3.2 Theme compatibility
+- 既存の theme（別Plugin等）が提供する見た目は、可能な限り維持されること
+- Widget を用いる場合、必要に応じて class を付与し、全体テーマと整合する見た目を実現すること
+  - cm6-live-preview-core は色を定義せず、class を付与するだけに留める
 
-## 6. 受け入れ条件（Acceptance Criteria）
-- ブロック記号が「カーソル行で露出 / それ以外で抑制」される
-- インライン記号が「隣接で露出 / それ以外で抑制」される
-- IME入力中に致命的なカーソルジャンプ/入力欠落が発生しない（少なくとも既知の破綻を回避）
-- 大きめの文書でも極端に重くならない（visibleRanges限定が効いている）
+## 4. Configuration API
 
-## 7. 依存
-- CM6 core + `@codemirror/lang-markdown`（構文木利用）
+`buildExtensions(options)` は以下のオプションを受ける。
+
+- `livePreviewEnabled: boolean`
+- `blockRevealEnabled: boolean`
+- （既存）`showLineNumbers`, `wrapLines`, `tabSize`, etc.
+
+### 4.1 Semantic definition of `livePreviewEnabled`
+- `false`: Source Mode（通常のMarkdown編集表示。syntaxは表示される）
+- `true`: Live Preview Mode（以下の Preview/Edit 切替規則・表示規則が有効）
+
+## 5. Live Preview Mode Requirements
+
+### 5.1 Rich display (default behavior)
+Live Preview Mode では、対象要素に対して次を適用できること。
+
+- **syntax token の非表示（hide）**が基本
+  - 例: `**`, `#`, `` ` ``, `[]()`, list marker など
+- 表示変換は view-only（Decoration.mark / Decoration.replace / Widget）で行う
+
+#### Rich renderer levels
+- Inline要素:
+  - 既定は syntax token を hide し、内容（content）を装飾して表示
+- Block要素:
+  - 既定は syntax token を hide し、blockとしてのスタイルを適用
+  - 任意で block 全体を Widget によりリッチ表示へ置換できる（opt-in）
+
+### 5.2 Raw display (default behavior)
+- `raw` 状態の要素は、原則 **生Markdown（source）表示**に戻ること
+- 要素ごとに `RawRenderer` を定義できる拡張点を持つこと（将来要件）
+
+## 6. Reveal / Switching Rules (Rich ⇄ Raw)
+
+### 6.1 Transition triggers
+要素が `raw` に切り替わる条件は以下。
+
+- **Nearby**: 選択範囲に交差、またはカーソル近傍（N=1）
+- **Block reveal**（`blockRevealEnabled=true`）: カーソルが属する block は `raw`
+
+### 6.2 Priority
+競合時の優先順位は次で固定する。
+
+`Nearby` > `Block`
+
+### 6.3 Scope of switching
+- 切替は **要素単位（inline/block）**で行い、ドキュメント全体を一律に切り替えない
+- 同一要素内でも必要に応じて「syntax token のみ raw」など細粒度を許容する（実装裁量）
+
+## 7. Element-specific Requirements (initial)
+PH1 の対象要素は少なく定義し、順次追加可能とする（この一覧は feature spec で確定する）。
+
+候補（例）:
+- Headings
+- Bold / Italic
+- Inline code
+- Links
+- List markers / checkboxes（将来）
+- Code blocks（将来）
+
+### 7.1 Mermaid code block (recommended future behavior)
+- Preview:
+  - code block 全体を Widget により mermaid 図として表示可能
+- Edit:
+  - 既定はソース表示へ戻す
+  - 将来的に code + preview を同時表示する EditRenderer を提供可能
+
+## 8. Non-goals
+以下は `livePreviewEnabled` の範囲外とする（別機能/別PBI）。
+
+- 別ペインの HTML プレビューの提供
+- プレビューDOM（contentEditable等）での直接編集
+- Markdown 方言（GFM等）の完全対応
+- “完全WYSIWYG” を保証する高度な編集体験（Google Docs同等）
+
+## 9. Implementation constraints (informative)
+- Live Preview は CM6 の `Decoration`（mark/replace）と `Widget` を用いて実現する
+- 切替のために extensions は compartment により再構成可能な設計を推奨する
+
+## 10. Live Preview Configuration (implementation)
+`packages/cm6-live-preview-core/src/config.ts` で要素ごとの `renderState` を定義する。
+
+| 要素 | rawModeTrigger | richDisplayStyle |
+| --- | --- | --- |
+| 見出し | nearby / block | hide |
+| 太字 | nearby | hide |
+| 箇条書き/番号付き | always | none |

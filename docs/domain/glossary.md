@@ -2,6 +2,20 @@
 
 - Base Editor: CM6 を使った最小の Markdown 編集 Webapp。以降の機能の土台。
 - editor-core: Feature 001 のプロダクト名。Base Editor の実装パッケージ名として扱う。
+- Live Preview: Markdown を保持したまま記号の露出を抑制する編集体験。
+- cm6-live-preview-core: 記号の表示切替ロジックのみを提供するパッケージ。
+- cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
+- cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
+- cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
+- Rich: `renderState` が `rich` の表示状態。
+- Raw: `renderState` が `raw` の表示状態。
+- doc: Markdown ソース文字列（真実）。
+- state: doc + 設定 + 解析結果（EditorState）。
+- view: state を DOM として描画したもの（EditorView）。
+- renderState: 要素単位の表示状態。`rich` と `raw` を持つ。
+- Trigger: `renderState` を切り替える判定条件。
+- Reveal Zones: 記号を露出させる範囲（Block/Inline）。
+- Typography Theme: Markdown の見た目（見出し/強調/引用/リンクなど）を整えるテーマ。
 - CodeMirror 6 (CM6): 拡張可能なエディタライブラリ。
 - Extension: CM6 の機能単位。配列で合成する。
 - Compartment: runtime で extension 構成を差し替えるための CM6 機構。
