@@ -53,6 +53,25 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
         "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
       fontSize: "var(--mb-inline-code-size, 0.95em)",
     },
+    [`${scope} .${prefix}code-block`]: {
+      backgroundColor: "var(--mb-code-block-bg, #f2f2f2)",
+      fontFamily:
+        "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
+      position: "relative",
+    },
+    [`${scope} .${prefix}code-block-first`]: {
+      borderTopLeftRadius: "var(--mb-code-block-radius, 8px)",
+      borderTopRightRadius: "var(--mb-code-block-radius, 8px)",
+    },
+    [`${scope} .${prefix}code-block-last`]: {
+      borderBottomLeftRadius: "var(--mb-code-block-radius, 8px)",
+      borderBottomRightRadius: "var(--mb-code-block-radius, 8px)",
+    },
+    [`${scope} .${prefix}code-block-first, ${scope} .${prefix}code-block-middle, ${scope} .${prefix}code-block-last`]:
+      {
+        paddingLeft: "var(--mb-code-block-padding-x, 0.75rem)",
+        paddingRight: "var(--mb-code-block-padding-x, 0.75rem)",
+      },
     [`${scope} .${prefix}blockquote`]: {
       backgroundImage:
         "repeating-linear-gradient(to right, var(--mb-quote-border-color, currentColor) 0 var(--mb-quote-border-width, 3px), transparent var(--mb-quote-border-width, 3px) var(--mb-quote-indent, 0.75rem))",

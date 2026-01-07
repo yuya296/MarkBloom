@@ -68,6 +68,38 @@ function addLineClassesForNode(
   }
 }
 
+function addLineClass(lineFrom: number, className: string, lineClasses: Map<number, Set<string>>) {
+  let set = lineClasses.get(lineFrom);
+  if (!set) {
+    set = new Set<string>();
+    lineClasses.set(lineFrom, set);
+  }
+  set.add(className);
+}
+
+function addCodeBlockClasses(
+  view: EditorView,
+  from: number,
+  to: number,
+  prefix: string,
+  lineClasses: Map<number, Set<string>>
+) {
+  if (from >= to) {
+    return;
+  }
+  const startLine = view.state.doc.lineAt(from);
+  const endLine = view.state.doc.lineAt(to);
+  addLineClass(startLine.from, `${prefix}code-block-first`, lineClasses);
+  addLineClass(endLine.from, `${prefix}code-block-last`, lineClasses);
+  if (startLine.number === endLine.number) {
+    return;
+  }
+  for (let lineNumber = startLine.number + 1; lineNumber <= endLine.number - 1; lineNumber += 1) {
+    const line = view.state.doc.line(lineNumber);
+    addLineClass(line.from, `${prefix}code-block-middle`, lineClasses);
+  }
+}
+
 function addLineLevelForNode(
   view: EditorView,
   from: number,
@@ -170,6 +202,10 @@ function buildDecorations(view: EditorView, prefix: string): DecorationSet {
         if (stateClass) {
           lineClassNames.push(stateClass);
         }
+      }
+
+      if (node.name === "FencedCode" || node.name === "CodeBlock") {
+        addCodeBlockClasses(view, node.from, node.to, prefix, lineClasses);
       }
 
       if (lineClassNames.length > 0) {
