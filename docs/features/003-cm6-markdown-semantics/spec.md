@@ -42,6 +42,7 @@ Markdown の構文要素を解析し、**semantic class** を付与すること�
 - `mb-table`
 - `mb-html-block`
 - `mb-footnote-definition`
+- `mb-thematic-break`
 
 ### 3.2 mark（span / Decoration.mark）
 

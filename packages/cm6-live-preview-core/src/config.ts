@@ -90,6 +90,7 @@ export const blockTriggerNodeNames: ReadonlySet<NodeName> = new Set<NodeName>([
   NodeName.BulletList,
   NodeName.OrderedList,
   NodeName.ListItem,
+  NodeName.HorizontalRule,
   NodeName.ATXHeading1,
   NodeName.ATXHeading2,
   NodeName.ATXHeading3,

@@ -1,4 +1,5 @@
 import { RangeSetBuilder } from "@codemirror/state";
+import { syntaxTree } from "@codemirror/language";
 import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import type { LivePreviewOptions } from "./index";
 import {
@@ -10,6 +11,30 @@ import { addInlineMarkerDecorations } from "./inline/inlineDecorations";
 import { collectInlineMarkerRanges } from "./inline/inlineMarkerRanges";
 import { collectExcludedRanges } from "./core/excludedRanges";
 import { overlapsRange } from "./core/utils";
+
+function addThematicBreakDecorations(
+  view: EditorView,
+  push: (from: number, to: number, decoration: Decoration) => void,
+  hiddenDecoration: Decoration,
+  blockRevealRange: { from: number; to: number } | null,
+  rawLineDecoration: Decoration
+) {
+  const revealRanges = blockRevealRange ? [blockRevealRange] : [];
+
+  syntaxTree(view.state).iterate({
+    enter: (node) => {
+      if (node.name !== "HorizontalRule") {
+        return;
+      }
+      if (blockRevealRange && overlapsRange(node.from, node.to, revealRanges)) {
+        const line = view.state.doc.lineAt(node.from);
+        push(line.from, line.from, rawLineDecoration);
+        return;
+      }
+      push(node.from, node.to, hiddenDecoration);
+    },
+  });
+}
 
 export function buildDecorations(view: EditorView, options: LivePreviewOptions): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
@@ -26,6 +51,7 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   const inlineHiddenDecoration = Decoration.replace({
     inclusive: false,
   });
+  const rawLineDecoration = Decoration.line({ class: "cm-lp-raw" });
 
   const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
   const pushDecoration = (from: number, to: number, decoration: Decoration) => {
@@ -68,6 +94,14 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
       pos = line.to + 1;
     }
   }
+
+  addThematicBreakDecorations(
+    view,
+    pushDecoration,
+    blockHiddenDecoration,
+    blockRevealRange,
+    rawLineDecoration
+  );
 
   addInlineMarkerDecorations(pushDecoration, inlineMarkerRanges.hidden, inlineHiddenDecoration);
 

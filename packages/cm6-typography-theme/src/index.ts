@@ -85,6 +85,24 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       borderBottomLeftRadius: "0",
       borderBottomRightRadius: "0",
     },
+    [`${scope} .${prefix}thematic-break`]: {
+      position: "relative",
+      color: "var(--mb-hr-color, currentColor)",
+      opacity: "var(--mb-hr-opacity, 0.3)",
+    },
+    [`${scope} .${prefix}thematic-break::after`]: {
+      content: '""',
+      display: "block",
+      position: "absolute",
+      left: "0",
+      right: "0",
+      top: "50%",
+      transform: "translateY(-50%)",
+      borderTop: "1px solid currentColor",
+    },
+    [`${scope} .${prefix}thematic-break.cm-lp-raw::after`]: {
+      display: "none",
+    },
     [`${scope} .${prefix}code-block-first, ${scope} .${prefix}code-block-middle, ${scope} .${prefix}code-block-last`]:
       {
         paddingLeft: "var(--mb-code-block-padding-x, 0.75rem)",

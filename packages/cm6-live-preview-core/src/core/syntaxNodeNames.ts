@@ -17,6 +17,7 @@ export const NodeName = {
   Image: "Image",
   InlineCode: "InlineCode",
   Strikethrough: "Strikethrough",
+  HorizontalRule: "HorizontalRule",
   FencedCode: "FencedCode",
   CodeBlock: "CodeBlock",
   CodeMark: "CodeMark",

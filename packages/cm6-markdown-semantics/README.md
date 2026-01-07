@@ -27,3 +27,4 @@ Examples:
 - `mb-task-checked`, `mb-task-unchecked`
 - `mb-table`, `mb-html-block`
 - `mb-footnote-definition`, `mb-footnote-ref`
+- `mb-thematic-break`

@@ -9,6 +9,7 @@ import { buildDecorations } from "./decorations";
 
 export type LivePreviewOptions = {
   blockRevealEnabled?: boolean;
+  rawModeKeepsTheme?: boolean;
   exclude?: { code?: boolean };
 };
 
@@ -18,6 +19,7 @@ export function livePreviewBaseTheme(): Extension {
 
 const defaultOptions: Required<LivePreviewOptions> = {
   blockRevealEnabled: false,
+  rawModeKeepsTheme: true,
   exclude: { code: true },
 };
 
