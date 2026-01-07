@@ -7,8 +7,6 @@
 - line クラスは `line.from` 単位で集約して付与
 - `classPrefix` をオプション化（default: `mb-`）
 - spec を整理・更新
-
-## TODO
 - list / blockquote のレベル付与
 - task list の checked/unchecked 対応
 - table / footnote / html block の追加

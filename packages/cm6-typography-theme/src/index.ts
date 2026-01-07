@@ -54,15 +54,37 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       fontSize: "var(--mb-inline-code-size, 0.95em)",
     },
     [`${scope} .${prefix}blockquote`]: {
-      borderLeft: "3px solid var(--mb-quote-border-color, currentColor)",
-      paddingLeft: "0.75rem",
+      backgroundImage:
+        "repeating-linear-gradient(to right, var(--mb-quote-border-color, currentColor) 0 var(--mb-quote-border-width, 3px), transparent var(--mb-quote-border-width, 3px) var(--mb-quote-indent, 0.75rem))",
+      backgroundSize:
+        "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem)) 100%",
+      backgroundPosition: "left top",
+      backgroundRepeat: "no-repeat",
+      paddingLeft:
+        "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem) - var(--mb-quote-border-width, 3px))",
       marginLeft: "0",
       opacity: "var(--mb-quote-opacity, 0.85)",
       lineHeight: "inherit",
       fontStyle: "var(--mb-quote-font-style, normal)",
     },
     [`${scope} .${prefix}list-item`]: {
-      paddingLeft: "0.1rem",
+      paddingLeft: "0",
     },
+    [`${scope} .${prefix}blockquote.${prefix}list-item`]: {
+      paddingLeft:
+        "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem) - var(--mb-quote-border-width, 3px))",
+    },
+    [`${scope} .${prefix}blockquote-level-1`]: { "--mb-blockquote-level": "1" },
+    [`${scope} .${prefix}blockquote-level-2`]: { "--mb-blockquote-level": "2" },
+    [`${scope} .${prefix}blockquote-level-3`]: { "--mb-blockquote-level": "3" },
+    [`${scope} .${prefix}blockquote-level-4`]: { "--mb-blockquote-level": "4" },
+    [`${scope} .${prefix}blockquote-level-5`]: { "--mb-blockquote-level": "5" },
+    [`${scope} .${prefix}blockquote-level-6`]: { "--mb-blockquote-level": "6" },
+    [`${scope} .${prefix}list-item-level-1`]: { "--mb-list-level": "1" },
+    [`${scope} .${prefix}list-item-level-2`]: { "--mb-list-level": "2" },
+    [`${scope} .${prefix}list-item-level-3`]: { "--mb-list-level": "3" },
+    [`${scope} .${prefix}list-item-level-4`]: { "--mb-list-level": "4" },
+    [`${scope} .${prefix}list-item-level-5`]: { "--mb-list-level": "5" },
+    [`${scope} .${prefix}list-item-level-6`]: { "--mb-list-level": "6" },
   });
 }

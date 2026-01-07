@@ -19,3 +19,8 @@ Examples:
 - `mb-strong`, `mb-em`
 - `mb-link`, `mb-code`, `mb-list-item`, `mb-blockquote`
 - `mb-code-block`
+- `mb-list-item-level-1` .. `mb-list-item-level-n`
+- `mb-blockquote-level-1` .. `mb-blockquote-level-n`
+- `mb-task-checked`, `mb-task-unchecked`
+- `mb-table`, `mb-html-block`
+- `mb-footnote-definition`, `mb-footnote-ref`

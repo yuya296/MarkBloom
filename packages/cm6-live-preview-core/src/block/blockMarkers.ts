@@ -13,7 +13,7 @@ import type { LivePreviewOptions } from "../index";
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
   list: /^\s{0,3}([*+-]|\d+\.)(?=\s)/,
-  quote: /^\s{0,3}(>)(?=\s?)/,
+  quotePrefix: /^\s{0,3}(?:>\s?)*/,
 };
 
 type BlockMarker = {
@@ -65,11 +65,20 @@ export function collectBlockRevealRange(
 
   for (const resolved of candidates) {
     let current: typeof resolved | null = resolved;
+    let fallback: Range | null = null;
     while (current) {
       if (hasNodeName(blockTriggerNodeNames, current.name)) {
-        return { from: current.from, to: current.to };
+        if (current.name === "Blockquote") {
+          return { from: current.from, to: current.to };
+        }
+        if (!fallback) {
+          fallback = { from: current.from, to: current.to };
+        }
       }
       current = current.parent;
+    }
+    if (fallback) {
+      return fallback;
     }
   }
 
@@ -101,12 +110,16 @@ function collectBlockMarkers(
     markers.push({ id: "list", from, to });
   }
 
-  const quoteMatch = lineText.match(blockMarkerPattern.quote);
-  if (quoteMatch) {
-    const markerIndex = lineText.indexOf(quoteMatch[1]);
-    const from = lineFrom + markerIndex;
-    const to = from + quoteMatch[1].length;
-    markers.push({ id: "quote", from, to });
+  const quotePrefix = lineText.match(blockMarkerPattern.quotePrefix)?.[0] ?? "";
+  if (quotePrefix.includes(">")) {
+    for (let i = 0; i < quotePrefix.length; i += 1) {
+      if (quotePrefix[i] === ">") {
+        const from = lineFrom + i;
+        const nextChar = quotePrefix[i + 1];
+        const to = nextChar === " " ? from + 2 : from + 1;
+        markers.push({ id: "quote", from, to });
+      }
+    }
   }
 
   const fenceMarkers = fenceMarkersByLine.get(lineFrom);

@@ -1,6 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import { RangeSetBuilder, type Extension } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import type { SyntaxNode } from "@lezer/common";
 
 export type MarkdownSemanticsOptions = {
   classPrefix?: string;
@@ -35,12 +36,93 @@ function buildRules(prefix: string): SemanticRule[] {
     { nodeNames: ["ListItem"], className: `${prefix}list-item`, applyToLine: true },
     { nodeNames: ["Blockquote"], className: `${prefix}blockquote`, applyToLine: true },
     { nodeNames: ["FencedCode", "CodeBlock"], className: `${prefix}code-block`, applyToLine: true },
+    { nodeNames: ["Table"], className: `${prefix}table`, applyToLine: true },
+    { nodeNames: ["HTMLBlock"], className: `${prefix}html-block`, applyToLine: true },
+    { nodeNames: ["FootnoteDefinition"], className: `${prefix}footnote-definition`, applyToLine: true },
+    { nodeNames: ["FootnoteReference"], className: `${prefix}footnote-ref` },
   ];
+}
+
+function addLineClassesForNode(
+  view: EditorView,
+  from: number,
+  to: number,
+  classNames: readonly string[],
+  lineClasses: Map<number, Set<string>>
+) {
+  if (from >= to) {
+    return;
+  }
+  const startLine = view.state.doc.lineAt(from);
+  const endLine = view.state.doc.lineAt(to);
+  for (let lineNumber = startLine.number; lineNumber <= endLine.number; lineNumber += 1) {
+    const line = view.state.doc.line(lineNumber);
+    let set = lineClasses.get(line.from);
+    if (!set) {
+      set = new Set<string>();
+      lineClasses.set(line.from, set);
+    }
+    for (const className of classNames) {
+      set.add(className);
+    }
+  }
+}
+
+function addLineLevelForNode(
+  view: EditorView,
+  from: number,
+  to: number,
+  level: number,
+  lineLevels: Map<number, number>
+) {
+  if (from >= to) {
+    return;
+  }
+  const startLine = view.state.doc.lineAt(from);
+  const endLine = view.state.doc.lineAt(to);
+  for (let lineNumber = startLine.number; lineNumber <= endLine.number; lineNumber += 1) {
+    const line = view.state.doc.line(lineNumber);
+    const current = lineLevels.get(line.from) ?? 0;
+    if (level > current) {
+      lineLevels.set(line.from, level);
+    }
+  }
+}
+
+function getListLevel(node: SyntaxNode): number {
+  let level = 0;
+  for (let current = node.parent; current; current = current.parent) {
+    if (current.name === "BulletList" || current.name === "OrderedList") {
+      level += 1;
+    }
+  }
+  return level;
+}
+
+function getBlockquoteLevel(node: SyntaxNode): number {
+  let level = 0;
+  for (let current: SyntaxNode | null = node; current; current = current.parent) {
+    if (current.name === "Blockquote") {
+      level += 1;
+    }
+  }
+  return level;
+}
+
+function getTaskStateClass(view: EditorView, from: number, to: number, prefix: string): string | null {
+  const sample = view.state.doc.sliceString(from, Math.min(to, from + 6));
+  const match = sample.match(/^\[( |x|X)\]/);
+  if (!match) {
+    return null;
+  }
+  return match[1].toLowerCase() === "x" ? `${prefix}task-checked` : `${prefix}task-unchecked`;
 }
 
 function buildDecorations(view: EditorView, prefix: string): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
   const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
+  const lineClasses = new Map<number, Set<string>>();
+  const lineBlockquoteLevels = new Map<number, number>();
   const rules = buildRules(prefix);
   const rulesByName = new Map<string, SemanticRule>();
   for (const rule of rules) {
@@ -51,35 +133,67 @@ function buildDecorations(view: EditorView, prefix: string): DecorationSet {
 
   syntaxTree(view.state).iterate({
     enter: (node) => {
-      const rule = rulesByName.get(node.name);
-      if (!rule) {
-        return;
-      }
       if (node.from >= node.to) {
         return;
       }
 
-      if (rule.applyToLine) {
-        const startLine = view.state.doc.lineAt(node.from);
-        const endLine = view.state.doc.lineAt(node.to);
-        for (let lineNumber = startLine.number; lineNumber <= endLine.number; lineNumber += 1) {
-          const line = view.state.doc.line(lineNumber);
+      const lineClassNames: string[] = [];
+      const rule = rulesByName.get(node.name);
+      if (rule) {
+        if (rule.applyToLine) {
+          lineClassNames.push(rule.className);
+        } else {
           pending.push({
-            from: line.from,
-            to: line.from,
-            decoration: Decoration.line({ class: rule.className }),
+            from: node.from,
+            to: node.to,
+            decoration: Decoration.mark({ class: rule.className }),
           });
         }
-        return;
       }
 
-      pending.push({
-        from: node.from,
-        to: node.to,
-        decoration: Decoration.mark({ class: rule.className }),
-      });
+      if (node.name === "ListItem") {
+        const level = getListLevel(node.node);
+        if (level > 0) {
+          lineClassNames.push(`${prefix}list-item-level-${level}`);
+        }
+      }
+
+      if (node.name === "Blockquote") {
+        const level = getBlockquoteLevel(node.node);
+        if (level > 0) {
+          addLineLevelForNode(view, node.from, node.to, level, lineBlockquoteLevels);
+        }
+      }
+
+      if (node.name === "Task") {
+        const stateClass = getTaskStateClass(view, node.from, node.to, prefix);
+        if (stateClass) {
+          lineClassNames.push(stateClass);
+        }
+      }
+
+      if (lineClassNames.length > 0) {
+        addLineClassesForNode(view, node.from, node.to, lineClassNames, lineClasses);
+      }
     },
   });
+
+  for (const [lineFrom, level] of lineBlockquoteLevels) {
+    let classSet = lineClasses.get(lineFrom);
+    if (!classSet) {
+      classSet = new Set<string>();
+      lineClasses.set(lineFrom, classSet);
+    }
+    classSet.add(`${prefix}blockquote-level-${level}`);
+  }
+
+  for (const [lineFrom, classSet] of lineClasses) {
+    pending.push({
+      from: lineFrom,
+      to: lineFrom,
+      decoration: Decoration.line({ class: Array.from(classSet).join(" ") }),
+    });
+  }
 
   pending.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));
   for (const item of pending) {

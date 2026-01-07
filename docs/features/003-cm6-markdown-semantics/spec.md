@@ -27,9 +27,16 @@ Markdown の構文要素を解析し、**semantic class** を付与すること�
 ### 3.1 line（cm-line / Decoration.line）
 
 - `mb-blockquote`
+- `mb-blockquote-level-1..n`
 - `mb-code-block`
 - `mb-list-item`
+- `mb-list-item-level-1..n`
+- `mb-task-checked`
+- `mb-task-unchecked`
 - `mb-heading-1..6`
+- `mb-table`
+- `mb-html-block`
+- `mb-footnote-definition`
 
 ### 3.2 mark（span / Decoration.mark）
 
@@ -37,6 +44,7 @@ Markdown の構文要素を解析し、**semantic class** を付与すること�
 - `mb-em`
 - `mb-link`
 - `mb-code`
+- `mb-footnote-ref`
 
 ## 4. アルゴリズム
 
@@ -64,6 +72,4 @@ export function markdownSemantics(options?: MarkdownSemanticsOptions): Extension
 
 ## 7. 将来拡張
 
-- list / blockquote のレベル付与
-- task list の checked/unchecked 状態
-- table / footnote / html block などの対応追加
+- （現状なし）
