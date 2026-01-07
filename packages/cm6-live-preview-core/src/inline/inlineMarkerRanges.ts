@@ -124,10 +124,6 @@ export function collectInlineMarkerRanges(
         return;
       }
 
-      if (options.exclude?.code !== false && node.name === NodeName.InlineCode) {
-        return;
-      }
-
       if (
         inRangeSegment(node.from, node.to, excluded.block) ||
         inRangeSegment(node.from, node.to, excluded.inline)

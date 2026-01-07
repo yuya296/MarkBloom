@@ -52,6 +52,9 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       fontFamily:
         "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
       fontSize: "var(--mb-inline-code-size, 0.95em)",
+      backgroundColor: "var(--mb-inline-code-bg, rgba(0, 0, 0, 0.05))",
+      borderRadius: "var(--mb-inline-code-radius, 4px)",
+      padding: "0.05em 0.35em",
     },
     [`${scope} .${prefix}code-block`]: {
       backgroundColor: "var(--mb-code-block-bg, #f2f2f2)",
