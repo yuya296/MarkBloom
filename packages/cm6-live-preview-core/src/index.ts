@@ -11,16 +11,30 @@ export type LivePreviewOptions = {
   blockRevealEnabled?: boolean;
   rawModeKeepsTheme?: boolean;
   exclude?: { code?: boolean };
+  imageBasePath?: string;
+  imageRawShowsPreview?: boolean;
 };
 
 export function livePreviewBaseTheme(): Extension {
-  return EditorView.baseTheme({});
+  return EditorView.baseTheme({
+    ".cm-content .cm-lp-image": {
+      display: "inline-block",
+      maxWidth: "100%",
+    },
+    ".cm-content .cm-lp-image img": {
+      display: "block",
+      maxWidth: "100%",
+      height: "auto",
+    },
+  });
 }
 
 const defaultOptions: Required<LivePreviewOptions> = {
   blockRevealEnabled: false,
   rawModeKeepsTheme: true,
   exclude: { code: true },
+  imageBasePath: "",
+  imageRawShowsPreview: false,
 };
 
 export function livePreview(options: LivePreviewOptions = {}): Extension {

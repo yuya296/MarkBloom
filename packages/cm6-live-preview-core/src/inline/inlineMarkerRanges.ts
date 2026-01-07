@@ -109,9 +109,18 @@ export function collectInlineMarkerRanges(
   view: EditorView,
   options: LivePreviewOptions,
   excluded: ExcludeRanges
-): { hidden: Range[] } {
+): {
+  hidden: Range[];
+  images: Array<{ from: number; to: number; src: string; alt: string; raw: boolean }>;
+} {
   const hidden: Range[] = [];
+  const images: Array<{ from: number; to: number; src: string; alt: string; raw: boolean }> = [];
   const tree = syntaxTree(view.state);
+  const basePath = options.imageBasePath?.replace(/\/+$/, "") ?? "";
+  const resolvedBase = basePath
+    ? new URL(basePath.endsWith("/") ? basePath : `${basePath}/`, view.dom.ownerDocument.baseURI)
+        .toString()
+    : "";
 
   tree.iterate({
     enter: (node) => {
@@ -138,8 +147,30 @@ export function collectInlineMarkerRanges(
           hidden.push(...collectChildRanges(view, node.from, node.to, new Set(targets)));
         }
       }
+
+      if ((!raw || options.imageRawShowsPreview) && node.name === NodeName.Image) {
+        const literal = view.state.doc.sliceString(node.from, node.to);
+        const match = literal.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
+        if (!match) {
+          return;
+        }
+        const alt = match[1] ?? "";
+        const rawSrc = match[2] ?? "";
+        if (!rawSrc) {
+          return;
+        }
+        const shouldResolve =
+          resolvedBase &&
+          !/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(rawSrc) &&
+          !rawSrc.startsWith("/");
+        const src = shouldResolve ? new URL(rawSrc, resolvedBase).toString() : rawSrc;
+        if (!src) {
+          return;
+        }
+        images.push({ from: node.from, to: node.to, src, alt, raw });
+      }
     },
   });
 
-  return { hidden };
+  return { hidden, images };
 }
