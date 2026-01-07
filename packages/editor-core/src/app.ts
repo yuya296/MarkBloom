@@ -41,6 +41,8 @@ function buildExtensions({
       livePreviewPreset({
         livePreview: {
           blockRevealEnabled,
+          imageBasePath: new URL("../assets/", import.meta.url).toString(),
+          imageRawShowsPreview: true,
         },
       })
     );

@@ -7,7 +7,7 @@ import {
   collectBlockRevealRange,
   collectFenceMarkersByLine,
 } from "./block/blockMarkers";
-import { addInlineMarkerDecorations } from "./inline/inlineDecorations";
+import { addImageDecorations, addInlineMarkerDecorations } from "./inline/inlineDecorations";
 import { collectInlineMarkerRanges } from "./inline/inlineMarkerRanges";
 import { collectExcludedRanges } from "./core/excludedRanges";
 import { overlapsRange } from "./core/utils";
@@ -104,6 +104,11 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   );
 
   addInlineMarkerDecorations(pushDecoration, inlineMarkerRanges.hidden, inlineHiddenDecoration);
+  addImageDecorations(
+    pushDecoration,
+    inlineMarkerRanges.images,
+    options.imageRawShowsPreview ?? false
+  );
 
   pending.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));
   for (const item of pending) {
