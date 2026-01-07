@@ -104,9 +104,6 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       lineHeight: "inherit",
       fontStyle: "var(--mb-quote-font-style, normal)",
     },
-    [`${scope} .${prefix}list-item`]: {
-      paddingLeft: "0",
-    },
     [`${scope} .${prefix}blockquote.${prefix}list-item`]: {
       paddingLeft:
         "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem) - var(--mb-quote-border-width, 3px))",
