@@ -57,7 +57,7 @@ Mixed list:
 - [OpenAI](https://openai.com)
 - Autolink: <https://example.com>
 
-![Placeholder image](https://via.placeholder.com/120x80)
+![sample.png](img/sample.png)
 
 ## Blockquotes
 > Blockquote line 1
