@@ -36,6 +36,8 @@ function buildRules(prefix: string): SemanticRule[] {
     { nodeNames: ["ListItem"], className: `${prefix}list-item`, applyToLine: true },
     { nodeNames: ["Blockquote"], className: `${prefix}blockquote`, applyToLine: true },
     { nodeNames: ["FencedCode", "CodeBlock"], className: `${prefix}code-block`, applyToLine: true },
+    { nodeNames: ["FencedCode"], className: `${prefix}code-block-fenced`, applyToLine: true },
+    { nodeNames: ["CodeBlock"], className: `${prefix}code-block-indented`, applyToLine: true },
     { nodeNames: ["Table"], className: `${prefix}table`, applyToLine: true },
     { nodeNames: ["HTMLBlock"], className: `${prefix}html-block`, applyToLine: true },
     { nodeNames: ["FootnoteDefinition"], className: `${prefix}footnote-definition`, applyToLine: true },

@@ -59,6 +59,16 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
         "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
       position: "relative",
     },
+    [`${scope} .${prefix}code-block-fenced`]: {
+      backgroundColor: "var(--mb-code-block-bg, #f2f2f2)",
+    },
+    [`${scope} .${prefix}code-block-indented`]: {
+      backgroundColor: "transparent",
+      backgroundImage:
+        "linear-gradient(to right, transparent 0 var(--mb-code-block-indent, 4ch), var(--mb-code-block-bg, #f2f2f2) var(--mb-code-block-indent, 4ch))",
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "100% 100%",
+    },
     [`${scope} .${prefix}code-block-first`]: {
       borderTopLeftRadius: "var(--mb-code-block-radius, 8px)",
       borderTopRightRadius: "var(--mb-code-block-radius, 8px)",
@@ -66,6 +76,14 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
     [`${scope} .${prefix}code-block-last`]: {
       borderBottomLeftRadius: "var(--mb-code-block-radius, 8px)",
       borderBottomRightRadius: "var(--mb-code-block-radius, 8px)",
+    },
+    [`${scope} .${prefix}code-block-indented.${prefix}code-block-first`]: {
+      borderTopLeftRadius: "0",
+      borderTopRightRadius: "0",
+    },
+    [`${scope} .${prefix}code-block-indented.${prefix}code-block-last`]: {
+      borderBottomLeftRadius: "0",
+      borderBottomRightRadius: "0",
     },
     [`${scope} .${prefix}code-block-first, ${scope} .${prefix}code-block-middle, ${scope} .${prefix}code-block-last`]:
       {

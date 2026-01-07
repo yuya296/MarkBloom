@@ -30,6 +30,8 @@ CodeMirror 6 (CM6) エディタの見た目を、MarkBloom のデザインガイ
 - line（cm-line / Decoration.line）に付与
   - `mb-blockquote`
   - `mb-code-block`
+  - `mb-code-block-fenced`
+  - `mb-code-block-indented`
   - `mb-code-block-first`
   - `mb-code-block-middle`
   - `mb-code-block-last`

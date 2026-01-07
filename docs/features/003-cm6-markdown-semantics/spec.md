@@ -29,6 +29,8 @@ Markdown の構文要素を解析し、**semantic class** を付与すること�
 - `mb-blockquote`
 - `mb-blockquote-level-1..n`
 - `mb-code-block`
+- `mb-code-block-fenced`
+- `mb-code-block-indented`
 - `mb-code-block-first`
 - `mb-code-block-middle`
 - `mb-code-block-last`
