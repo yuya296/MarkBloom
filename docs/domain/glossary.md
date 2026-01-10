@@ -7,6 +7,10 @@
 - cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
+- cm6-table-editor: Markdown テーブルを Widget 化して表示・編集する CM6 パッケージ。
+- RevoGrid: WebComponent ベースのグリッドライブラリ。テーブル描画候補の1つ。
+- Tabulator: Vanilla JS グリッドライブラリ。テーブル描画候補の1つ。
+- TOAST UI Grid: TOAST UI のグリッドライブラリ。テーブル描画候補の1つ。
 - Rich: `renderState` が `rich` の表示状態。
 - Raw: `renderState` が `raw` の表示状態。
 - doc: Markdown ソース文字列（真実）。

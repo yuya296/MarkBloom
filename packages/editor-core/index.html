@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
     <title>editor-core</title>
   </head>
   <body>
@@ -34,6 +35,15 @@
         <label class="control-item">
           Tab size
           <input id="tab-size" type="number" min="2" max="8" value="4" />
+        </label>
+        <label class="control-item">
+          Table engine
+          <select id="table-engine">
+            <option value="revogrid" selected>RevoGrid</option>
+            <option value="tabulator">Tabulator</option>
+            <option value="toastui">TOAST UI Grid</option>
+            <option value="none">None</option>
+          </select>
         </label>
         <button id="apply" type="button">Apply</button>
       </section>

@@ -37,3 +37,5 @@ Thumbs.db
 .vite/
 .svelte-kit/
 .nuxt/
+.playwright-browsers
+test-results/
