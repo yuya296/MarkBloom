@@ -84,7 +84,9 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       fontStyle: "italic",
     },
     [`${scope} .${prefix}link`]: {
+      color: "var(--mb-link-color, var(--editor-primary-color, #0f5b9e))",
       textDecoration: "underline",
+      cursor: "pointer",
     },
     [`${scope} .${prefix}code`]: {
       fontFamily:

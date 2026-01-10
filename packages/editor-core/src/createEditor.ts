@@ -18,6 +18,38 @@ export type EditorHandle = {
   destroy: () => void;
 };
 
+function slugifyHeading(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function findHeadingLineForId(view: EditorView, targetId: string) {
+  const used = new Map<string, number>();
+  for (let i = 1; i <= view.state.doc.lines; i += 1) {
+    const line = view.state.doc.line(i);
+    const match = line.text.match(/^\s{0,3}#{1,6}\s+(.+)$/);
+    if (!match) {
+      continue;
+    }
+    const headingText = match[1].replace(/\s+#*\s*$/, "");
+    const base = slugifyHeading(headingText);
+    if (!base) {
+      continue;
+    }
+    const count = used.get(base) ?? 0;
+    used.set(base, count + 1);
+    const id = count === 0 ? base : `${base}-${count}`;
+    if (id === targetId) {
+      return line;
+    }
+  }
+  return null;
+}
+
 export function createEditor({
   parent,
   initialText = "",
@@ -31,6 +63,44 @@ export function createEditor({
   const dynamicExtensions = new Compartment();
 
   const baseExtensions = [
+    EditorView.domEventHandlers({
+      click: (event) => {
+        if (!(event.target instanceof Element)) {
+          return false;
+        }
+        const link = event.target.closest(".mb-link[data-href]");
+        if (!(link instanceof HTMLElement)) {
+          return false;
+        }
+        const href = link.dataset.href;
+        if (!href) {
+          return false;
+        }
+        const view = EditorView.findFromDOM(event.target);
+        if (!view) {
+          return false;
+        }
+        if (href.startsWith("#")) {
+          event.preventDefault();
+          event.stopPropagation();
+          const targetId = decodeURIComponent(href.slice(1));
+          const targetLine = findHeadingLineForId(view, targetId);
+          if (targetLine) {
+            view.dispatch({
+              selection: { anchor: targetLine.from },
+              scrollIntoView: true,
+            });
+            return true;
+          }
+          return false;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        window.open(href, "_blank", "noopener,noreferrer");
+        return true;
+      },
+    }),
     keymap.of(defaultKeymap),
     markdown({ extensions: [Strikethrough] }),
     EditorView.updateListener.of((update) => {
