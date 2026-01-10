@@ -281,27 +281,6 @@ footer.footer {
   line-height: 2;
 }
 
-.cm-editor .cm-content .mb-code {
-  font-family: var(--mb-font-mono);
-}
-
-.cm-editor .cm-content .mb-code-block {
-  font-family: var(--mb-font-mono);
-}
-
-.cm-editor .cm-content .mb-code-block-indented {
-  --mb-code-block-indent: 2ch;
-}
-
-.cm-editor .cm-line.mb-code-block-fenced {
-  font-family: var(--mb-font-mono);
-  line-height: 1.2rem;
-}
-
-.cm-editor .cm-line.mb-code-block-indented {
-  line-height: 1.2rem;
-}
-
 .cm-editor .mb-syntax-secondary {
   color: var(--editor-secondary-color);
 }

@@ -110,9 +110,16 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
     },
     [`${scope} .${prefix}code-block-fenced`]: {
       backgroundColor: "var(--mb-code-block-bg, #f2f2f2)",
+      fontFamily:
+        "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
+      lineHeight: "1.2rem",
     },
     [`${scope} .${prefix}code-block-indented`]: {
+      "--mb-code-block-indent": "2ch",
       backgroundColor: "transparent",
+      fontFamily:
+        "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
+      lineHeight: "1.2rem",
       backgroundImage:
         "linear-gradient(to right, transparent 0 var(--mb-code-block-indent, 4ch), var(--mb-code-block-bg, #f2f2f2) var(--mb-code-block-indent, 4ch))",
       backgroundRepeat: "no-repeat",
