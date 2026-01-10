@@ -109,7 +109,12 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       position: "relative",
     },
     [`${scope} .${prefix}code-block-fenced`]: {
-      backgroundColor: "var(--mb-code-block-bg, #f2f2f2)",
+      backgroundImage:
+        "linear-gradient(var(--mb-code-block-bg, #f2f2f2), var(--mb-code-block-bg, #f2f2f2))",
+      backgroundRepeat: "no-repeat",
+      backgroundSize:
+        "100% calc(100% - var(--mb-code-block-padding-top, 0px) - var(--mb-code-block-padding-bottom, 0px))",
+      backgroundPosition: "0 var(--mb-code-block-padding-top, 0px)",
       fontFamily:
         "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
       lineHeight: "1.2rem",
@@ -132,6 +137,16 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
     [`${scope} .${prefix}code-block-last`]: {
       borderBottomLeftRadius: "var(--mb-code-block-radius, 8px)",
       borderBottomRightRadius: "var(--mb-code-block-radius, 8px)",
+    },
+    [`${scope} .${prefix}code-block-fenced.${prefix}code-block-first`]: {
+      "--mb-code-block-padding-top": "0.35rem",
+      "--mb-code-block-padding-bottom": "0px",
+      paddingTop: "var(--mb-code-block-padding-top)",
+    },
+    [`${scope} .${prefix}code-block-fenced.${prefix}code-block-last`]: {
+      "--mb-code-block-padding-top": "0px",
+      "--mb-code-block-padding-bottom": "0.35rem",
+      paddingBottom: "var(--mb-code-block-padding-bottom)",
     },
     [`${scope} .${prefix}code-block-indented.${prefix}code-block-first`]: {
       borderTopLeftRadius: "0",
