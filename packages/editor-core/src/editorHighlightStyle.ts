@@ -19,6 +19,7 @@ const highlightStyle = HighlightStyle.define([
   { tag: tags.emphasis, fontStyle: "italic" },
   { tag: tags.strong, fontWeight: "700" },
   { tag: tags.meta, color: "var(--syntax-meta)" },
+  { tag: tags.monospace, fontFamily: "var(--mb-font-mono)" },
 ]);
 
 export function editorHighlightStyle(): Extension {
