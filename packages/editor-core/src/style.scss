@@ -3,11 +3,97 @@
 :root {
   color-scheme: light;
   font-family: "Noto Sans JP", "Noto Sans", "Yu Gothic", "YuGothic", "Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic Pro", sans-serif;
-  background: #ffffff;
-  color: #1f1e1c;
+  background: var(--app-bg);
+  color: var(--app-text);
+  --app-bg: #ffffff;
+  --app-surface: #ffffff;
+  --app-text: #1f1e1c;
+  --app-muted: #6a6257;
+  --app-subtle: #4c463c;
+  --app-border: #ece4d2;
+  --app-shadow: 0 8px 16px rgba(31, 30, 28, 0.06);
+  --app-pill-bg: #fdf7e5;
+  --app-pill-border: #e6dcc6;
+  --app-button-bg: #f7ead2;
+  --app-button-border: #d8cbb4;
+  --app-input-bg: #ffffff;
+  --app-input-border: #d8cbb4;
   --editor-primary-color: #0f5b9e;
   --editor-secondary-color: #8f8a7f;
+  --editor-surface: #ffffff;
+  --editor-border: #e6dcc6;
+  --editor-text-color: #1f1e1c;
+  --editor-gutter-bg: transparent;
+  --editor-gutter-color: #8f8a7f;
+  --editor-selection-bg: rgba(15, 91, 158, 0.2);
+  --editor-active-line-bg: rgba(15, 91, 158, 0.06);
+  --editor-active-line-gutter-bg: rgba(15, 91, 158, 0.08);
+  --editor-caret-color: #0f5b9e;
   --mb-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --mb-inline-code-bg: rgba(15, 91, 158, 0.08);
+  --mb-code-block-bg: #f2f2f2;
+  --mb-quote-border-color: #b9b1a4;
+  --mb-hr-color: #6a6257;
+  --syntax-comment: #7a6f62;
+  --syntax-keyword: #6f3cc3;
+  --syntax-operator: #6b5c4a;
+  --syntax-string: #b23a2b;
+  --syntax-number: #0f5b9e;
+  --syntax-atom: #2e6b3c;
+  --syntax-function: #7f4b00;
+  --syntax-variable: #2d2a26;
+  --syntax-type: #1c6a86;
+  --syntax-property: #6a2d2b;
+  --syntax-tag: #6f3cc3;
+  --syntax-link: #0f5b9e;
+  --syntax-heading: #2d2a26;
+  --syntax-meta: #6b5c4a;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #0f1419;
+  --app-surface: #161c22;
+  --app-text: #e6e2da;
+  --app-muted: #9a9487;
+  --app-subtle: #c1b8a8;
+  --app-border: #2b333c;
+  --app-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  --app-pill-bg: #1c2430;
+  --app-pill-border: #2e3946;
+  --app-button-bg: #263242;
+  --app-button-border: #384758;
+  --app-input-bg: #161c22;
+  --app-input-border: #2e3946;
+  --editor-primary-color: #7ab0ff;
+  --editor-secondary-color: #9a9487;
+  --editor-surface: #10161d;
+  --editor-border: #27303a;
+  --editor-text-color: #e6e2da;
+  --editor-gutter-bg: #10161d;
+  --editor-gutter-color: #9a9487;
+  --editor-selection-bg: rgba(122, 176, 255, 0.24);
+  --editor-active-line-bg: rgba(255, 255, 255, 0.05);
+  --editor-active-line-gutter-bg: rgba(255, 255, 255, 0.08);
+  --editor-caret-color: #7ab0ff;
+  --mb-inline-code-bg: rgba(122, 176, 255, 0.14);
+  --mb-code-block-bg: #0c1116;
+  --mb-quote-border-color: #4f5a66;
+  --mb-hr-color: #9a9487;
+  --syntax-comment: #7f8a98;
+  --syntax-keyword: #c08cff;
+  --syntax-operator: #9fb0c0;
+  --syntax-string: #ff9b7f;
+  --syntax-number: #7ab0ff;
+  --syntax-atom: #7ce0a1;
+  --syntax-function: #f5b56b;
+  --syntax-variable: #e6e2da;
+  --syntax-type: #7bd5e8;
+  --syntax-property: #f3a6b3;
+  --syntax-tag: #c08cff;
+  --syntax-link: #7ab0ff;
+  --syntax-heading: #f1ede4;
+  --syntax-meta: #9fb0c0;
 }
 
 * {
@@ -17,6 +103,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--app-text);
 }
 
 #app {
@@ -25,7 +113,7 @@ body {
   gap: 16px;
   min-height: 100vh;
   padding: 24px;
-  background: #ffffff;
+  background: var(--app-bg);
 }
 
 .app-header {
@@ -44,17 +132,17 @@ body {
 }
 
 .app-subtitle {
-  color: #4c463c;
+  color: var(--app-subtle);
   font-size: 14px;
 }
 
 .status {
   font-size: 13px;
-  color: #6a6257;
+  color: var(--app-muted);
   padding: 6px 10px;
   border-radius: 999px;
-  background: #fdf7e5;
-  border: 1px solid #e6dcc6;
+  background: var(--app-pill-bg);
+  border: 1px solid var(--app-pill-border);
 }
 
 .controls {
@@ -62,10 +150,10 @@ body {
   flex-wrap: wrap;
   gap: 12px;
   padding: 12px 16px;
-  background: #ffffff;
+  background: var(--app-surface);
   border-radius: 12px;
-  border: 1px solid #ece4d2;
-  box-shadow: 0 8px 16px rgba(31, 30, 28, 0.06);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
@@ -81,21 +169,71 @@ body {
 .control-item input[type="number"] {
   width: 64px;
   padding: 4px 6px;
+  background: var(--app-input-bg);
+  color: var(--app-text);
+  border: 1px solid var(--app-input-border);
 }
 
 button#apply {
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid #d8cbb4;
-  background: #f7ead2;
+  border: 1px solid var(--app-button-border);
+  background: var(--app-button-bg);
+  color: var(--app-text);
   cursor: pointer;
   font-weight: 600;
 }
 
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--app-button-border);
+  background: var(--app-button-bg);
+  color: var(--app-text);
+  cursor: pointer;
+  position: relative;
+}
+
+.icon-button .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-button .icon {
+  display: block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+.icon-button [data-icon="sun"] {
+  -webkit-mask-image: url("./assets/icons/sun.svg");
+  mask-image: url("./assets/icons/sun.svg");
+}
+
+.icon-button [data-icon="moon"] {
+  -webkit-mask-image: url("./assets/icons/moon.svg");
+  mask-image: url("./assets/icons/moon.svg");
+}
+
+[data-theme="dark"] .icon-button [data-icon="sun"],
+:root:not([data-theme="dark"]) .icon-button [data-icon="moon"] {
+  display: none;
+}
+
 .editor {
   border-radius: 12px;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-surface);
   min-height: 60vh;
   box-shadow: none;
   padding: 8px;
@@ -106,7 +244,7 @@ button#apply {
 
 footer.footer {
   font-size: 12px;
-  color: #6a6257;
+  color: var(--app-muted);
 }
 
 .cm-editor,
@@ -125,8 +263,9 @@ footer.footer {
 }
 
 .cm-editor .cm-gutters {
-  background: transparent;
-  border-right: none;
+  background: var(--editor-gutter-bg);
+  border-right: 1px solid var(--editor-border);
+  color: var(--editor-gutter-color);
 }
 
 .cm-editor .cm-content {
