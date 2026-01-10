@@ -1,5 +1,5 @@
 import { syntaxTree } from "@codemirror/language";
-import { RangeSetBuilder, type Extension } from "@codemirror/state";
+import { Annotation, RangeSetBuilder, type Extension } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -51,6 +51,8 @@ type TableRegistryEntry = {
   cols: number;
   lastFocus: { rowIndex: number; colIndex: number } | null;
 };
+
+const tableEditAnnotation = Annotation.define<boolean>();
 
 const defaultOptions: Required<TableEditorOptions> = {
   enabled: true,
@@ -188,7 +190,7 @@ class TableWidget extends WidgetType {
 
     registerTable(this.tableInfo.id, grid, this.tableInfo.rowCount, this.tableInfo.colCount);
 
-    const onAfterEdit = (event: Event) => {
+  const onAfterEdit = (event: Event) => {
       const detail = (event as CustomEvent).detail as Record<string, unknown>;
       const edit = extractEdit(detail, columns);
       if (!edit) {
@@ -209,6 +211,7 @@ class TableWidget extends WidgetType {
       }
       this.view.dispatch({
         changes: { from: cell.from, to: cell.to, insert },
+        annotations: tableEditAnnotation.of(true),
       });
     };
 
@@ -637,6 +640,24 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       }
 
       update(update: ViewUpdate) {
+        const isTableEdit = update.transactions.some(
+          (transaction) => transaction.annotation(tableEditAnnotation) === true
+        );
+        if (update.docChanged && isTableEdit) {
+          this.decorations = this.decorations.map(update.changes);
+          this.tables = this.tables.map((table) => ({
+            ...table,
+            from: update.changes.mapPos(table.from),
+            to: update.changes.mapPos(table.to),
+            startLineFrom: update.changes.mapPos(table.startLineFrom),
+            endLineFrom: update.changes.mapPos(table.endLineFrom),
+            lineBeforeFrom:
+              table.lineBeforeFrom != null ? update.changes.mapPos(table.lineBeforeFrom) : null,
+            lineAfterFrom:
+              table.lineAfterFrom != null ? update.changes.mapPos(table.lineAfterFrom) : null,
+          }));
+          return;
+        }
         if (update.docChanged || update.viewportChanged || update.selectionSet) {
           const state = buildDecorations(update.view, resolved);
           this.decorations = state.decorations;
