@@ -31,7 +31,7 @@ function buildRules(prefix: string): SemanticRule[] {
     { nodeNames: ["ATXHeading6"], className: `${prefix}heading-6`, applyToLine: true },
     { nodeNames: ["StrongEmphasis"], className: `${prefix}strong` },
     { nodeNames: ["Emphasis"], className: `${prefix}em` },
-    { nodeNames: ["Link"], className: `${prefix}link` },
+    { nodeNames: ["Link", "Autolink"], className: `${prefix}link` },
     { nodeNames: ["InlineCode"], className: `${prefix}code` },
     { nodeNames: ["ListItem"], className: `${prefix}list-item`, applyToLine: true },
     { nodeNames: ["Blockquote"], className: `${prefix}blockquote`, applyToLine: true },
@@ -78,6 +78,59 @@ function addLineClass(lineFrom: number, className: string, lineClasses: Map<numb
     lineClasses.set(lineFrom, set);
   }
   set.add(className);
+}
+
+function slugifyHeading(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function extractHeadingText(view: EditorView, from: number, to: number): string {
+  const raw = view.state.doc.sliceString(from, to);
+  return raw.replace(/^\s{0,3}#{1,6}\s+/, "").replace(/\s+#*\s*$/, "");
+}
+
+function findLinkTargetNode(node: SyntaxNode): SyntaxNode | null {
+  for (let child = node.firstChild; child; child = child.nextSibling) {
+    if (
+      child.name.includes("URL") ||
+      child.name.includes("LinkDestination") ||
+      child.name === "Autolink"
+    ) {
+      return child;
+    }
+    const nested = findLinkTargetNode(child);
+    if (nested) {
+      return nested;
+    }
+  }
+  return null;
+}
+
+function extractLinkHref(view: EditorView, node: SyntaxNode): string | null {
+  const targetNode = findLinkTargetNode(node);
+  if (targetNode) {
+    let href = view.state.doc.sliceString(targetNode.from, targetNode.to).trim();
+    if (href.startsWith("<") && href.endsWith(">")) {
+      href = href.slice(1, -1).trim();
+    }
+    return href || null;
+  }
+
+  const raw = view.state.doc.sliceString(node.from, node.to);
+  const autolinkMatch = raw.match(/<([^>]+)>/);
+  if (autolinkMatch) {
+    return autolinkMatch[1].trim() || null;
+  }
+  const linkMatch = raw.match(/\(([^)]+)\)/);
+  if (linkMatch) {
+    return linkMatch[1].trim() || null;
+  }
+  return null;
 }
 
 function addCodeBlockClasses(
@@ -157,9 +210,11 @@ function buildDecorations(view: EditorView, prefix: string): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
   const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
   const lineClasses = new Map<number, Set<string>>();
+  const lineIds = new Map<number, string>();
   const lineBlockquoteLevels = new Map<number, number>();
   const rules = buildRules(prefix);
   const rulesByName = new Map<string, SemanticRule>();
+  const headingSlugCounts = new Map<string, number>();
   for (const rule of rules) {
     for (const name of rule.nodeNames) {
       rulesByName.set(name, rule);
@@ -177,12 +232,36 @@ function buildDecorations(view: EditorView, prefix: string): DecorationSet {
       if (rule) {
         if (rule.applyToLine) {
           lineClassNames.push(rule.className);
+          if (rule.className.includes("heading-")) {
+            const headingText = extractHeadingText(view, node.from, node.to);
+            const base = slugifyHeading(headingText);
+            if (base) {
+              const count = headingSlugCounts.get(base) ?? 0;
+              headingSlugCounts.set(base, count + 1);
+              const id = count === 0 ? base : `${base}-${count}`;
+              const line = view.state.doc.lineAt(node.from);
+              lineIds.set(line.from, id);
+            }
+          }
         } else {
-          pending.push({
-            from: node.from,
-            to: node.to,
-            decoration: Decoration.mark({ class: rule.className }),
-          });
+          if (node.name === "Link" || node.name === "Autolink") {
+            const href = extractLinkHref(view, node.node);
+            pending.push({
+              from: node.from,
+              to: node.to,
+              decoration: Decoration.mark({
+                class: rule.className,
+                tagName: "span",
+                attributes: href ? { "data-href": href } : undefined,
+              }),
+            });
+          } else {
+            pending.push({
+              from: node.from,
+              to: node.to,
+              decoration: Decoration.mark({ class: rule.className }),
+            });
+          }
         }
       }
 
@@ -231,6 +310,13 @@ function buildDecorations(view: EditorView, prefix: string): DecorationSet {
       from: lineFrom,
       to: lineFrom,
       decoration: Decoration.line({ class: Array.from(classSet).join(" ") }),
+    });
+  }
+  for (const [lineFrom, id] of lineIds) {
+    pending.push({
+      from: lineFrom,
+      to: lineFrom,
+      decoration: Decoration.line({ attributes: { id } }),
     });
   }
 
