@@ -39,3 +39,4 @@ Thumbs.db
 .nuxt/
 .playwright-browsers
 test-results/
+.pnpm-store/

@@ -1,12 +1,13 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
-import { defaultHighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import initialText from "../assets/sample.md?raw";
 import { livePreviewPreset } from "cm6-live-preview";
 import { createEditor } from "./createEditor";
 import { tableEditor as revogridTableEditor } from "cm6-table-editor";
 import { tableEditor as tabulatorTableEditor } from "cm6-table-editor-tabulator";
 import { tableEditor as toastuiTableEditor } from "cm6-table-editor-toastui";
+import { editorTheme } from "./editorTheme";
+import { editorHighlightStyle } from "./editorHighlightStyle";
 
 type ExtensionOptions = {
   showLineNumbers: boolean;
@@ -39,7 +40,8 @@ function buildExtensions({
     extensions.push(EditorState.tabSize.of(tabSize));
   }
 
-  extensions.push(syntaxHighlighting(defaultHighlightStyle));
+  extensions.push(editorHighlightStyle());
+  extensions.push(editorTheme());
 
   if (livePreviewEnabled) {
     extensions.push(
@@ -74,9 +76,11 @@ export function setupApp() {
     wrap: document.getElementById("toggle-wrap"),
     livePreview: document.getElementById("toggle-live-preview"),
     blockReveal: document.getElementById("toggle-block-reveal"),
+    themeToggle: document.getElementById("toggle-theme"),
     tabSize: document.getElementById("tab-size"),
     tableEngine: document.getElementById("table-engine"),
     apply: document.getElementById("apply"),
+    settingsMenu: document.getElementById("settings-menu"),
   };
 
   if (
@@ -84,6 +88,7 @@ export function setupApp() {
     !(controls.wrap instanceof HTMLInputElement) ||
     !(controls.livePreview instanceof HTMLInputElement) ||
     !(controls.blockReveal instanceof HTMLInputElement) ||
+    !(controls.themeToggle instanceof HTMLButtonElement) ||
     !(controls.tabSize instanceof HTMLInputElement) ||
     !(controls.tableEngine instanceof HTMLSelectElement) ||
     !(controls.apply instanceof HTMLButtonElement)
@@ -95,9 +100,29 @@ export function setupApp() {
   const wrapControl = controls.wrap;
   const livePreviewControl = controls.livePreview;
   const blockRevealControl = controls.blockReveal;
+  const themeToggleControl = controls.themeToggle;
   const tabSizeControl = controls.tabSize;
   const tableEngineControl = controls.tableEngine;
   const applyControl = controls.apply;
+  const settingsMenu = controls.settingsMenu;
+
+  const setTheme = (nextTheme: "light" | "dark") => {
+    document.documentElement.dataset.theme = nextTheme;
+    themeToggleControl.setAttribute(
+      "aria-pressed",
+      nextTheme === "dark" ? "true" : "false"
+    );
+  };
+
+  const prefersDark =
+    window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+  setTheme(prefersDark ? "dark" : "light");
+
+  themeToggleControl.addEventListener("click", () => {
+    const nextTheme =
+      document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+  });
 
   const editor = createEditor({
     parent: editorHost,
@@ -131,6 +156,9 @@ export function setupApp() {
         tableEngine: resolveTableEngine(tableEngineControl.value),
       })
     );
+    if (settingsMenu instanceof HTMLDetailsElement) {
+      settingsMenu.open = false;
+    }
   };
 
   applyControl.addEventListener("click", applyExtensions);

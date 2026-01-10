@@ -14,30 +14,74 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       fontSize: "1.6em",
       fontWeight: "700",
       lineHeight: "1.2",
+      display: "block",
+      width: "100%",
+      backgroundImage: "linear-gradient(#d0d0d0, #d0d0d0)",
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "100% 1px",
+      backgroundPosition: "0 calc(100% - 0.5rem)",
+      paddingBottom: "0.8rem",
+      marginBottom: "0",
     },
     [`${scope} .${prefix}heading-2`]: {
       fontSize: "1.4em",
       fontWeight: "700",
       lineHeight: "1.25",
+      display: "block",
+      width: "100%",
+      backgroundImage: "linear-gradient(#d0d0d0, #d0d0d0)",
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "100% 1px",
+      backgroundPosition: "0 calc(100% - 0.5rem)",
+      paddingBottom: "0.8rem",
+      marginBottom: "0",
     },
     [`${scope} .${prefix}heading-3`]: {
       fontSize: "1.25em",
       fontWeight: "650",
       lineHeight: "1.3",
+      display: "block",
+      paddingBottom: "0.5rem",
+      marginBottom: "0",
     },
     [`${scope} .${prefix}heading-4`]: {
       fontSize: "1.15em",
       fontWeight: "650",
       lineHeight: "1.35",
+      display: "block",
+      paddingBottom: "0.5rem",
+      marginBottom: "0",
     },
     [`${scope} .${prefix}heading-5`]: {
       fontSize: "1.05em",
       fontWeight: "600",
+      display: "block",
+      paddingBottom: "0.5rem",
+      marginBottom: "0",
     },
     [`${scope} .${prefix}heading-6`]: {
       fontSize: "1em",
       fontWeight: "600",
       opacity: "0.9",
+      display: "block",
+      paddingBottom: "0.5rem",
+      marginBottom: "0",
+    },
+    [`${scope} .${prefix}heading-1,
+      ${scope} .${prefix}heading-2,
+      ${scope} .${prefix}heading-3,
+      ${scope} .${prefix}heading-4,
+      ${scope} .${prefix}heading-5,
+      ${scope} .${prefix}heading-6`]: {
+      textDecoration: "none",
+    },
+    [`${scope} .${prefix}heading-1 *,
+      ${scope} .${prefix}heading-2 *,
+      ${scope} .${prefix}heading-3 *,
+      ${scope} .${prefix}heading-4 *,
+      ${scope} .${prefix}heading-5 *,
+      ${scope} .${prefix}heading-6 *`]: {
+      textDecoration: "none",
     },
     [`${scope} .${prefix}strong`]: {
       fontWeight: "700",
@@ -46,7 +90,9 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       fontStyle: "italic",
     },
     [`${scope} .${prefix}link`]: {
+      color: "var(--mb-link-color, var(--editor-primary-color, #0f5b9e))",
       textDecoration: "underline",
+      cursor: "pointer",
     },
     [`${scope} .${prefix}code`]: {
       fontFamily:
@@ -63,10 +109,22 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       position: "relative",
     },
     [`${scope} .${prefix}code-block-fenced`]: {
-      backgroundColor: "var(--mb-code-block-bg, #f2f2f2)",
+      backgroundImage:
+        "linear-gradient(var(--mb-code-block-bg, #f2f2f2), var(--mb-code-block-bg, #f2f2f2))",
+      backgroundRepeat: "no-repeat",
+      backgroundSize:
+        "100% calc(100% - var(--mb-code-block-padding-top, 0px) - var(--mb-code-block-padding-bottom, 0px))",
+      backgroundPosition: "0 var(--mb-code-block-padding-top, 0px)",
+      fontFamily:
+        "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
+      lineHeight: "1.2rem",
     },
     [`${scope} .${prefix}code-block-indented`]: {
+      "--mb-code-block-indent": "2ch",
       backgroundColor: "transparent",
+      fontFamily:
+        "var(--mb-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)",
+      lineHeight: "1.2rem",
       backgroundImage:
         "linear-gradient(to right, transparent 0 var(--mb-code-block-indent, 4ch), var(--mb-code-block-bg, #f2f2f2) var(--mb-code-block-indent, 4ch))",
       backgroundRepeat: "no-repeat",
@@ -79,6 +137,16 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
     [`${scope} .${prefix}code-block-last`]: {
       borderBottomLeftRadius: "var(--mb-code-block-radius, 8px)",
       borderBottomRightRadius: "var(--mb-code-block-radius, 8px)",
+    },
+    [`${scope} .${prefix}code-block-fenced.${prefix}code-block-first`]: {
+      "--mb-code-block-padding-top": "0.35rem",
+      "--mb-code-block-padding-bottom": "0px",
+      paddingTop: "var(--mb-code-block-padding-top)",
+    },
+    [`${scope} .${prefix}code-block-fenced.${prefix}code-block-last`]: {
+      "--mb-code-block-padding-top": "0px",
+      "--mb-code-block-padding-bottom": "0.35rem",
+      paddingBottom: "var(--mb-code-block-padding-bottom)",
     },
     [`${scope} .${prefix}code-block-indented.${prefix}code-block-first`]: {
       borderTopLeftRadius: "0",
