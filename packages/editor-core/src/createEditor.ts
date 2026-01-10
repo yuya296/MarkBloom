@@ -2,12 +2,7 @@ import { EditorState, Compartment, Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
-import { LanguageDescription, StreamLanguage } from "@codemirror/language";
-import { javascript } from "@codemirror/lang-javascript";
-import { json } from "@codemirror/lang-json";
-import { css } from "@codemirror/lang-css";
-import { html } from "@codemirror/lang-html";
-import { shell } from "@codemirror/legacy-modes/mode/shell";
+import { languages } from "@codemirror/language-data";
 import { Strikethrough } from "@lezer/markdown";
 
 export type CreateEditorOptions = {
@@ -110,38 +105,7 @@ export function createEditor({
     keymap.of(defaultKeymap),
     markdown({
       extensions: [Strikethrough],
-      codeLanguages: [
-        LanguageDescription.of({
-          name: "TypeScript",
-          alias: ["ts", "typescript", "tsx"],
-          support: javascript({ typescript: true, jsx: true }),
-        }),
-        LanguageDescription.of({
-          name: "JavaScript",
-          alias: ["js", "javascript", "jsx"],
-          support: javascript({ jsx: true }),
-        }),
-        LanguageDescription.of({
-          name: "JSON",
-          alias: ["json"],
-          support: json(),
-        }),
-        LanguageDescription.of({
-          name: "CSS",
-          alias: ["css"],
-          support: css(),
-        }),
-        LanguageDescription.of({
-          name: "HTML",
-          alias: ["html"],
-          support: html(),
-        }),
-        LanguageDescription.of({
-          name: "Shell",
-          alias: ["bash", "sh", "shell"],
-          support: StreamLanguage.define(shell),
-        }),
-      ],
+      codeLanguages: languages,
     }),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
