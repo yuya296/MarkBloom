@@ -45,7 +45,7 @@ function buildExtensions({
           imageRawShowsPreview: true,
         },
         tableEditor: {
-          editMode: "sourceOnFocus",
+          editMode: "inlineCellEdit",
         },
       })
     );

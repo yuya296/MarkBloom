@@ -32,6 +32,7 @@ Markdown テーブルを、CM6 上で **リッチ表示（グリッド）**し�
 - セルクリックで編集UI（input/textarea等）を出す
 - 編集結果を Markdown の該当範囲に差分適用
 - 行/列追加削除は v2 末または v3
+- 実装は RevoGrid を利用（ADR-0003）
 
 ## 5. 公開API（案）
 ```ts

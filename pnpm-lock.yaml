@@ -105,6 +105,9 @@ importers:
       '@lezer/common':
         specifier: ^1.5.0
         version: 1.5.0
+      '@revolist/revogrid':
+        specifier: ^4.20.2
+        version: 4.20.2
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -507,6 +510,9 @@ packages:
   '@parcel/watcher@2.5.1':
     resolution: {integrity: sha512-dfUnCxiN9H4ap84DvD2ubjw+3vUNpstxa0TneY/Paat8a3R4uQZDLSvWjmznAY/DoahqTHl9V46HF/Zs3F29pg==}
     engines: {node: '>= 10.0.0'}
+
+  '@revolist/revogrid@4.20.2':
+    resolution: {integrity: sha512-t2u1oix10OsV4u9emIlyWXe9EaCx7F1AAxIYe1pFHU2OUQdhzPqdWqssC/A1MV6OK3J0BP6A+C2Kuhn04svEWg==}
 
   '@rollup/rollup-android-arm-eabi@4.54.0':
     resolution: {integrity: sha512-OywsdRHrFvCdvsewAInDKCNyR3laPA2mc9bRYJ6LBp5IyvF3fvXbbNR0bSzHlZVFtn6E0xw2oZlyjg4rKCVcng==}
@@ -1451,6 +1457,8 @@ snapshots:
       '@parcel/watcher-win32-ia32': 2.5.1
       '@parcel/watcher-win32-x64': 2.5.1
     optional: true
+
+  '@revolist/revogrid@4.20.2': {}
 
   '@rollup/rollup-android-arm-eabi@4.54.0':
     optional: true
