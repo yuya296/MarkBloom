@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=swap");
 
 :root {
   color-scheme: light;
@@ -114,6 +114,7 @@ body {
   min-height: 100vh;
   padding: 24px;
   background: var(--app-bg);
+  position: relative;
 }
 
 .app-header {
@@ -145,18 +146,46 @@ body {
   border: 1px solid var(--app-pill-border);
 }
 
-.controls {
+.top-controls {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 3;
+}
+
+.settings-menu {
+  position: relative;
+}
+
+.settings-menu > summary {
+  list-style: none;
+}
+
+.settings-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
   padding: 12px 16px;
+  min-width: 240px;
   background: var(--app-surface);
   border-radius: 12px;
   border: 1px solid var(--app-border);
   box-shadow: var(--app-shadow);
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  z-index: 2;
+}
+
+.settings-menu:not([open]) .settings-panel {
+  display: none;
 }
 
 .control-item {
@@ -191,9 +220,9 @@ button#apply {
   width: 36px;
   height: 36px;
   padding: 0;
-  border-radius: 999px;
-  border: 1px solid var(--app-button-border);
-  background: var(--app-button-bg);
+  border-radius: 0;
+  border: none;
+  background: transparent;
   color: var(--app-text);
   cursor: pointer;
   position: relative;
@@ -204,25 +233,14 @@ button#apply {
   height: 20px;
 }
 
-.icon-button .icon {
-  display: block;
-  background-color: currentColor;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: contain;
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
-}
-
-.icon-button [data-icon="sun"] {
-  -webkit-mask-image: url("./assets/icons/sun.svg");
-  mask-image: url("./assets/icons/sun.svg");
-}
-
-.icon-button [data-icon="moon"] {
-  -webkit-mask-image: url("./assets/icons/moon.svg");
-  mask-image: url("./assets/icons/moon.svg");
+.icon-button .material-symbols-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Material Symbols Outlined";
+  font-size: 20px;
+  line-height: 1;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
 }
 
 [data-theme="dark"] .icon-button [data-icon="sun"],

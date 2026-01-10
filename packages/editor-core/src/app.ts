@@ -70,6 +70,7 @@ export function setupApp() {
     themeToggle: document.getElementById("toggle-theme"),
     tabSize: document.getElementById("tab-size"),
     apply: document.getElementById("apply"),
+    settingsMenu: document.getElementById("settings-menu"),
   };
 
   if (
@@ -91,6 +92,7 @@ export function setupApp() {
   const themeToggleControl = controls.themeToggle;
   const tabSizeControl = controls.tabSize;
   const applyControl = controls.apply;
+  const settingsMenu = controls.settingsMenu;
 
   const setTheme = (nextTheme: "light" | "dark") => {
     document.documentElement.dataset.theme = nextTheme;
@@ -140,6 +142,9 @@ export function setupApp() {
         tabSize: Number(tabSizeControl.value),
       })
     );
+    if (settingsMenu instanceof HTMLDetailsElement) {
+      settingsMenu.open = false;
+    }
   };
 
   applyControl.addEventListener("click", applyExtensions);
