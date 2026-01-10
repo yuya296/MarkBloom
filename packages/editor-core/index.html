@@ -7,36 +7,46 @@
   </head>
   <body>
     <div id="app">
-      <header class="app-header">
-        <div>
-          <div class="app-title">editor-core</div>
-          <div class="app-subtitle">CM6 Markdown Base Editor</div>
-        </div>
-        <div id="status" class="status">Ready</div>
-      </header>
-      <section class="controls">
-        <label class="control-item">
-          <input id="toggle-line-numbers" type="checkbox" checked />
-          Line numbers
-        </label>
-        <label class="control-item">
-          <input id="toggle-wrap" type="checkbox" checked />
-          Line wrapping
-        </label>
-        <label class="control-item">
-          <input id="toggle-live-preview" type="checkbox" checked />
-          Live preview
-        </label>
-        <label class="control-item">
-          <input id="toggle-block-reveal" type="checkbox" checked />
-          Block reveal
-        </label>
-        <label class="control-item">
-          Tab size
-          <input id="tab-size" type="number" min="2" max="8" value="4" />
-        </label>
-        <button id="apply" type="button">Apply</button>
-      </section>
+      <div class="top-controls">
+        <button id="toggle-theme" class="icon-button" type="button" aria-label="Toggle theme">
+          <span class="icon material-symbols-outlined" data-icon="sun" aria-hidden="true">
+            light_mode
+          </span>
+          <span class="icon material-symbols-outlined" data-icon="moon" aria-hidden="true">
+            dark_mode
+          </span>
+        </button>
+        <details id="settings-menu" class="settings-menu">
+          <summary class="icon-button" aria-label="Open settings">
+            <span class="icon material-symbols-outlined" data-icon="gear" aria-hidden="true">
+              settings
+            </span>
+          </summary>
+          <div class="settings-panel" role="menu">
+            <label class="control-item">
+              <input id="toggle-line-numbers" type="checkbox" />
+              Line numbers
+            </label>
+            <label class="control-item">
+              <input id="toggle-wrap" type="checkbox" checked />
+              Line wrapping
+            </label>
+            <label class="control-item">
+              <input id="toggle-live-preview" type="checkbox" checked />
+              Live preview
+            </label>
+            <label class="control-item">
+              <input id="toggle-block-reveal" type="checkbox" checked />
+              Block reveal
+            </label>
+            <label class="control-item">
+              Tab size
+              <input id="tab-size" type="number" min="2" max="8" value="4" />
+            </label>
+            <button id="apply" type="button">Apply</button>
+          </div>
+        </details>
+      </div>
       <main>
         <div id="editor" class="editor"></div>
       </main>
