@@ -53,6 +53,8 @@ type TableRegistryEntry = {
 };
 
 const tableEditAnnotation = Annotation.define<boolean>();
+const defaultRowSize = 27;
+const minRowCount = 1;
 
 const defaultOptions: Required<TableEditorOptions> = {
   enabled: true,
@@ -154,6 +156,7 @@ class TableWidget extends WidgetType {
       rowClass: string;
       theme: string;
       refresh?: () => Promise<void>;
+      getContentSize?: () => Promise<{ x: number; y: number }>;
       componentOnReady?: () => Promise<void>;
     };
 
@@ -177,15 +180,28 @@ class TableWidget extends WidgetType {
       grid.useClipboard = false;
       grid.autoSizeColumn = true;
       grid.tabIndex = 0;
+      const fallbackHeight = estimateGridHeight(this.tableInfo.rowCount, Boolean(this.data.header));
+      applyGridHeight(grid, fallbackHeight, this.data.header != null);
       if (typeof grid.refresh === "function") {
         grid.refresh();
       }
     };
 
     if (typeof grid.componentOnReady === "function") {
-      grid.componentOnReady().then(applyConfig).catch(applyConfig);
+      grid
+        .componentOnReady()
+        .then(async () => {
+          applyConfig();
+          await applyGridHeightFromContent(grid, this.data.header != null, this.tableInfo.rowCount);
+        })
+        .catch(() => {
+          applyConfig();
+        });
     } else {
-      queueMicrotask(applyConfig);
+      queueMicrotask(async () => {
+        applyConfig();
+        await applyGridHeightFromContent(grid, this.data.header != null, this.tableInfo.rowCount);
+      });
     }
 
     registerTable(this.tableInfo.id, grid, this.tableInfo.rowCount, this.tableInfo.colCount);
@@ -296,6 +312,37 @@ class TableWidget extends WidgetType {
     }
     unregisterTable(this.tableInfo.id);
   }
+}
+
+function estimateGridHeight(rowCount: number, hasHeader: boolean): number {
+  const rows = Math.max(rowCount, minRowCount);
+  const headerSize = hasHeader ? defaultRowSize : 0;
+  return headerSize + rows * defaultRowSize;
+}
+
+async function applyGridHeightFromContent(
+  grid: HTMLElement & { getContentSize?: () => Promise<{ x: number; y: number }> },
+  hasHeader: boolean,
+  rowCount: number
+): Promise<void> {
+  if (typeof grid.getContentSize !== "function") {
+    return;
+  }
+  try {
+    const size = await grid.getContentSize();
+    const headerSize = hasHeader ? defaultRowSize : 0;
+    const height = Math.max(size.y + headerSize, estimateGridHeight(rowCount, hasHeader));
+    applyGridHeight(grid, height, hasHeader);
+  } catch {
+    // ignore
+  }
+}
+
+function applyGridHeight(grid: HTMLElement, height: number, _hasHeader: boolean) {
+  const value = `${height}px`;
+  grid.style.height = value;
+  grid.style.minHeight = value;
+  grid.style.maxHeight = value;
 }
 
 function sanitizeColumns(columns: TableColumn[]): TableColumn[] {
