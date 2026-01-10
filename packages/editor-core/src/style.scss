@@ -289,6 +289,10 @@ footer.footer {
   font-family: var(--mb-font-mono);
 }
 
+.cm-editor .cm-content .mb-code-block-indented {
+  --mb-code-block-indent: 2ch;
+}
+
 .cm-editor .mb-syntax-secondary {
   color: var(--editor-secondary-color);
 }
