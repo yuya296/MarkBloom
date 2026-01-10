@@ -6,6 +6,7 @@
 - cm6-live-preview-core: 記号の表示切替ロジックのみを提供するパッケージ。
 - cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
+- cm6-table-editor: Markdownテーブルをリッチ表示するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
 - Rich: `renderState` が `rich` の表示状態。
 - Raw: `renderState` が `raw` の表示状態。

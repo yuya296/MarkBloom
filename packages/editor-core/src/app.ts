@@ -44,6 +44,9 @@ function buildExtensions({
           imageBasePath: new URL("../assets/", import.meta.url).toString(),
           imageRawShowsPreview: true,
         },
+        tableEditor: {
+          editMode: "sourceOnFocus",
+        },
       })
     );
   }
