@@ -1,6 +1,5 @@
 import { syntaxTree } from "@codemirror/language";
-import type { EditorView } from "@codemirror/view";
-import type { Line } from "@codemirror/state";
+import type { EditorState, Line } from "@codemirror/state";
 import type { ExcludeRanges, Range } from "../core/types";
 import type { LivePreviewOptions } from "../index";
 import { inRangeSegment, selectionOverlapsRange } from "../core/utils";
@@ -55,7 +54,7 @@ function normalizeTriggers(rawModeTrigger: RawModeTrigger | RawModeTrigger[]): R
 }
 
 function isInlineRaw(
-  view: EditorView,
+  state: EditorState,
   node: { from: number; to: number },
   rawModeTrigger: InlineElementConfig["rawModeTrigger"]
 ): boolean {
@@ -66,17 +65,17 @@ function isInlineRaw(
   }
 
   if (triggers.includes("nearby")) {
-    if (selectionOverlapsRange(view.state.selection.ranges, node.from, node.to)) {
+    if (selectionOverlapsRange(state.selection.ranges, node.from, node.to)) {
       return true;
     }
-    const head = view.state.selection.main.head;
-  const line = view.state.doc.lineAt(head);
-  if (line.number === view.state.doc.lineAt(node.from).number) {
-    const radiusBefore = 1;
-    const radiusAfter = 1;
-    if (head >= node.from && head <= node.to) {
-      return true;
-    }
+    const head = state.selection.main.head;
+    const line = state.doc.lineAt(head);
+    if (line.number === state.doc.lineAt(node.from).number) {
+      const radiusBefore = 1;
+      const radiusAfter = 1;
+      if (head >= node.from && head <= node.to) {
+        return true;
+      }
       if (isCursorAdjacent(line, head, node.from, node.to, radiusBefore, radiusAfter)) {
         return true;
       }
@@ -87,13 +86,13 @@ function isInlineRaw(
 }
 
 function collectChildRanges(
-  view: EditorView,
+  state: EditorState,
   from: number,
   to: number,
   targets: ReadonlySet<NodeName>
 ): Range[] {
   const ranges: Range[] = [];
-  syntaxTree(view.state).iterate({
+  syntaxTree(state).iterate({
     from,
     to,
     enter: (node) => {
@@ -106,7 +105,7 @@ function collectChildRanges(
 }
 
 export function collectInlineMarkerRanges(
-  view: EditorView,
+  state: EditorState,
   options: LivePreviewOptions,
   excluded: ExcludeRanges
 ): {
@@ -115,12 +114,22 @@ export function collectInlineMarkerRanges(
 } {
   const hidden: Range[] = [];
   const images: Array<{ from: number; to: number; src: string; alt: string; raw: boolean }> = [];
-  const tree = syntaxTree(view.state);
+  const tree = syntaxTree(state);
   const basePath = options.imageBasePath?.replace(/\/+$/, "") ?? "";
-  const resolvedBase = basePath
-    ? new URL(basePath.endsWith("/") ? basePath : `${basePath}/`, view.dom.ownerDocument.baseURI)
-        .toString()
-    : "";
+  const resolvedBase = (() => {
+    if (!basePath) {
+      return "";
+    }
+    const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
+    if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(normalizedBase)) {
+      return new URL(normalizedBase).toString();
+    }
+    const baseURI = typeof document !== "undefined" ? document.baseURI : "";
+    if (!baseURI) {
+      return "";
+    }
+    return new URL(normalizedBase, baseURI).toString();
+  })();
 
   tree.iterate({
     enter: (node) => {
@@ -140,16 +149,16 @@ export function collectInlineMarkerRanges(
         return;
       }
 
-      const raw = isInlineRaw(view, node, config.rawModeTrigger);
+      const raw = isInlineRaw(state, node, config.rawModeTrigger);
       if (!raw && config.richDisplayStyle === "hide") {
         const targets = inlineHideTargets.get(config.node);
         if (targets) {
-          hidden.push(...collectChildRanges(view, node.from, node.to, new Set(targets)));
+          hidden.push(...collectChildRanges(state, node.from, node.to, new Set(targets)));
         }
       }
 
       if ((!raw || options.imageRawShowsPreview) && node.name === NodeName.Image) {
-        const literal = view.state.doc.sliceString(node.from, node.to);
+        const literal = state.doc.sliceString(node.from, node.to);
         const match = literal.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
         if (!match) {
           return;

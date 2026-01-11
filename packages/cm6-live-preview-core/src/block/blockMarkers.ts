@@ -1,5 +1,6 @@
 import { syntaxTree } from "@codemirror/language";
-import { Decoration, EditorView } from "@codemirror/view";
+import { type EditorState } from "@codemirror/state";
+import { Decoration } from "@codemirror/view";
 import type { Range } from "../core/types";
 import { hasNodeName } from "../core/syntaxNodeNames";
 import {
@@ -52,15 +53,15 @@ function isRawByTriggers(state: BlockRawState, rawModeTrigger: RawModeTrigger | 
 }
 
 export function collectBlockRevealRange(
-  view: EditorView,
+  state: EditorState,
   options: LivePreviewOptions
 ): Range | null {
   if (!options.blockRevealEnabled) {
     return null;
   }
 
-  const head = view.state.selection.main.head;
-  const tree = syntaxTree(view.state);
+  const head = state.selection.main.head;
+  const tree = syntaxTree(state);
   const candidates = [tree.resolve(head, 1), tree.resolve(head, -1)];
 
   for (const resolved of candidates) {
@@ -165,13 +166,13 @@ export function addBlockMarkerDecorations(
 }
 
 export function collectFenceMarkersByLine(
-  view: EditorView,
+  state: EditorState,
   selectionRanges: Range[],
   blockRevealRange: Range | null
 ): Map<number, BlockMarker[]> {
   const markersByLine = new Map<number, BlockMarker[]>();
 
-  syntaxTree(view.state).iterate({
+  syntaxTree(state).iterate({
     enter: (node) => {
       if (node.name !== "FencedCode") {
         return;
@@ -194,8 +195,8 @@ export function collectFenceMarkersByLine(
         return;
       }
 
-      const startLine = view.state.doc.lineAt(node.from);
-      const endLine = view.state.doc.lineAt(node.to);
+      const startLine = state.doc.lineAt(node.from);
+      const endLine = state.doc.lineAt(node.to);
 
       const startMarkers = markersByLine.get(startLine.from) ?? [];
       startMarkers.push({ id: "fence", from: startLine.from, to: startLine.to });

@@ -1,11 +1,15 @@
 import { syntaxTree } from "@codemirror/language";
-import { Annotation, RangeSetBuilder, type Extension } from "@codemirror/state";
+import {
+  Annotation,
+  RangeSetBuilder,
+  StateField,
+  type EditorState,
+  type Extension,
+} from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
   EditorView,
-  ViewPlugin,
-  ViewUpdate,
   WidgetType,
 } from "@codemirror/view";
 import type { SyntaxNode } from "@lezer/common";
@@ -48,7 +52,6 @@ const defaultOptions: Required<TableEditorOptions> = {
 
 class TableWidget extends WidgetType {
   constructor(
-    private readonly view: EditorView,
     private readonly data: TableData,
     private readonly isEditable: boolean,
     private readonly tableInfo: TableInfo
@@ -64,7 +67,7 @@ class TableWidget extends WidgetType {
     );
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "cm-table-editor cm-table-editor-vanilla";
     wrapper.dataset.tableId = String(this.tableInfo.id);
@@ -76,7 +79,7 @@ class TableWidget extends WidgetType {
     const commitTable = () => {
       normalizeTableData(data);
       const markdown = buildTableMarkdown(data);
-      dispatchOutsideUpdate(this.view, {
+      dispatchOutsideUpdate(view, {
         changes: {
           from: this.tableInfo.startLineFrom,
           to: this.tableInfo.endLineTo,
@@ -363,8 +366,8 @@ function escapePipes(value: string): string {
   return value.replace(/\|/g, "\\|");
 }
 
-function isSelectionInside(view: EditorView, from: number, to: number): boolean {
-  return view.state.selection.ranges.some((range) => {
+function isSelectionInside(state: EditorState, from: number, to: number): boolean {
+  return state.selection.ranges.some((range) => {
     if (range.from === range.to) {
       return range.from >= from && range.from <= to;
     }
@@ -372,33 +375,33 @@ function isSelectionInside(view: EditorView, from: number, to: number): boolean 
   });
 }
 
-function collectTableData(view: EditorView, node: SyntaxNode): TableData {
+function collectTableData(state: EditorState, node: SyntaxNode): TableData {
   const headerNode = node.getChild("TableHeader");
   const rowNodes = node.getChildren("TableRow");
-  const header = headerNode ? { cells: collectCells(view, headerNode) } : null;
-  const rows = rowNodes.map((row) => ({ cells: collectCells(view, row) }));
+  const header = headerNode ? { cells: collectCells(state, headerNode) } : null;
+  const rows = rowNodes.map((row) => ({ cells: collectCells(state, row) }));
   return { header, rows };
 }
 
-function collectTableLines(view: EditorView, from: number, to: number) {
+function collectTableLines(state: EditorState, from: number, to: number) {
   const lines = [];
-  const startLine = view.state.doc.lineAt(from);
-  const endLine = view.state.doc.lineAt(Math.max(from, to - 1));
+  const startLine = state.doc.lineAt(from);
+  const endLine = state.doc.lineAt(Math.max(from, to - 1));
   for (let lineNumber = startLine.number; lineNumber <= endLine.number; lineNumber += 1) {
-    lines.push(view.state.doc.line(lineNumber));
+    lines.push(state.doc.line(lineNumber));
   }
   return lines;
 }
 
 function collectCells(
-  view: EditorView,
+  state: EditorState,
   rowNode: SyntaxNode
 ): Array<{ text: string; from: number; to: number }> {
   const cells: Array<{ text: string; from: number; to: number }> = [];
   for (let child = rowNode.firstChild; child; child = child.nextSibling) {
     if (child.name === "TableCell") {
       cells.push({
-        text: view.state.doc.sliceString(child.from, child.to).trim(),
+        text: state.doc.sliceString(child.from, child.to).trim(),
         from: child.from,
         to: child.to,
       });
@@ -416,43 +419,35 @@ function toMarkdownText(value: string): string {
 }
 
 function buildDecorations(
-  view: EditorView,
+  state: EditorState,
   options: Required<TableEditorOptions>
-): { decorations: DecorationSet; tables: TableInfo[] } {
+): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
-  const tables: TableInfo[] = [];
 
   if (!options.enabled || options.renderMode !== "widget") {
-    return { decorations: builder.finish(), tables };
+    return builder.finish();
   }
 
   const shouldRenderRich = (from: number, to: number) => {
     if (options.editMode !== "sourceOnFocus") {
       return true;
     }
-    return !isSelectionInside(view, from, to);
+    return !isSelectionInside(state, from, to);
   };
-
-  const visibleRanges = view.visibleRanges;
-  const isVisible = (from: number, to: number) =>
-    visibleRanges.some((range) => from < range.to && to > range.from);
 
   let tableId = 0;
 
-  syntaxTree(view.state).iterate({
+  syntaxTree(state).iterate({
     enter: (node) => {
       if (node.name !== "Table") {
-        return;
-      }
-      if (!isVisible(node.from, node.to)) {
         return;
       }
       if (!shouldRenderRich(node.from, node.to)) {
         return;
       }
 
-      const data = collectTableData(view, node.node);
-      const lines = collectTableLines(view, node.from, node.to);
+      const data = collectTableData(state, node.node);
+      const lines = collectTableLines(state, node.from, node.to);
       if (lines.length === 0) {
         return;
       }
@@ -466,45 +461,32 @@ function buildDecorations(
         startLineFrom: firstLine.from,
         endLineTo: lastLine.to,
       };
-      tables.push(info);
 
-      const pending: Array<{ from: number; to: number; decoration: Decoration }> = [];
-      const widgetDecoration = Decoration.replace({
-        widget: new TableWidget(view, data, options.editMode === "inlineCellEdit", info),
-        inclusive: false,
+      const widgetDecoration = Decoration.widget({
+        widget: new TableWidget(data, options.editMode === "inlineCellEdit", info),
+        block: true,
       });
-      pending.push({ from: firstLine.from, to: firstLine.to, decoration: widgetDecoration });
+      builder.add(firstLine.from, firstLine.from, widgetDecoration);
 
-      for (let i = 1; i < lines.length; i += 1) {
-        const line = lines[i];
-        pending.push({
-          from: line.from,
-          to: line.to,
-          decoration: Decoration.replace({ inclusive: false }),
-        });
-        pending.push({
-          from: line.from,
-          to: line.from,
-          decoration: Decoration.line({ class: "cm-table-editor-hidden" }),
-        });
-      }
-
-      pending.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));
-      for (const item of pending) {
-        builder.add(item.from, item.to, item.decoration);
+      const hiddenLineDecoration = Decoration.line({ class: "cm-table-editor-hidden" });
+      for (const line of lines) {
+        builder.add(line.from, line.from, hiddenLineDecoration);
       }
 
       tableId += 1;
     },
   });
 
-  return { decorations: builder.finish(), tables };
+  return builder.finish();
 }
 
 export function tableEditor(options: TableEditorOptions = {}): Extension {
   const resolved = { ...defaultOptions, ...options };
 
   const theme = EditorView.baseTheme({
+    ".cm-content .cm-line.cm-table-editor-hidden": {
+      display: "none",
+    },
     ".cm-content .cm-table-editor": {
       overflowX: "auto",
       margin: "0.5rem 0",
@@ -562,34 +544,17 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       cursor: "pointer",
       fontSize: "12px",
     },
-    ".cm-content .cm-table-editor-hidden": {
-      padding: "0",
-      margin: "0",
-      border: "0",
-      visibility: "hidden",
-    },
   });
 
-  const plugin = ViewPlugin.fromClass(
-    class {
-      decorations: DecorationSet;
-
-      constructor(view: EditorView) {
-        const state = buildDecorations(view, resolved);
-        this.decorations = state.decorations;
-      }
-
-      update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged || update.selectionSet) {
-          const state = buildDecorations(update.view, resolved);
-          this.decorations = state.decorations;
-        }
-      }
+  const decorations = StateField.define<DecorationSet>({
+    create(state) {
+      return buildDecorations(state, resolved);
     },
-    {
-      decorations: (view) => view.decorations,
-    }
-  );
+    update(_decorations, tr) {
+      return buildDecorations(tr.state, resolved);
+    },
+    provide: (field) => EditorView.decorations.from(field),
+  });
 
-  return [theme, plugin];
+  return [theme, decorations];
 }
