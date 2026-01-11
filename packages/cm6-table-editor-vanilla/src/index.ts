@@ -19,6 +19,8 @@ export type TableEditorOptions = {
   renderMode?: "widget" | "none";
 };
 
+type TableAlignment = "left" | "center" | "right" | null;
+
 type TableCell = {
   text: string;
   from: number;
@@ -32,6 +34,7 @@ type TableRow = {
 type TableData = {
   header: TableRow | null;
   rows: TableRow[];
+  alignments: TableAlignment[];
 };
 
 type TableInfo = {
@@ -49,6 +52,8 @@ const defaultOptions: Required<TableEditorOptions> = {
 };
 
 class TableWidget extends WidgetType {
+  private readonly menuAbort = new AbortController();
+
   constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
   }
@@ -68,6 +73,44 @@ class TableWidget extends WidgetType {
     const data = cloneTableData(this.data);
     const table = document.createElement("table");
     table.className = "cm-table";
+
+    const scrollArea = document.createElement("div");
+    scrollArea.className = "cm-table-scroll";
+    const rowActions = document.createElement("div");
+    rowActions.className = "cm-table-row-actions";
+
+    let scheduleRowActionLayout: () => void = () => {};
+
+    const closeAllMenus = () => {
+      wrapper
+        .querySelectorAll<HTMLElement>(".cm-table-action[data-open=\"true\"]")
+        .forEach((element) => {
+          element
+            .querySelector<HTMLElement>(".cm-table-action-menu")
+            ?.removeAttribute("style");
+          element.dataset.open = "false";
+        });
+    };
+
+    wrapper.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+      if (!target.closest(".cm-table-action")) {
+        closeAllMenus();
+      }
+    });
+
+    const closeOnScroll = () => {
+      closeAllMenus();
+      scheduleRowActionLayout();
+    };
+
+    const signal = this.menuAbort.signal;
+    view.scrollDOM.addEventListener("scroll", closeOnScroll, { passive: true, signal });
+    window.addEventListener("scroll", closeOnScroll, { passive: true, signal });
+    window.addEventListener("resize", closeOnScroll, { signal });
 
     const commitTable = () => {
       normalizeTableData(data);
@@ -108,6 +151,7 @@ class TableWidget extends WidgetType {
       input.addEventListener("input", () => {
         onChange(input.value);
         resizeToContent();
+        scheduleRowActionLayout();
       });
       input.addEventListener("focus", resizeToContent);
       input.addEventListener("blur", (event) => {
@@ -141,39 +185,201 @@ class TableWidget extends WidgetType {
       return input;
     };
 
-    const addRowButton = document.createElement("button");
-    addRowButton.type = "button";
-    addRowButton.className = "cm-table-control";
-    addRowButton.textContent = "Add row";
-    addRowButton.addEventListener("click", () => {
-      const columnCount = getColumnCount(data);
+    const insertRow = (index: number) => {
+      const columnCount = Math.max(1, getColumnCount(data));
       normalizeTableData(data);
-      data.rows.push({
+      const nextIndex = Math.max(0, Math.min(index, data.rows.length));
+      data.rows.splice(nextIndex, 0, {
         cells: Array.from({ length: columnCount }, () => ({ text: "", from: -1, to: -1 })),
       });
       commitTable();
-    });
+    };
 
-    const addColumnButton = document.createElement("button");
-    addColumnButton.type = "button";
-    addColumnButton.className = "cm-table-control";
-    addColumnButton.textContent = "Add column";
-    addColumnButton.addEventListener("click", () => {
+    const deleteRow = (index: number) => {
+      if (index < 0 || index >= data.rows.length) {
+        return;
+      }
+      data.rows.splice(index, 1);
+      commitTable();
+    };
+
+    const insertColumn = (index: number) => {
       normalizeTableData(data);
-      const columnCount = getColumnCount(data) + 1;
-      ensureHeader(data, columnCount);
+      const columnCount = Math.max(1, getColumnCount(data));
+      const nextIndex = Math.max(0, Math.min(index, columnCount));
+      ensureHeader(data, columnCount + 1);
       if (data.header) {
-        data.header.cells.push({
-          text: `Col ${columnCount}`,
+        data.header.cells.splice(nextIndex, 0, {
+          text: `Col ${nextIndex + 1}`,
           from: -1,
           to: -1,
         });
       }
       data.rows.forEach((row) => {
-        row.cells.push({ text: "", from: -1, to: -1 });
+        row.cells.splice(nextIndex, 0, { text: "", from: -1, to: -1 });
       });
+      data.alignments.splice(nextIndex, 0, null);
       commitTable();
-    });
+    };
+
+    const deleteColumn = (index: number) => {
+      const columnCount = Math.max(1, getColumnCount(data));
+      if (columnCount <= 1) {
+        return;
+      }
+      normalizeTableData(data);
+      const nextIndex = Math.max(0, Math.min(index, columnCount - 1));
+      if (data.header) {
+        data.header.cells.splice(nextIndex, 1);
+      }
+      data.rows.forEach((row) => {
+        row.cells.splice(nextIndex, 1);
+      });
+      data.alignments.splice(nextIndex, 1);
+      commitTable();
+    };
+
+    const setColumnAlignment = (index: number, alignment: TableAlignment) => {
+      normalizeTableData(data);
+      const columnCount = Math.max(1, getColumnCount(data));
+      if (index < 0 || index >= columnCount) {
+        return;
+      }
+      data.alignments[index] = alignment;
+      commitTable();
+    };
+
+    type ActionItem = {
+      label: string;
+      onSelect?: () => void;
+      submenu?: ActionItem[];
+      disabled?: boolean;
+    };
+
+    const createActionMenu = (items: ActionItem[], menuLabel: string) => {
+      const container = document.createElement("div");
+      container.className = "cm-table-action";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "cm-table-action-button";
+      button.textContent = "⋯";
+      button.setAttribute("aria-label", menuLabel);
+
+      const menu = document.createElement("div");
+      menu.className = "cm-table-action-menu";
+
+      const renderMenuItem = (item: ActionItem) => {
+        if (item.submenu && item.submenu.length > 0) {
+          const submenuWrapper = document.createElement("div");
+          submenuWrapper.className = "cm-table-action-item cm-table-action-item--submenu";
+
+          const submenuButton = document.createElement("button");
+          submenuButton.type = "button";
+          submenuButton.className = "cm-table-action-item-button";
+          submenuButton.textContent = `${item.label} ▸`;
+          submenuButton.disabled = Boolean(item.disabled);
+
+          const submenu = document.createElement("div");
+          submenu.className = "cm-table-action-submenu";
+
+          item.submenu.forEach((subItem) => {
+            const subButton = document.createElement("button");
+            subButton.type = "button";
+            subButton.className = "cm-table-action-item-button";
+            subButton.textContent = subItem.label;
+            subButton.disabled = Boolean(subItem.disabled);
+            subButton.addEventListener("click", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              subItem.onSelect?.();
+              closeAllMenus();
+            });
+            submenu.appendChild(subButton);
+          });
+
+          submenuWrapper.appendChild(submenuButton);
+          submenuWrapper.appendChild(submenu);
+          return submenuWrapper;
+        }
+
+        const itemButton = document.createElement("button");
+        itemButton.type = "button";
+        itemButton.className = "cm-table-action-item-button";
+        itemButton.textContent = item.label;
+        itemButton.disabled = Boolean(item.disabled);
+        itemButton.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          item.onSelect?.();
+          closeAllMenus();
+        });
+        return itemButton;
+      };
+
+      items.forEach((item) => {
+        menu.appendChild(renderMenuItem(item));
+      });
+
+      const positionMenu = () => {
+        const rect = button.getBoundingClientRect();
+        const top = rect.bottom + 6;
+        const left = rect.left;
+        menu.style.position = "fixed";
+        menu.style.top = `${top}px`;
+        menu.style.left = `${left}px`;
+        menu.style.maxWidth = "240px";
+        menu.style.zIndex = "2000";
+        menu.style.display = "grid";
+        menu.style.gap = "4px";
+      };
+
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const isOpen = container.dataset.open === "true";
+        closeAllMenus();
+        if (!isOpen) {
+          container.dataset.open = "true";
+          positionMenu();
+        }
+      });
+
+      container.appendChild(button);
+      container.appendChild(menu);
+      return container;
+    };
+
+    const rowElements: HTMLTableRowElement[] = [];
+    let rowActionLayoutPending = false;
+    const positionRowActions = () => {
+      if (rowElements.length === 0) {
+        return;
+      }
+      rowElements.forEach((rowElement, index) => {
+        const rowRect = rowElement.getBoundingClientRect();
+        const menu = rowActions.children[index];
+        if (!(menu instanceof HTMLElement)) {
+          return;
+        }
+        const menuHeight = menu.getBoundingClientRect().height;
+        const top = rowRect.top + Math.max(0, (rowRect.height - menuHeight) / 2);
+        const left = rowRect.left - 26;
+        menu.style.top = `${top}px`;
+        menu.style.left = `${left}px`;
+        menu.style.transform = "none";
+      });
+    };
+    scheduleRowActionLayout = () => {
+      if (rowActionLayoutPending) {
+        return;
+      }
+      rowActionLayoutPending = true;
+      requestAnimationFrame(() => {
+        rowActionLayoutPending = false;
+        positionRowActions();
+      });
+    };
 
     const renderHeader = () => {
       const thead = document.createElement("thead");
@@ -197,6 +403,28 @@ class TableWidget extends WidgetType {
           }
         );
         th.appendChild(input);
+        const columnMenu = createActionMenu(
+          [
+            { label: "Insert column left", onSelect: () => insertColumn(colIndex) },
+            { label: "Insert column right", onSelect: () => insertColumn(colIndex + 1) },
+            {
+              label: "Delete column",
+              onSelect: () => deleteColumn(colIndex),
+              disabled: columnCount <= 1,
+            },
+            {
+              label: "Align",
+              submenu: [
+                { label: "Left", onSelect: () => setColumnAlignment(colIndex, "left") },
+                { label: "Center", onSelect: () => setColumnAlignment(colIndex, "center") },
+                { label: "Right", onSelect: () => setColumnAlignment(colIndex, "right") },
+              ],
+            },
+          ],
+          "Column actions"
+        );
+        columnMenu.classList.add("cm-table-action--column");
+        th.appendChild(columnMenu);
         th.dataset.colIndex = String(colIndex);
         row.appendChild(th);
       });
@@ -230,6 +458,7 @@ class TableWidget extends WidgetType {
           tr.appendChild(td);
         }
         tbody.appendChild(tr);
+        rowElements.push(tr);
       });
       return tbody;
     };
@@ -237,19 +466,51 @@ class TableWidget extends WidgetType {
     table.appendChild(renderHeader());
     table.appendChild(renderBody());
 
-    const controls = document.createElement("div");
-    controls.className = "cm-table-controls";
-    controls.appendChild(addRowButton);
-    controls.appendChild(addColumnButton);
+    scrollArea.appendChild(table);
+    wrapper.appendChild(scrollArea);
+    wrapper.appendChild(rowActions);
 
-    wrapper.appendChild(table);
-    wrapper.appendChild(controls);
+    const setActiveRowAction = (activeIndex: number | null) => {
+      Array.from(rowActions.children).forEach((child, index) => {
+        if (!(child instanceof HTMLElement)) {
+          return;
+        }
+        if (activeIndex !== null && index === activeIndex) {
+          child.dataset.active = "true";
+        } else {
+          child.removeAttribute("data-active");
+        }
+      });
+    };
+
+    rowElements.forEach((rowElement, rowIndex) => {
+      const rowMenu = createActionMenu(
+        [
+          { label: "Insert row above", onSelect: () => insertRow(rowIndex) },
+          { label: "Insert row below", onSelect: () => insertRow(rowIndex + 1) },
+          { label: "Delete row", onSelect: () => deleteRow(rowIndex) },
+        ],
+        "Row actions"
+      );
+      rowMenu.classList.add("cm-table-action--row");
+      rowMenu.addEventListener("mouseenter", () => setActiveRowAction(rowIndex));
+      rowMenu.addEventListener("mouseleave", () => setActiveRowAction(null));
+      rowElement.addEventListener("mouseenter", () => setActiveRowAction(rowIndex));
+      rowElement.addEventListener("mouseleave", () => setActiveRowAction(null));
+      rowActions.appendChild(rowMenu);
+    });
+
+    scheduleRowActionLayout();
 
     return wrapper;
   }
 
   ignoreEvent(): boolean {
     return true;
+  }
+
+  destroy(): void {
+    this.menuAbort.abort();
   }
 }
 
@@ -261,6 +522,7 @@ function cloneTableData(data: TableData): TableData {
     rows: data.rows.map((row) => ({
       cells: row.cells.map((cell) => ({ ...cell })),
     })),
+    alignments: [...data.alignments],
   };
 }
 
@@ -277,6 +539,16 @@ function normalizeTableData(data: TableData): void {
       row.cells.push({ text: "", from: -1, to: -1 });
     }
   });
+  if (!data.alignments) {
+    data.alignments = [];
+  }
+  if (data.alignments.length < columnCount) {
+    for (let i = data.alignments.length; i < columnCount; i += 1) {
+      data.alignments.push(null);
+    }
+  } else if (data.alignments.length > columnCount) {
+    data.alignments = data.alignments.slice(0, columnCount);
+  }
 }
 
 function ensureHeader(data: TableData, columnCount: number): void {
@@ -303,12 +575,15 @@ function getColumnCount(data: TableData): number {
 function buildTableMarkdown(data: TableData): string {
   const columnCount = Math.max(1, getColumnCount(data));
   normalizeTableData(data);
+  const alignments = data.alignments.slice(0, columnCount);
   const headerCells = data.header?.cells ?? [];
   const headerLine = `| ${headerCells
     .slice(0, columnCount)
     .map((cell, index) => formatCell(cell.text || `Col ${index + 1}`))
     .join(" | ")} |`;
-  const separatorLine = `| ${Array.from({ length: columnCount }, () => "---").join(" | ")} |`;
+  const separatorLine = `| ${alignments
+    .map((alignment) => formatAlignment(alignment))
+    .join(" | ")} |`;
   const bodyLines = data.rows.map((row) => {
     const cells = Array.from({ length: columnCount }, (_value, index) => {
       const cell = row.cells[index];
@@ -342,12 +617,22 @@ function escapePipes(value: string): string {
   return value.replace(/\|/g, "\\|");
 }
 
-function collectTableData(state: EditorState, node: SyntaxNode): TableData {
+function collectTableData(
+  state: EditorState,
+  node: SyntaxNode,
+  lines: ReturnType<typeof collectTableLines>
+): TableData {
   const headerNode = node.getChild("TableHeader");
   const rowNodes = node.getChildren("TableRow");
   const header = headerNode ? { cells: collectCells(state, headerNode) } : null;
   const rows = rowNodes.map((row) => ({ cells: collectCells(state, row) }));
-  return { header, rows };
+  const columnCount = Math.max(
+    header?.cells.length ?? 0,
+    ...rows.map((row) => row.cells.length),
+    0
+  );
+  const alignments = parseAlignmentsFromLines(lines, columnCount);
+  return { header, rows, alignments };
 }
 
 function collectTableLines(state: EditorState, from: number, to: number) {
@@ -358,6 +643,44 @@ function collectTableLines(state: EditorState, from: number, to: number) {
     lines.push(state.doc.line(lineNumber));
   }
   return lines;
+}
+
+function parseAlignmentsFromLines(
+  lines: ReturnType<typeof collectTableLines>,
+  columnCount: number
+): TableAlignment[] {
+  if (columnCount <= 0) {
+    return [];
+  }
+  const separatorLine = lines[1]?.text;
+  if (!separatorLine) {
+    return Array.from({ length: columnCount }, () => null);
+  }
+  return parseAlignmentLine(separatorLine, columnCount);
+}
+
+function parseAlignmentLine(line: string, columnCount: number): TableAlignment[] {
+  const trimmed = line.trim();
+  const withoutEdges = trimmed.replace(/^\|/, "").replace(/\|$/, "");
+  const parts = withoutEdges.split("|").map((part) => part.trim());
+  const alignments = parts.map((part) => {
+    const startsWith = part.startsWith(":");
+    const endsWith = part.endsWith(":");
+    if (startsWith && endsWith) {
+      return "center";
+    }
+    if (startsWith) {
+      return "left";
+    }
+    if (endsWith) {
+      return "right";
+    }
+    return null;
+  });
+  if (alignments.length < columnCount) {
+    return alignments.concat(Array.from({ length: columnCount - alignments.length }, () => null));
+  }
+  return alignments.slice(0, columnCount);
 }
 
 function collectCells(
@@ -385,6 +708,19 @@ function toMarkdownText(value: string): string {
   return value.replace(/\r?\n/g, "<br>");
 }
 
+function formatAlignment(alignment: TableAlignment): string {
+  switch (alignment) {
+    case "left":
+      return ":---";
+    case "center":
+      return ":---:";
+    case "right":
+      return "---:";
+    default:
+      return "---";
+  }
+}
+
 function buildDecorations(
   state: EditorState,
   options: Required<TableEditorOptions>
@@ -403,11 +739,11 @@ function buildDecorations(
         return;
       }
 
-      const data = collectTableData(state, node.node);
       const lines = collectTableLines(state, node.from, node.to);
       if (lines.length === 0) {
         return;
       }
+      const data = collectTableData(state, node.node, lines);
 
       const firstLine = lines[0];
       const lastLine = lines[lines.length - 1];
@@ -445,8 +781,12 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       display: "none",
     },
     ".cm-content .cm-table-editor": {
-      overflowX: "auto",
+      overflow: "visible",
       margin: "0.5rem 0",
+      position: "relative",
+    },
+    ".cm-content .cm-table-editor .cm-table-scroll": {
+      overflowX: "auto",
     },
     ".cm-content .cm-table-editor table.cm-table": {
       width: "100%",
@@ -461,6 +801,10 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor th": {
       backgroundColor: "var(--app-pill-bg)",
       textAlign: "left",
+      position: "relative",
+    },
+    ".cm-content .cm-table-editor td": {
+      position: "relative",
     },
     ".cm-content .cm-table-editor .cm-table-input": {
       width: "100%",
@@ -477,6 +821,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       padding: "2px",
       whiteSpace: "pre-wrap",
       wordBreak: "break-word",
+      position: "relative",
+      zIndex: "1",
     },
     ".cm-content .cm-table-editor .cm-table-input:focus": {
       outline: "none",
@@ -487,20 +833,128 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       whiteSpace: "pre-wrap",
       wordBreak: "break-word",
     },
-    ".cm-content .cm-table-editor .cm-table-controls": {
-      display: "flex",
-      gap: "8px",
-      marginTop: "6px",
+    ".cm-content .cm-table-editor .cm-table-action": {
+      position: "absolute",
+      zIndex: "10",
+      display: "inline-flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: "4px",
+      pointerEvents: "auto",
     },
-    ".cm-content .cm-table-editor .cm-table-control": {
-      borderRadius: "6px",
-      border: "1px solid var(--app-button-border)",
-      background: "var(--app-button-bg)",
+    ".cm-content .cm-table-editor .cm-table-action--row": {
+      left: "6px",
+      top: "50%",
+    },
+    ".cm-content .cm-table-editor .cm-table-action--column": {
+      top: "6px",
+      right: "6px",
+      left: "auto",
+    },
+    ".cm-content .cm-table-editor .cm-table-action-button": {
+      border: "none",
+      background: "transparent",
       color: "var(--app-text)",
-      padding: "4px 8px",
+      fontSize: "14px",
+      padding: "0",
+      cursor: "pointer",
+      pointerEvents: "auto",
+      opacity: "0.35",
+      transition: "opacity 120ms ease",
+    },
+    ".cm-content .cm-table-editor .cm-table-row-actions .cm-table-action-button": {
+      opacity: "0.35",
+    },
+    ".cm-content .cm-table-editor .cm-table-row-actions .cm-table-action:hover .cm-table-action-button":
+      {
+        opacity: "0.85",
+      },
+    ".cm-content .cm-table-editor tr:hover .cm-table-action-button": {
+      opacity: "0.85",
+    },
+    ".cm-content .cm-table-editor th:hover .cm-table-action-button": {
+      opacity: "0.85",
+    },
+    ".cm-content .cm-table-editor .cm-table-action[data-open=\"true\"] .cm-table-action-button": {
+      opacity: "1",
+    },
+    ".cm-content .cm-table-editor .cm-table-action-menu": {
+      display: "none",
+      position: "absolute",
+      top: "26px",
+      left: "0",
+      minWidth: "160px",
+      background: "#2f2f2f",
+      border: "1px solid var(--editor-border)",
+      borderRadius: "8px",
+      boxShadow: "0 6px 18px rgba(0, 0, 0, 0.12)",
+      padding: "6px",
+      zIndex: "3",
+    },
+    ".cm-content .cm-table-editor .cm-table-action--column .cm-table-action-menu": {
+      top: "26px",
+      left: "0",
+    },
+    ".cm-content .cm-table-editor .cm-table-action[data-open=\"true\"] .cm-table-action-menu": {
+      display: "grid",
+      gap: "4px",
+    },
+    ".cm-content .cm-table-editor .cm-table-action-item-button": {
+      width: "100%",
+      textAlign: "left",
+      borderRadius: "6px",
+      border: "0",
+      background: "transparent",
+      color: "var(--editor-text-color)",
+      padding: "4px 6px",
       cursor: "pointer",
       fontSize: "12px",
     },
+    ".cm-content .cm-table-editor .cm-table-action-item-button:hover": {
+      background: "var(--app-pill-bg)",
+    },
+    ".cm-content .cm-table-editor .cm-table-action-item-button:disabled": {
+      opacity: "0.4",
+      cursor: "not-allowed",
+    },
+    ".cm-content .cm-table-editor .cm-table-action-item--submenu": {
+      position: "relative",
+    },
+    ".cm-content .cm-table-editor .cm-table-action-submenu": {
+      display: "none",
+      position: "absolute",
+      top: "0",
+      left: "100%",
+      marginLeft: "6px",
+      minWidth: "140px",
+      background: "var(--editor-surface)",
+      border: "1px solid var(--editor-border)",
+      borderRadius: "8px",
+      boxShadow: "0 6px 18px rgba(0, 0, 0, 0.12)",
+      padding: "6px",
+      zIndex: "4",
+    },
+    ".cm-content .cm-table-editor .cm-table-action-item--submenu:hover .cm-table-action-submenu": {
+      display: "grid",
+      gap: "4px",
+    },
+    ".cm-content .cm-table-editor .cm-table-row-actions": {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "0",
+      height: "0",
+      pointerEvents: "none",
+      zIndex: "10",
+    },
+    ".cm-content .cm-table-editor .cm-table-row-actions .cm-table-action": {
+      opacity: "0",
+      transition: "opacity 120ms ease",
+    },
+    ".cm-content .cm-table-editor .cm-table-row-actions .cm-table-action[data-active=\"true\"]":
+      {
+        opacity: "0.85",
+      },
   });
 
   const decorations = StateField.define<DecorationSet>({
