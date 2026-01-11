@@ -20,7 +20,7 @@ VS Code 拡張として Webview を提供し、CM6 ベースのエディタ（fe
 ## 3. 成果物
 - `packages/vscode-extension`
   - Webview UI（feature/001 の webapp を組み込み）
-  - `cm6-live-preview` / `cm6-table-editor` を読み込み
+  - `cm6-live-preview` / `cm6-table-editor-vanilla` を読み込み
   - bridge 実装（最小）
 
 ## 4. Bridge（最小要件）
@@ -50,4 +50,4 @@ VS Code 拡張として Webview を提供し、CM6 ベースのエディタ（fe
 - 編集内容が保存できる
 - 設定変更が Webview に反映される（少なくとも再読み込みでOK、できればランタイム反映）
 - `cm6-live-preview` を有効化すると露出制御が効く
-- `cm6-table-editor` を有効化するとテーブル表示が効く（v1）
+- `cm6-table-editor-vanilla` を有効化するとテーブル表示が効く（v1）

@@ -3,11 +3,7 @@ import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
 import { livePreviewPreset } from "cm6-live-preview";
 import { createEditor } from "./createEditor";
-import { tableEditor as revogridTableEditor } from "cm6-table-editor";
-import { tableEditor as tabulatorTableEditor } from "cm6-table-editor-tabulator";
-import { tableEditor as toastuiTableEditor } from "cm6-table-editor-toastui";
 import { tableEditor as vanillaTableEditor } from "cm6-table-editor-vanilla";
-import { tableEditor as tanstackTableEditor } from "cm6-table-editor-tanstack";
 import { editorTheme } from "./editorTheme";
 import { editorHighlightStyle } from "./editorHighlightStyle";
 
@@ -17,7 +13,7 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
-  tableEngine: "revogrid" | "tabulator" | "toastui" | "vanilla" | "tanstack" | "none";
+  tableEngine: "vanilla" | "none";
 };
 
 function buildExtensions({
@@ -169,13 +165,7 @@ export function setupApp() {
 }
 
 function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
-  if (
-    value === "tabulator" ||
-    value === "toastui" ||
-    value === "vanilla" ||
-    value === "tanstack" ||
-    value === "none"
-  ) {
+  if (value === "vanilla" || value === "none") {
     return value;
   }
   return "vanilla";
@@ -183,18 +173,11 @@ function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
 
 function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension {
   switch (engine) {
-    case "tabulator":
-      return tabulatorTableEditor({ editMode: "inlineCellEdit" });
-    case "toastui":
-      return toastuiTableEditor({ editMode: "inlineCellEdit" });
     case "vanilla":
       return vanillaTableEditor({ editMode: "inlineCellEdit" });
-    case "tanstack":
-      return tanstackTableEditor({ editMode: "inlineCellEdit" });
     case "none":
       return [];
-    case "revogrid":
     default:
-      return revogridTableEditor({ editMode: "inlineCellEdit" });
+      return vanillaTableEditor({ editMode: "inlineCellEdit" });
   }
 }

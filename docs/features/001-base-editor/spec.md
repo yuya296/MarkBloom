@@ -4,7 +4,7 @@
 
 ## 1. 目的
 CodeMirror 6 を用いて、Markdown を編集できる **Webapp の最小実装（実装ベース）**を作る。
-以降の `cm6-live-preview` / `cm6-table-editor` / VS Code Webview 統合の土台とする。
+以降の `cm6-live-preview` / `cm6-table-editor-vanilla` / VS Code Webview 統合の土台とする。
 
 ## 2. スコープ
 ### In scope
