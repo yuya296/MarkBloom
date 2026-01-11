@@ -76,7 +76,7 @@ class TableWidget extends WidgetType {
     const commitTable = () => {
       normalizeTableData(data);
       const markdown = buildTableMarkdown(data);
-      this.view.dispatch({
+      dispatchOutsideUpdate(this.view, {
         changes: { from: this.tableInfo.from, to: this.tableInfo.to, insert: markdown },
         annotations: tableEditAnnotation.of(true),
       });
@@ -90,6 +90,12 @@ class TableWidget extends WidgetType {
       input.className = "cm-table-input";
       input.rows = 1;
       input.value = toDisplayText(initialValue);
+      const resizeToContent = () => {
+        input.style.height = "0px";
+        input.style.height = `${input.scrollHeight}px`;
+      };
+      resizeToContent();
+      requestAnimationFrame(resizeToContent);
       let committed = false;
       const commit = () => {
         if (committed) {
@@ -98,6 +104,8 @@ class TableWidget extends WidgetType {
         committed = true;
         onCommit(input.value);
       };
+      input.addEventListener("input", resizeToContent);
+      input.addEventListener("focus", resizeToContent);
       input.addEventListener("blur", commit);
       input.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -290,6 +298,20 @@ function buildTableMarkdown(data: TableData): string {
   return [headerLine, separatorLine, ...bodyLines].join("\n");
 }
 
+function dispatchOutsideUpdate(
+  view: EditorView,
+  transaction: { changes: { from: number; to: number; insert: string }; annotations: Annotation<any> }
+) {
+  const dispatch = () => {
+    setTimeout(() => view.dispatch(transaction), 0);
+  };
+  if (typeof view.requestMeasure === "function") {
+    view.requestMeasure({ read() {}, write: dispatch });
+    return;
+  }
+  dispatch();
+}
+
 function formatCell(value: string): string {
   const normalized = escapePipes(value);
   return normalized.trim();
@@ -463,16 +485,26 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       width: "100%",
       minHeight: "1.6rem",
       border: "0",
-      resize: "vertical",
+      resize: "none",
+      outline: "none",
+      boxShadow: "none",
+      overflow: "hidden",
       background: "transparent",
       color: "var(--editor-text-color)",
       font: "inherit",
       lineHeight: "1.4",
       padding: "2px",
+      whiteSpace: "pre-wrap",
+      wordBreak: "break-word",
     },
     ".cm-content .cm-table-editor .cm-table-input:focus": {
-      outline: "1px solid var(--editor-primary-color)",
+      outline: "none",
+      boxShadow: "none",
       background: "var(--app-input-bg)",
+    },
+    ".cm-content .cm-table-editor .cm-table-cell": {
+      whiteSpace: "pre-wrap",
+      wordBreak: "break-word",
     },
     ".cm-content .cm-table-editor .cm-table-controls": {
       display: "flex",
