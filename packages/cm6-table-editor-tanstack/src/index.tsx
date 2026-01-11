@@ -44,7 +44,7 @@ type TableInfo = {
   from: number;
   to: number;
   startLineFrom: number;
-  endLineFrom: number;
+  endLineTo: number;
 };
 
 type TableModel = {
@@ -284,7 +284,11 @@ class TableWidget extends WidgetType {
       normalizeTableData(nextData);
       const markdown = buildTableMarkdown(nextData);
       dispatchOutsideUpdate(this.view, {
-        changes: { from: this.tableInfo.from, to: this.tableInfo.to, insert: markdown },
+        changes: {
+          from: this.tableInfo.startLineFrom,
+          to: this.tableInfo.endLineTo,
+          insert: markdown,
+        },
         annotations: tableEditAnnotation.of(true),
       });
     };
@@ -543,7 +547,7 @@ function buildDecorations(
         from: node.from,
         to: node.to,
         startLineFrom: firstLine.from,
-        endLineFrom: lastLine.from,
+        endLineTo: lastLine.to,
       };
       tables.push(info);
 
