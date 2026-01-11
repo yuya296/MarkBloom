@@ -78,8 +78,12 @@ class TableWidget extends WidgetType {
     scrollArea.className = "cm-table-scroll";
     const rowActions = document.createElement("div");
     rowActions.className = "cm-table-row-actions";
+    const rowDropIndicator = document.createElement("div");
+    rowDropIndicator.className = "cm-table-row-drop-indicator";
 
     let scheduleRowActionLayout: () => void = () => {};
+    let dragSourceIndex: number | null = null;
+    let dragTargetIndex: number | null = null;
 
     const closeAllMenus = () => {
       wrapper
@@ -381,6 +385,75 @@ class TableWidget extends WidgetType {
       });
     };
 
+    const getDropIndex = (clientY: number) => {
+      for (let index = 0; index < rowElements.length; index += 1) {
+        const rowRect = rowElements[index].getBoundingClientRect();
+        if (clientY < rowRect.top + rowRect.height / 2) {
+          return index;
+        }
+      }
+      return rowElements.length;
+    };
+
+    const updateDropIndicator = (clientX: number, clientY: number) => {
+      if (dragSourceIndex === null) {
+        return;
+      }
+      const firstRow = rowElements[0];
+      const lastRow = rowElements[rowElements.length - 1];
+      if (!firstRow || !lastRow) {
+        clearDropIndicator();
+        return;
+      }
+      const firstRect = firstRow.getBoundingClientRect();
+      const lastRect = lastRow.getBoundingClientRect();
+      const withinY = clientY >= firstRect.top && clientY <= lastRect.bottom;
+      if (!withinY) {
+        clearDropIndicator();
+        return;
+      }
+      const dropIndex = getDropIndex(clientY);
+      dragTargetIndex = dropIndex;
+      const referenceIndex = Math.min(dropIndex, rowElements.length - 1);
+      const referenceRow = rowElements[referenceIndex];
+      if (!referenceRow) {
+        rowDropIndicator.style.display = "none";
+        return;
+      }
+      const rowRect = referenceRow.getBoundingClientRect();
+      const top = dropIndex >= rowElements.length ? rowRect.bottom : rowRect.top;
+      rowDropIndicator.style.display = "block";
+      rowDropIndicator.style.top = `${top}px`;
+      rowDropIndicator.style.left = `${rowRect.left}px`;
+      rowDropIndicator.style.width = `${rowRect.width}px`;
+    };
+
+    const clearDropIndicator = () => {
+      rowDropIndicator.style.display = "none";
+      dragTargetIndex = null;
+    };
+
+    const commitRowReorder = () => {
+      if (dragSourceIndex === null || dragTargetIndex === null) {
+        return;
+      }
+      const total = data.rows.length;
+      if (total <= 1) {
+        return;
+      }
+      const sourceIndex = dragSourceIndex;
+      let targetIndex = dragTargetIndex;
+      if (sourceIndex < targetIndex) {
+        targetIndex -= 1;
+      }
+      if (targetIndex < 0 || targetIndex >= total || targetIndex === sourceIndex) {
+        return;
+      }
+      const [moved] = data.rows.splice(sourceIndex, 1);
+      data.rows.splice(targetIndex, 0, moved);
+      commitTable();
+    };
+
     const renderHeader = () => {
       const thead = document.createElement("thead");
       const row = document.createElement("tr");
@@ -493,6 +566,22 @@ class TableWidget extends WidgetType {
         "Row actions"
       );
       rowMenu.classList.add("cm-table-action--row");
+      const rowMenuButton = rowMenu.querySelector<HTMLButtonElement>(".cm-table-action-button");
+      if (rowMenuButton) {
+        rowMenuButton.draggable = true;
+        rowMenuButton.addEventListener("dragstart", (event) => {
+          dragSourceIndex = rowIndex;
+          dragTargetIndex = rowIndex;
+          rowMenu.dataset.dragging = "true";
+          event.dataTransfer?.setData("text/plain", String(rowIndex));
+          event.dataTransfer?.setDragImage(rowMenuButton, 0, 0);
+        });
+        rowMenuButton.addEventListener("dragend", () => {
+          dragSourceIndex = null;
+          rowMenu.removeAttribute("data-dragging");
+          clearDropIndicator();
+        });
+      }
       rowMenu.addEventListener("mouseenter", () => setActiveRowAction(rowIndex));
       rowMenu.addEventListener("mouseleave", () => setActiveRowAction(null));
       rowElement.addEventListener("mouseenter", () => setActiveRowAction(rowIndex));
@@ -500,7 +589,32 @@ class TableWidget extends WidgetType {
       rowActions.appendChild(rowMenu);
     });
 
+    wrapper.appendChild(rowDropIndicator);
     scheduleRowActionLayout();
+
+    const handleDragOver = (event: DragEvent) => {
+      if (dragSourceIndex === null) {
+        return;
+      }
+      event.preventDefault();
+      updateDropIndicator(event.clientX, event.clientY);
+    };
+
+    const handleDrop = (event: DragEvent) => {
+      if (dragSourceIndex === null) {
+        return;
+      }
+      event.preventDefault();
+      if (dragTargetIndex !== null) {
+        commitRowReorder();
+      }
+      clearDropIndicator();
+      dragSourceIndex = null;
+    };
+
+    window.addEventListener("dragover", handleDragOver, { signal });
+    window.addEventListener("drop", handleDrop, { signal });
+
 
     return wrapper;
   }
@@ -946,6 +1060,15 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       height: "0",
       pointerEvents: "none",
       zIndex: "10",
+    },
+    ".cm-content .cm-table-editor .cm-table-row-drop-indicator": {
+      position: "fixed",
+      height: "2px",
+      background: "var(--editor-primary-color)",
+      boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.25)",
+      pointerEvents: "none",
+      display: "none",
+      zIndex: "2000",
     },
     ".cm-content .cm-table-editor .cm-table-row-actions .cm-table-action": {
       opacity: "0",
