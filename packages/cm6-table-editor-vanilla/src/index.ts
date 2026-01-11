@@ -88,6 +88,7 @@ class TableWidget extends WidgetType {
 
     const createCellEditor = (
       initialValue: string,
+      onChange: (value: string) => void,
       onCommit: (value: string) => void
     ): HTMLTextAreaElement => {
       const input = document.createElement("textarea");
@@ -108,10 +109,34 @@ class TableWidget extends WidgetType {
         committed = true;
         onCommit(input.value);
       };
-      input.addEventListener("input", resizeToContent);
+      input.addEventListener("input", () => {
+        onChange(input.value);
+        resizeToContent();
+      });
       input.addEventListener("focus", resizeToContent);
-      input.addEventListener("blur", commit);
+      input.addEventListener("blur", (event) => {
+        const nextTarget = event.relatedTarget;
+        if (nextTarget instanceof Node && wrapper.contains(nextTarget)) {
+          committed = false;
+          return;
+        }
+        commit();
+      });
       input.addEventListener("keydown", (event) => {
+        if (event.key === "Tab") {
+          event.preventDefault();
+          const inputs = Array.from(
+            wrapper.querySelectorAll<HTMLTextAreaElement>("textarea.cm-table-input")
+          );
+          const currentIndex = inputs.indexOf(input);
+          if (currentIndex !== -1) {
+            const direction = event.shiftKey ? -1 : 1;
+            const nextIndex =
+              (currentIndex + direction + inputs.length) % inputs.length;
+            inputs[nextIndex]?.focus();
+          }
+          return;
+        }
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           commit();
@@ -173,10 +198,16 @@ class TableWidget extends WidgetType {
       headerRow.cells.forEach((cell, colIndex) => {
         const th = document.createElement("th");
         if (this.isEditable) {
-          const input = createCellEditor(cell.text, (value) => {
-            cell.text = toMarkdownText(value);
-            commitTable();
-          });
+          const input = createCellEditor(
+            cell.text,
+            (value) => {
+              cell.text = toMarkdownText(value);
+            },
+            (value) => {
+              cell.text = toMarkdownText(value);
+              commitTable();
+            }
+          );
           th.appendChild(input);
         } else {
           th.appendChild(renderReadOnlyCell(cell.text));
@@ -197,11 +228,18 @@ class TableWidget extends WidgetType {
           const cell = row.cells[colIndex] ?? { text: "", from: -1, to: -1 };
           const td = document.createElement("td");
           if (this.isEditable) {
-            const input = createCellEditor(cell.text, (value) => {
-              cell.text = toMarkdownText(value);
-              row.cells[colIndex] = cell;
-              commitTable();
-            });
+            const input = createCellEditor(
+              cell.text,
+              (value) => {
+                cell.text = toMarkdownText(value);
+                row.cells[colIndex] = cell;
+              },
+              (value) => {
+                cell.text = toMarkdownText(value);
+                row.cells[colIndex] = cell;
+                commitTable();
+              }
+            );
             td.appendChild(input);
           } else {
             td.appendChild(renderReadOnlyCell(cell.text));
