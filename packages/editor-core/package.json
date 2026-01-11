@@ -21,8 +21,10 @@
     "@lezer/markdown": "^1.6.2",
     "cm6-live-preview": "workspace:*",
     "cm6-table-editor": "workspace:*",
+    "cm6-table-editor-tanstack": "workspace:*",
     "cm6-table-editor-tabulator": "workspace:*",
-    "cm6-table-editor-toastui": "workspace:*"
+    "cm6-table-editor-toastui": "workspace:*",
+    "cm6-table-editor-vanilla": "workspace:*"
   },
   "devDependencies": {
     "sass": "^1.97.1",

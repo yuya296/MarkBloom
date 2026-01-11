@@ -163,6 +163,25 @@ class TableWidget extends WidgetType {
 
     const columns = safeClone(sanitizeColumns(buildColumns(this.data)));
     const source = safeClone(sanitizeSource(buildSource(this.data, columns.length)));
+    const updateHeader = (colIndex: number, nextValue: string) => {
+      const header = this.data.header;
+      const headerCell = header?.cells[colIndex];
+      if (!headerCell) {
+        return;
+      }
+      const insert = toMarkdownText(nextValue);
+      if (insert === headerCell.text) {
+        return;
+      }
+      headerCell.text = insert;
+      columns[colIndex].name = toPlainText(nextValue);
+      this.view.dispatch({
+        changes: { from: headerCell.from, to: headerCell.to, insert },
+        annotations: tableEditAnnotation.of(true),
+      });
+      grid.columns = columns;
+      grid.refresh?.();
+    };
 
     let applied = false;
     const applyConfig = () => {
@@ -271,23 +290,52 @@ class TableWidget extends WidgetType {
       }
     };
 
+    const onHeaderDblClick = (event: MouseEvent) => {
+      if (!this.isEditable) {
+        return;
+      }
+      const colIndex = extractHeaderColumnIndex(event, grid, columns);
+      if (colIndex == null) {
+        return;
+      }
+      const headerCell = this.data.header?.cells[colIndex];
+      if (!headerCell) {
+        return;
+      }
+      const currentValue = toDisplayText(headerCell.text);
+      const nextValue = window.prompt("Edit header", currentValue);
+      if (nextValue == null) {
+        return;
+      }
+      updateHeader(colIndex, nextValue);
+    };
+
     grid.addEventListener("afteredit", onAfterEdit);
     grid.addEventListener("afterfocus", onAfterFocus);
     grid.addEventListener("keydown", onKeyDown);
+    grid.addEventListener("dblclick", onHeaderDblClick);
 
     (grid as HTMLElement & {
       __cmOnAfterEdit?: (event: Event) => void;
       __cmOnAfterFocus?: (event: Event) => void;
       __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
     }).__cmOnAfterEdit = onAfterEdit;
     (grid as HTMLElement & {
       __cmOnAfterFocus?: (event: Event) => void;
       __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
     }).__cmOnAfterFocus = onAfterFocus;
     (grid as HTMLElement & {
       __cmOnAfterFocus?: (event: Event) => void;
       __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
     }).__cmOnKeyDown = onKeyDown;
+    (grid as HTMLElement & {
+      __cmOnAfterFocus?: (event: Event) => void;
+      __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
+    }).__cmOnHeaderDblClick = onHeaderDblClick;
 
     wrapper.appendChild(grid);
 
@@ -303,6 +351,7 @@ class TableWidget extends WidgetType {
       __cmOnAfterEdit?: (event: Event) => void;
       __cmOnAfterFocus?: (event: Event) => void;
       __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
     };
     if (grid?.__cmOnAfterEdit) {
       grid.removeEventListener("afteredit", grid.__cmOnAfterEdit);
@@ -312,6 +361,9 @@ class TableWidget extends WidgetType {
     }
     if (grid?.__cmOnKeyDown) {
       grid.removeEventListener("keydown", grid.__cmOnKeyDown);
+    }
+    if (grid?.__cmOnHeaderDblClick) {
+      grid.removeEventListener("dblclick", grid.__cmOnHeaderDblClick);
     }
     unregisterTable(this.tableInfo.id);
   }
@@ -332,6 +384,25 @@ function sanitizeSource(source: TableSourceRow[]): TableSourceRow[] {
     }
     return record;
   });
+}
+
+function parseColumnIndex(value: string | undefined): number | null {
+  if (value == null) {
+    return null;
+  }
+  const index = Number(value);
+  return Number.isFinite(index) ? index : null;
+}
+
+function columnIndexFromDataset(element: HTMLElement): number | null {
+  const { colIndex, col, columnIndex, column, index } = element.dataset;
+  return (
+    parseColumnIndex(colIndex) ??
+    parseColumnIndex(col) ??
+    parseColumnIndex(columnIndex) ??
+    parseColumnIndex(column) ??
+    parseColumnIndex(index)
+  );
 }
 
 function safeClone<T>(value: T): T {
@@ -449,6 +520,85 @@ function toDisplayText(value: string): string {
 
 function toMarkdownText(value: string): string {
   return value.replace(/\r?\n/g, "<br>");
+}
+
+function extractColumnIndex(detail: Record<string, unknown>, columns: TableColumn[]): number | null {
+  const prop =
+    (detail.prop as string | undefined) ??
+    (detail?.column && typeof detail.column === "object"
+      ? ((detail.column as Record<string, unknown>).prop as string | undefined)
+      : undefined);
+
+  const colIndex = (detail.colIndex as number | undefined) ?? (detail.col as number | undefined);
+
+  if (typeof colIndex === "number") {
+    return colIndex;
+  }
+
+  if (prop) {
+    const match = prop.match(/^c(\d+)$/);
+    if (match) {
+      return Number(match[1]);
+    }
+    const index = columns.findIndex((col) => col.prop === prop);
+    return index >= 0 ? index : null;
+  }
+
+  return null;
+}
+
+function extractHeaderColumnIndex(
+  event: Event,
+  grid: HTMLElement,
+  columns: TableColumn[]
+): number | null {
+  const customEvent = event as CustomEvent;
+  const detail =
+    customEvent.detail && typeof customEvent.detail === "object"
+      ? (customEvent.detail as Record<string, unknown>)
+      : null;
+  if (detail) {
+    const columnIndex = extractColumnIndex(detail, columns);
+    if (columnIndex != null) {
+      return columnIndex;
+    }
+  }
+
+  const path = (event as MouseEvent).composedPath?.() ?? [];
+  const headerElement = path.find((node) => {
+    if (!(node instanceof HTMLElement)) {
+      return false;
+    }
+    if (node.getAttribute("role") === "columnheader") {
+      return true;
+    }
+    return node.classList.contains("rgHeaderCell") || node.classList.contains("rgHeader");
+  }) as HTMLElement | undefined;
+
+  if (headerElement) {
+    const datasetIndex = columnIndexFromDataset(headerElement);
+    if (datasetIndex != null) {
+      return datasetIndex;
+    }
+    const headerRoot = grid.shadowRoot ?? grid;
+    const headerCells = headerRoot.querySelectorAll('[role="columnheader"], .rgHeaderCell');
+    const index = Array.from(headerCells).indexOf(headerElement);
+    if (index >= 0) {
+      return index;
+    }
+  }
+
+  for (const node of path) {
+    if (!(node instanceof HTMLElement)) {
+      continue;
+    }
+    const datasetIndex = columnIndexFromDataset(node);
+    if (datasetIndex != null) {
+      return datasetIndex;
+    }
+  }
+
+  return null;
 }
 
 function extractEdit(

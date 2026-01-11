@@ -117,6 +117,29 @@ class TableWidget extends WidgetType {
 
     const columns = buildColumns(this.data, wrapper);
     const source = buildSource(this.data, columns.length);
+    const updateHeader = (colIndex: number, nextValue: string, headerElement?: HTMLElement) => {
+      const header = this.data.header;
+      const headerCell = header?.cells[colIndex];
+      if (!headerCell) {
+        return;
+      }
+      const insert = toMarkdownText(nextValue);
+      if (insert === headerCell.text) {
+        return;
+      }
+      headerCell.text = insert;
+      const nextHeader = toPlainText(nextValue);
+      columns[colIndex].header = nextHeader;
+      this.view.dispatch({
+        changes: { from: headerCell.from, to: headerCell.to, insert },
+        annotations: tableEditAnnotation.of(true),
+      });
+      const headerContent =
+        headerElement?.querySelector<HTMLElement>(".tui-grid-cell-content") ?? null;
+      if (headerContent) {
+        headerContent.textContent = nextHeader;
+      }
+    };
 
     const grid = new Grid({
       el: wrapper,
@@ -227,10 +250,46 @@ class TableWidget extends WidgetType {
       }
     };
 
-    wrapper.addEventListener("keydown", onKeyDown);
+    const onHeaderDblClick = (event: MouseEvent) => {
+      if (!this.isEditable) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      const headerCell = target?.closest(".tui-grid-cell-header") as HTMLElement | null;
+      if (!headerCell) {
+        return;
+      }
+      const columnName = headerCell.dataset.columnName;
+      if (!columnName) {
+        return;
+      }
+      const colIndex = columns.findIndex((col) => col.name === columnName);
+      if (colIndex < 0) {
+        return;
+      }
+      const headerData = this.data.header?.cells[colIndex];
+      if (!headerData) {
+        return;
+      }
+      const currentValue = toDisplayText(headerData.text);
+      const nextValue = window.prompt("Edit header", currentValue);
+      if (nextValue == null) {
+        return;
+      }
+      updateHeader(colIndex, nextValue, headerCell);
+    };
 
-    (wrapper as HTMLElement & { __cmOnKeyDown?: (event: KeyboardEvent) => void }).__cmOnKeyDown =
-      onKeyDown;
+    wrapper.addEventListener("keydown", onKeyDown);
+    wrapper.addEventListener("dblclick", onHeaderDblClick);
+
+    (wrapper as HTMLElement & {
+      __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
+    }).__cmOnKeyDown = onKeyDown;
+    (wrapper as HTMLElement & {
+      __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
+    }).__cmOnHeaderDblClick = onHeaderDblClick;
 
     applyRowHeights(grid, this.data);
 
@@ -242,9 +301,15 @@ class TableWidget extends WidgetType {
   }
 
   destroy(dom: HTMLElement): void {
-    const wrapper = dom as HTMLElement & { __cmOnKeyDown?: (event: KeyboardEvent) => void };
+    const wrapper = dom as HTMLElement & {
+      __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
+    };
     if (wrapper.__cmOnKeyDown) {
       wrapper.removeEventListener("keydown", wrapper.__cmOnKeyDown);
+    }
+    if (wrapper.__cmOnHeaderDblClick) {
+      wrapper.removeEventListener("dblclick", wrapper.__cmOnHeaderDblClick);
     }
     if (this.grid && typeof (this.grid as { destroy?: () => void }).destroy === "function") {
       (this.grid as { destroy?: () => void }).destroy?.();

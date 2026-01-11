@@ -112,6 +112,35 @@ class TableWidget extends WidgetType {
 
     const columns = safeClone(buildColumns(this.data));
     const source = safeClone(buildSource(this.data, columns.length));
+    const updateHeader = (colIndex: number, nextValue: string, headerElement?: HTMLElement) => {
+      const header = this.data.header;
+      const headerCell = header?.cells[colIndex];
+      if (!headerCell) {
+        return;
+      }
+      const insert = toMarkdownText(nextValue);
+      if (insert === headerCell.text) {
+        return;
+      }
+      headerCell.text = insert;
+      const nextTitle = toPlainText(nextValue);
+      columns[colIndex].title = nextTitle;
+      this.view.dispatch({
+        changes: { from: headerCell.from, to: headerCell.to, insert },
+        annotations: tableEditAnnotation.of(true),
+      });
+      const field = columns[colIndex]?.field;
+      const tabulatorApi = tabulator as {
+        getColumn?: (field: string) => { updateDefinition?: (next: Record<string, unknown>) => void };
+      };
+      const column = field ? tabulatorApi.getColumn?.(field) : null;
+      column?.updateDefinition?.({ title: nextTitle });
+      const titleElement =
+        headerElement?.querySelector<HTMLElement>(".tabulator-col-title") ?? null;
+      if (titleElement) {
+        titleElement.textContent = nextTitle;
+      }
+    };
 
     const tabulator = new Tabulator(wrapper, {
       data: source,
@@ -218,6 +247,35 @@ class TableWidget extends WidgetType {
       }
     };
 
+    const onHeaderDblClick = (event: MouseEvent) => {
+      if (!this.isEditable) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      const headerCell = target?.closest(".tabulator-col") as HTMLElement | null;
+      if (!headerCell) {
+        return;
+      }
+      const field = headerCell.dataset.field;
+      if (!field) {
+        return;
+      }
+      const colIndex = columns.findIndex((col) => col.field === field);
+      if (colIndex < 0) {
+        return;
+      }
+      const headerData = this.data.header?.cells[colIndex];
+      if (!headerData) {
+        return;
+      }
+      const currentValue = toDisplayText(headerData.text);
+      const nextValue = window.prompt("Edit header", currentValue);
+      if (nextValue == null) {
+        return;
+      }
+      updateHeader(colIndex, nextValue, headerCell);
+    };
+
     (tabulator as unknown as { on?: (event: string, cb: (...args: any[]) => void) => void })
       .on?.("cellEdited", onCellEdited);
     (tabulator as unknown as { on?: (event: string, cb: (...args: any[]) => void) => void })
@@ -226,9 +284,16 @@ class TableWidget extends WidgetType {
       .on?.("cellEdited", onCellFocus);
 
     wrapper.addEventListener("keydown", onKeyDown);
+    wrapper.addEventListener("dblclick", onHeaderDblClick);
 
-    (wrapper as HTMLElement & { __cmOnKeyDown?: (event: KeyboardEvent) => void }).__cmOnKeyDown =
-      onKeyDown;
+    (wrapper as HTMLElement & {
+      __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
+    }).__cmOnKeyDown = onKeyDown;
+    (wrapper as HTMLElement & {
+      __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
+    }).__cmOnHeaderDblClick = onHeaderDblClick;
 
     return wrapper;
   }
@@ -238,9 +303,15 @@ class TableWidget extends WidgetType {
   }
 
   destroy(dom: HTMLElement): void {
-    const wrapper = dom as HTMLElement & { __cmOnKeyDown?: (event: KeyboardEvent) => void };
+    const wrapper = dom as HTMLElement & {
+      __cmOnKeyDown?: (event: KeyboardEvent) => void;
+      __cmOnHeaderDblClick?: (event: MouseEvent) => void;
+    };
     if (wrapper.__cmOnKeyDown) {
       wrapper.removeEventListener("keydown", wrapper.__cmOnKeyDown);
+    }
+    if (wrapper.__cmOnHeaderDblClick) {
+      wrapper.removeEventListener("dblclick", wrapper.__cmOnHeaderDblClick);
     }
     if (this.table && typeof (this.table as { destroy?: () => void }).destroy === "function") {
       (this.table as { destroy?: () => void }).destroy?.();
