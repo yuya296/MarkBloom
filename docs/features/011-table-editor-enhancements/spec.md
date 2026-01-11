@@ -43,6 +43,7 @@ Markdown テーブルの編集体験を改善し、行/列の追加・削除・�
   - Insert column right
   - Delete column
   - Align: Left / Center / Right（列単位、サブメニュー）
+- 列ハンドルのドラッグで列順を入れ替え（ドロップ位置をライン表示）
 
 ### 4.4 Align の反映
 - Markdown の separator 行に `:---`, `---:`, `:---:` を用いて整列を保持

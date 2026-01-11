@@ -80,10 +80,17 @@ class TableWidget extends WidgetType {
     rowActions.className = "cm-table-row-actions";
     const rowDropIndicator = document.createElement("div");
     rowDropIndicator.className = "cm-table-row-drop-indicator";
+    const columnHandles = document.createElement("div");
+    columnHandles.className = "cm-table-column-handles";
+    const columnDropIndicator = document.createElement("div");
+    columnDropIndicator.className = "cm-table-column-drop-indicator";
 
     let scheduleRowActionLayout: () => void = () => {};
+    let scheduleColumnHandleLayout: () => void = () => {};
     let dragSourceIndex: number | null = null;
     let dragTargetIndex: number | null = null;
+    let dragSourceColumnIndex: number | null = null;
+    let dragTargetColumnIndex: number | null = null;
 
     const closeAllMenus = () => {
       wrapper
@@ -109,6 +116,7 @@ class TableWidget extends WidgetType {
     const closeOnScroll = () => {
       closeAllMenus();
       scheduleRowActionLayout();
+      scheduleColumnHandleLayout();
     };
 
     const signal = this.menuAbort.signal;
@@ -156,6 +164,7 @@ class TableWidget extends WidgetType {
         onChange(input.value);
         resizeToContent();
         scheduleRowActionLayout();
+        scheduleColumnHandleLayout();
       });
       input.addEventListener("focus", resizeToContent);
       input.addEventListener("blur", (event) => {
@@ -187,6 +196,13 @@ class TableWidget extends WidgetType {
         }
       });
       return input;
+    };
+
+    const createIconSpan = (iconName: string) => {
+      const icon = document.createElement("span");
+      icon.className = "cm-table-icon material-symbols-outlined";
+      icon.textContent = iconName;
+      return icon;
     };
 
     const insertRow = (index: number) => {
@@ -260,14 +276,18 @@ class TableWidget extends WidgetType {
       disabled?: boolean;
     };
 
-    const createActionMenu = (items: ActionItem[], menuLabel: string) => {
+    const createActionMenu = (
+      items: ActionItem[],
+      menuLabel: string,
+      iconName: string = "more_horiz"
+    ) => {
       const container = document.createElement("div");
       container.className = "cm-table-action";
 
       const button = document.createElement("button");
       button.type = "button";
       button.className = "cm-table-action-button";
-      button.textContent = "⋯";
+      button.appendChild(createIconSpan(iconName));
       button.setAttribute("aria-label", menuLabel);
 
       const menu = document.createElement("div");
@@ -355,6 +375,7 @@ class TableWidget extends WidgetType {
     };
 
     const rowElements: HTMLTableRowElement[] = [];
+    const headerCells: HTMLTableCellElement[] = [];
     let rowActionLayoutPending = false;
     const positionRowActions = () => {
       if (rowElements.length === 0) {
@@ -368,7 +389,7 @@ class TableWidget extends WidgetType {
         }
         const menuHeight = menu.getBoundingClientRect().height;
         const top = rowRect.top + Math.max(0, (rowRect.height - menuHeight) / 2);
-        const left = rowRect.left - 26;
+        const left = rowRect.left - 22;
         menu.style.top = `${top}px`;
         menu.style.left = `${left}px`;
         menu.style.transform = "none";
@@ -385,6 +406,35 @@ class TableWidget extends WidgetType {
       });
     };
 
+    let columnHandleLayoutPending = false;
+    const positionColumnHandles = () => {
+      if (headerCells.length === 0) {
+        return;
+      }
+      headerCells.forEach((cell, index) => {
+        const cellRect = cell.getBoundingClientRect();
+        const handle = columnHandles.children[index];
+        if (!(handle instanceof HTMLElement)) {
+          return;
+        }
+        const handleRect = handle.getBoundingClientRect();
+        const top = cellRect.top - handleRect.height + 2;
+        const left = cellRect.left + (cellRect.width - handleRect.width) / 2;
+        handle.style.top = `${top}px`;
+        handle.style.left = `${left}px`;
+      });
+    };
+    scheduleColumnHandleLayout = () => {
+      if (columnHandleLayoutPending) {
+        return;
+      }
+      columnHandleLayoutPending = true;
+      requestAnimationFrame(() => {
+        columnHandleLayoutPending = false;
+        positionColumnHandles();
+      });
+    };
+
     const getDropIndex = (clientY: number) => {
       for (let index = 0; index < rowElements.length; index += 1) {
         const rowRect = rowElements[index].getBoundingClientRect();
@@ -393,6 +443,16 @@ class TableWidget extends WidgetType {
         }
       }
       return rowElements.length;
+    };
+
+    const getColumnDropIndex = (clientX: number) => {
+      for (let index = 0; index < headerCells.length; index += 1) {
+        const cellRect = headerCells[index].getBoundingClientRect();
+        if (clientX < cellRect.left + cellRect.width / 2) {
+          return index;
+        }
+      }
+      return headerCells.length;
     };
 
     const updateDropIndicator = (clientX: number, clientY: number) => {
@@ -433,6 +493,41 @@ class TableWidget extends WidgetType {
       dragTargetIndex = null;
     };
 
+    const updateColumnDropIndicator = (clientX: number, clientY: number) => {
+      if (dragSourceColumnIndex === null) {
+        return;
+      }
+      const tableRect = table.getBoundingClientRect();
+      const tolerance = 60;
+      const withinY =
+        clientY >= tableRect.top - tolerance && clientY <= tableRect.bottom + tolerance;
+      const withinX =
+        clientX >= tableRect.left - tolerance && clientX <= tableRect.right + tolerance;
+      if (!withinX || !withinY) {
+        clearColumnDropIndicator();
+        return;
+      }
+      const dropIndex = getColumnDropIndex(clientX);
+      dragTargetColumnIndex = dropIndex;
+      const referenceIndex = Math.min(dropIndex, headerCells.length - 1);
+      const referenceCell = headerCells[referenceIndex];
+      if (!referenceCell) {
+        columnDropIndicator.style.display = "none";
+        return;
+      }
+      const cellRect = referenceCell.getBoundingClientRect();
+      const left = dropIndex >= headerCells.length ? cellRect.right : cellRect.left;
+      columnDropIndicator.style.display = "block";
+      columnDropIndicator.style.top = `${tableRect.top}px`;
+      columnDropIndicator.style.left = `${left}px`;
+      columnDropIndicator.style.height = `${tableRect.height}px`;
+    };
+
+    const clearColumnDropIndicator = () => {
+      columnDropIndicator.style.display = "none";
+      dragTargetColumnIndex = null;
+    };
+
     const commitRowReorder = () => {
       if (dragSourceIndex === null || dragTargetIndex === null) {
         return;
@@ -451,6 +546,36 @@ class TableWidget extends WidgetType {
       }
       const [moved] = data.rows.splice(sourceIndex, 1);
       data.rows.splice(targetIndex, 0, moved);
+      commitTable();
+    };
+
+    const commitColumnReorder = () => {
+      if (dragSourceColumnIndex === null || dragTargetColumnIndex === null) {
+        return;
+      }
+      normalizeTableData(data);
+      const columnCount = getColumnCount(data);
+      if (columnCount <= 1) {
+        return;
+      }
+      const sourceIndex = dragSourceColumnIndex;
+      let targetIndex = dragTargetColumnIndex;
+      if (sourceIndex < targetIndex) {
+        targetIndex -= 1;
+      }
+      if (targetIndex < 0 || targetIndex >= columnCount || targetIndex === sourceIndex) {
+        return;
+      }
+      if (data.header) {
+        const [movedHeader] = data.header.cells.splice(sourceIndex, 1);
+        data.header.cells.splice(targetIndex, 0, movedHeader);
+      }
+      data.rows.forEach((row) => {
+        const [movedCell] = row.cells.splice(sourceIndex, 1);
+        row.cells.splice(targetIndex, 0, movedCell);
+      });
+      const [movedAlign] = data.alignments.splice(sourceIndex, 1);
+      data.alignments.splice(targetIndex, 0, movedAlign);
       commitTable();
     };
 
@@ -476,6 +601,7 @@ class TableWidget extends WidgetType {
           }
         );
         th.appendChild(input);
+        headerCells.push(th);
         const columnMenu = createActionMenu(
           [
             { label: "Insert column left", onSelect: () => insertColumn(colIndex) },
@@ -494,7 +620,8 @@ class TableWidget extends WidgetType {
               ],
             },
           ],
-          "Column actions"
+          "Column actions",
+          "more_horiz"
         );
         columnMenu.classList.add("cm-table-action--column");
         th.appendChild(columnMenu);
@@ -563,7 +690,8 @@ class TableWidget extends WidgetType {
           { label: "Insert row below", onSelect: () => insertRow(rowIndex + 1) },
           { label: "Delete row", onSelect: () => deleteRow(rowIndex) },
         ],
-        "Row actions"
+        "Row actions",
+        "drag_indicator"
       );
       rowMenu.classList.add("cm-table-action--row");
       const rowMenuButton = rowMenu.querySelector<HTMLButtonElement>(".cm-table-action-button");
@@ -589,22 +717,73 @@ class TableWidget extends WidgetType {
       rowActions.appendChild(rowMenu);
     });
 
+    const setActiveColumnHandle = (activeIndex: number | null) => {
+      Array.from(columnHandles.children).forEach((child, index) => {
+        if (!(child instanceof HTMLElement)) {
+          return;
+        }
+        if (activeIndex !== null && index === activeIndex) {
+          child.dataset.active = "true";
+        } else {
+          child.removeAttribute("data-active");
+        }
+      });
+    };
+
+    headerCells.forEach((headerCell, colIndex) => {
+      const handle = document.createElement("button");
+      handle.type = "button";
+      handle.className = "cm-table-column-handle";
+      handle.appendChild(createIconSpan("drag_indicator"));
+      handle.setAttribute("aria-label", "Drag column");
+      handle.draggable = true;
+      handle.addEventListener("dragstart", (event) => {
+        dragSourceColumnIndex = colIndex;
+        dragTargetColumnIndex = colIndex;
+        event.dataTransfer?.setData("text/plain", String(colIndex));
+        event.dataTransfer?.setDragImage(handle, 0, 0);
+      });
+      handle.addEventListener("dragend", () => {
+        dragSourceColumnIndex = null;
+        clearColumnDropIndicator();
+      });
+      handle.addEventListener("mouseenter", () => setActiveColumnHandle(colIndex));
+      handle.addEventListener("mouseleave", () => setActiveColumnHandle(null));
+      headerCell.addEventListener("mouseenter", () => setActiveColumnHandle(colIndex));
+      headerCell.addEventListener("mouseleave", () => setActiveColumnHandle(null));
+      columnHandles.appendChild(handle);
+    });
+
     wrapper.appendChild(rowDropIndicator);
+    wrapper.appendChild(columnHandles);
+    wrapper.appendChild(columnDropIndicator);
     scheduleRowActionLayout();
+    scheduleColumnHandleLayout();
 
     const handleDragOver = (event: DragEvent) => {
-      if (dragSourceIndex === null) {
+      if (dragSourceIndex === null && dragSourceColumnIndex === null) {
         return;
       }
       event.preventDefault();
+      if (dragSourceColumnIndex !== null) {
+        updateColumnDropIndicator(event.clientX, event.clientY);
+        clearDropIndicator();
+        return;
+      }
       updateDropIndicator(event.clientX, event.clientY);
     };
 
     const handleDrop = (event: DragEvent) => {
-      if (dragSourceIndex === null) {
+      if (dragSourceIndex === null && dragSourceColumnIndex === null) {
         return;
       }
       event.preventDefault();
+      if (dragSourceColumnIndex !== null && dragTargetColumnIndex !== null) {
+        commitColumnReorder();
+        clearColumnDropIndicator();
+        dragSourceColumnIndex = null;
+        return;
+      }
       if (dragTargetIndex !== null) {
         commitRowReorder();
       }
@@ -897,6 +1076,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor": {
       overflow: "visible",
       margin: "0.5rem 0",
+      paddingTop: "0.5rem",
       position: "relative",
     },
     ".cm-content .cm-table-editor .cm-table-scroll": {
@@ -1061,9 +1241,54 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       pointerEvents: "none",
       zIndex: "10",
     },
+    ".cm-content .cm-table-editor .cm-table-column-handles": {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "0",
+      height: "0",
+      pointerEvents: "none",
+      zIndex: "10",
+    },
+    ".cm-content .cm-table-editor .cm-table-column-handle": {
+      position: "absolute",
+      border: "none",
+      background: "transparent",
+      color: "var(--app-text)",
+      fontSize: "12px",
+      padding: "0",
+      cursor: "grab",
+      pointerEvents: "auto",
+      opacity: "0",
+      transition: "opacity 120ms ease",
+    },
+    ".cm-content .cm-table-editor .cm-table-column-handle[data-active=\"true\"]": {
+      opacity: "0.8",
+    },
+    ".cm-content .cm-table-editor .cm-table-icon": {
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontFamily: "\"Material Symbols Outlined\"",
+      fontSize: "18px",
+      lineHeight: "1",
+      fontVariationSettings: "\"FILL\" 0, \"wght\" 400, \"GRAD\" 0, \"opsz\" 20",
+    },
+    ".cm-content .cm-table-editor .cm-table-column-handle .cm-table-icon": {
+      transform: "rotate(90deg)",
+    },
     ".cm-content .cm-table-editor .cm-table-row-drop-indicator": {
       position: "fixed",
       height: "2px",
+      background: "var(--editor-primary-color)",
+      boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.25)",
+      pointerEvents: "none",
+      display: "none",
+      zIndex: "2000",
+    },
+    ".cm-content .cm-table-editor .cm-table-column-drop-indicator": {
+      position: "fixed",
+      width: "2px",
       background: "var(--editor-primary-color)",
       boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.25)",
       pointerEvents: "none",
