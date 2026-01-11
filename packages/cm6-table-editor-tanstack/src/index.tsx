@@ -283,7 +283,7 @@ class TableWidget extends WidgetType {
       const nextData = applyModelToData(nextModel, cloneTableData(this.data));
       normalizeTableData(nextData);
       const markdown = buildTableMarkdown(nextData);
-      this.view.dispatch({
+      dispatchOutsideUpdate(this.view, {
         changes: { from: this.tableInfo.from, to: this.tableInfo.to, insert: markdown },
         annotations: tableEditAnnotation.of(true),
       });
@@ -417,6 +417,20 @@ function buildTableMarkdown(data: TableData): string {
     return `| ${cells.join(" | ")} |`;
   });
   return [headerLine, separatorLine, ...bodyLines].join("\n");
+}
+
+function dispatchOutsideUpdate(
+  view: EditorView,
+  transaction: { changes: { from: number; to: number; insert: string }; annotations: Annotation<any> }
+) {
+  const dispatch = () => {
+    setTimeout(() => view.dispatch(transaction), 0);
+  };
+  if (typeof view.requestMeasure === "function") {
+    view.requestMeasure({ read() {}, write: dispatch });
+    return;
+  }
+  dispatch();
 }
 
 function formatCell(value: string): string {

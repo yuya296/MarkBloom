@@ -178,7 +178,7 @@ function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
   ) {
     return value;
   }
-  return "revogrid";
+  return "vanilla";
 }
 
 function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension {
