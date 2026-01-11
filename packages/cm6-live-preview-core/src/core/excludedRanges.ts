@@ -1,9 +1,12 @@
 import { syntaxTree } from "@codemirror/language";
-import type { EditorView } from "@codemirror/view";
+import type { EditorState } from "@codemirror/state";
 import type { ExcludeRanges } from "./types";
 import type { LivePreviewOptions } from "../index";
 
-export function collectExcludedRanges(view: EditorView, options: LivePreviewOptions): ExcludeRanges {
+export function collectExcludedRanges(
+  state: EditorState,
+  options: LivePreviewOptions
+): ExcludeRanges {
   const block: ExcludeRanges["block"] = [];
   const inline: ExcludeRanges["inline"] = [];
 
@@ -14,7 +17,7 @@ export function collectExcludedRanges(view: EditorView, options: LivePreviewOpti
   const blockNames = new Set(["FencedCode", "CodeBlock"]);
   const inlineNames = new Set(["CodeText"]);
 
-  syntaxTree(view.state).iterate({
+  syntaxTree(state).iterate({
     enter: (node) => {
       if (blockNames.has(node.name)) {
         block.push({ from: node.from, to: node.to });

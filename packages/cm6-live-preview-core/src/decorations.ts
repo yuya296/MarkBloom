@@ -1,6 +1,6 @@
-import { RangeSetBuilder } from "@codemirror/state";
+import { RangeSetBuilder, type EditorState } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
-import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
+import { Decoration, type DecorationSet } from "@codemirror/view";
 import type { LivePreviewOptions } from "./index";
 import {
   addBlockMarkerDecorations,
@@ -13,7 +13,7 @@ import { collectExcludedRanges } from "./core/excludedRanges";
 import { overlapsRange } from "./core/utils";
 
 function addThematicBreakDecorations(
-  view: EditorView,
+  state: EditorState,
   push: (from: number, to: number, decoration: Decoration) => void,
   hiddenDecoration: Decoration,
   blockRevealRange: { from: number; to: number } | null,
@@ -21,13 +21,13 @@ function addThematicBreakDecorations(
 ) {
   const revealRanges = blockRevealRange ? [blockRevealRange] : [];
 
-  syntaxTree(view.state).iterate({
+  syntaxTree(state).iterate({
     enter: (node) => {
       if (node.name !== "HorizontalRule") {
         return;
       }
       if (blockRevealRange && overlapsRange(node.from, node.to, revealRanges)) {
-        const line = view.state.doc.lineAt(node.from);
+        const line = state.doc.lineAt(node.from);
         push(line.from, line.from, rawLineDecoration);
         return;
       }
@@ -36,12 +36,12 @@ function addThematicBreakDecorations(
   });
 }
 
-export function buildDecorations(view: EditorView, options: LivePreviewOptions): DecorationSet {
+export function buildDecorations(state: EditorState, options: LivePreviewOptions): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
-  const excluded = collectExcludedRanges(view, options);
-  const inlineMarkerRanges = collectInlineMarkerRanges(view, options, excluded);
-  const blockRevealRange = collectBlockRevealRange(view, options);
-  const selectionRanges = view.state.selection.ranges
+  const excluded = collectExcludedRanges(state, options);
+  const inlineMarkerRanges = collectInlineMarkerRanges(state, options, excluded);
+  const blockRevealRange = collectBlockRevealRange(state, options);
+  const selectionRanges = state.selection.ranges
     .filter((range) => range.from !== range.to)
     .map((range) => ({ from: range.from, to: range.to }));
 
@@ -59,44 +59,34 @@ export function buildDecorations(view: EditorView, options: LivePreviewOptions):
   };
 
   const fenceMarkersByLine = collectFenceMarkersByLine(
-    view,
+    state,
     selectionRanges,
     blockRevealRange
   );
 
-  for (const range of view.visibleRanges) {
-    let pos = range.from;
+  for (let lineNumber = 1; lineNumber <= state.doc.lines; lineNumber += 1) {
+    const line = state.doc.line(lineNumber);
+    const isExcluded = overlapsRange(line.from, line.to, excluded.block);
+    const hasFenceMarkers = fenceMarkersByLine.has(line.from);
+    const isSelectionOverlap = overlapsRange(line.from, line.to, selectionRanges);
+    const isBlockReveal = blockRevealRange
+      ? overlapsRange(line.from, line.to, [blockRevealRange])
+      : false;
 
-    while (pos <= range.to) {
-      const line = view.state.doc.lineAt(pos);
-      if (line.from > range.to) {
-        break;
-      }
-
-      const isExcluded = overlapsRange(line.from, line.to, excluded.block);
-      const hasFenceMarkers = fenceMarkersByLine.has(line.from);
-      const isSelectionOverlap = overlapsRange(line.from, line.to, selectionRanges);
-      const isBlockReveal = blockRevealRange
-        ? overlapsRange(line.from, line.to, [blockRevealRange])
-        : false;
-
-      if (!isExcluded || hasFenceMarkers) {
-        addBlockMarkerDecorations(
-          pushDecoration,
-          line.from,
-          line.text,
-          { isSelectionOverlap, isBlockReveal },
-          blockHiddenDecoration,
-          fenceMarkersByLine
-        );
-      }
-
-      pos = line.to + 1;
+    if (!isExcluded || hasFenceMarkers) {
+      addBlockMarkerDecorations(
+        pushDecoration,
+        line.from,
+        line.text,
+        { isSelectionOverlap, isBlockReveal },
+        blockHiddenDecoration,
+        fenceMarkersByLine
+      );
     }
   }
 
   addThematicBreakDecorations(
-    view,
+    state,
     pushDecoration,
     blockHiddenDecoration,
     blockRevealRange,

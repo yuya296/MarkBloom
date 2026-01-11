@@ -1,4 +1,4 @@
-# Feature 010: cm6-table-editor (テーブル描画・編集)
+# Feature 010: cm6-table-editor-vanilla (テーブル描画・編集)
 
 ## 1. 目的
 Markdown テーブルを、CM6 上で **リッチ表示（グリッド）**し、段階的に **編集**できるようにする。
@@ -10,13 +10,15 @@ Markdown テーブルを、CM6 上で **リッチ表示（グリッド）**し�
 - テーブルブロック検出
 - 表示：Widget 化してグリッド描画
 - 編集：段階導入（v1: ソースへ戻す / v2: セル編集）
+- 列幅の自動調整（セル内容に応じて）
+- セル内改行（表示・編集）
 
 ### Out of scope
 - すべての Markdown 方言（GFM以外）への完全対応
 - 高度な整形（列幅計算や美観最適化）は後回し
 
 ## 3. 成果物
-- `packages/cm6-table-editor`
+- `packages/cm6-table-editor-vanilla`
   - `tableEditor(options?): Extension`
   - テーブル表示 Widget
   - テーブル→AST（内部表現）→Markdown 生成（v2以降）
@@ -49,7 +51,9 @@ export function tableEditor(options?: TableEditorOptions): Extension;
 - テーブルが Widget で視認性高く表示される
 - v1 の動作として「テーブル内にカーソル → ソース表示へ戻る」が安定する
 - v2 ではセル編集ができ、編集結果が Markdown として保存可能
+- セル内容に応じた列幅に自動調整される
+- セル内改行が表示・編集できる
 
 ## 7. 依存
 - CM6 core
-- UIライブラリ（React/AG Grid等）を使う場合は本パッケージに閉じ込める
+- 依存ゼロで実装し、UIライブラリは持ち込まない

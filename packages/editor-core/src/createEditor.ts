@@ -3,7 +3,7 @@ import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
-import { Strikethrough } from "@lezer/markdown";
+import { GFM, Strikethrough } from "@lezer/markdown";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -104,7 +104,7 @@ export function createEditor({
     }),
     keymap.of(defaultKeymap),
     markdown({
-      extensions: [Strikethrough],
+      extensions: [Strikethrough, GFM],
       codeLanguages: languages,
     }),
     EditorView.updateListener.of((update) => {

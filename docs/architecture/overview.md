@@ -9,12 +9,14 @@
 | `cm6-markdown-semantics` | Markdown要素を検出して範囲に semantic class を付与する |
 | `cm6-typography-theme` | semantic class に対する見た目（CSSテーマ）を提供する |
 | `cm6-live-preview` | 上記3つを束ね、プリセットとして配布する |
+| `cm6-table-editor-vanilla` | 依存ゼロの HTML table で Markdown テーブル編集 UI |
 
 ## Dependency DAG
 
 ```
 editor-core
   ↑（アプリ/VSCode/webview 等が利用）
+  └─ depends on: cm6-table-editor-vanilla
 
 cm6-live-preview
   ├─ depends on: cm6-live-preview-core

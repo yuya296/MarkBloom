@@ -1,10 +1,5 @@
-import { Extension } from "@codemirror/state";
-import {
-  type DecorationSet,
-  EditorView,
-  ViewPlugin,
-  ViewUpdate,
-} from "@codemirror/view";
+import { Extension, StateField } from "@codemirror/state";
+import { type DecorationSet, EditorView } from "@codemirror/view";
 import { buildDecorations } from "./decorations";
 
 export type LivePreviewOptions = {
@@ -47,24 +42,15 @@ export function livePreview(options: LivePreviewOptions = {}): Extension {
     },
   };
 
-  const plugin = ViewPlugin.fromClass(
-    class {
-      decorations: DecorationSet;
-
-      constructor(view: EditorView) {
-        this.decorations = buildDecorations(view, resolved);
-      }
-
-      update(update: ViewUpdate) {
-        if (update.docChanged || update.selectionSet || update.viewportChanged) {
-          this.decorations = buildDecorations(update.view, resolved);
-        }
-      }
+  const decorations = StateField.define<DecorationSet>({
+    create(state) {
+      return buildDecorations(state, resolved);
     },
-    {
-      decorations: (view) => view.decorations,
-    }
-  );
+    update(_decorations, tr) {
+      return buildDecorations(tr.state, resolved);
+    },
+    provide: (field) => EditorView.decorations.from(field),
+  });
 
-  return [livePreviewBaseTheme(), plugin];
+  return [livePreviewBaseTheme(), decorations];
 }

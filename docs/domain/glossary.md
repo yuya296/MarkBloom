@@ -7,6 +7,7 @@
 - cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
+- cm6-table-editor-vanilla: 依存ゼロの HTML table で Markdown テーブルを表示・編集する CM6 パッケージ。
 - Rich: `renderState` が `rich` の表示状態。
 - Raw: `renderState` が `raw` の表示状態。
 - doc: Markdown ソース文字列（真実）。
