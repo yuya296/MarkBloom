@@ -26,9 +26,7 @@ Markdown テーブルを、CM6 上で **リッチ表示（グリッド）**し�
 ## 4. 段階仕様
 ### 4.1 v1: Table Viewer（表示優先）
 - テーブル範囲を検出し、Widget でリッチ表示
-- カーソルがテーブル範囲に入った場合：
-  - 方式A：Widgetを外してソース表示に戻す（推奨：安全）
-  - 方式B：Widget維持しつつセル選択（後回し）
+- Widget 表示を維持しつつ、セル単位の操作へ移行する
 
 ### 4.2 v2: Cell Editor（編集）
 - セルクリックで編集UI（input/textarea等）を出す
@@ -40,7 +38,6 @@ Markdown テーブルを、CM6 上で **リッチ表示（グリッド）**し�
 export type TableEditorOptions = {
   enabled?: boolean;
   renderMode?: "widget" | "none";
-  editMode?: "sourceOnFocus" | "inlineCellEdit";
   // 将来：フォーマッタ差し替えなど
 };
 

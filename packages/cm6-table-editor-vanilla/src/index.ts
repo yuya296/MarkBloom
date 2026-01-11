@@ -17,7 +17,6 @@ import type { SyntaxNode } from "@lezer/common";
 export type TableEditorOptions = {
   enabled?: boolean;
   renderMode?: "widget" | "none";
-  editMode?: "sourceOnFocus" | "inlineCellEdit";
 };
 
 type TableCell = {
@@ -47,21 +46,15 @@ const tableEditAnnotation = Annotation.define<boolean>();
 const defaultOptions: Required<TableEditorOptions> = {
   enabled: true,
   renderMode: "widget",
-  editMode: "sourceOnFocus",
 };
 
 class TableWidget extends WidgetType {
-  constructor(
-    private readonly data: TableData,
-    private readonly isEditable: boolean,
-    private readonly tableInfo: TableInfo
-  ) {
+  constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
   }
 
   eq(other: TableWidget): boolean {
     return (
-      this.isEditable === other.isEditable &&
       this.tableInfo.id === other.tableInfo.id &&
       JSON.stringify(this.data) === JSON.stringify(other.data)
     );
@@ -182,13 +175,6 @@ class TableWidget extends WidgetType {
       commitTable();
     });
 
-    const renderReadOnlyCell = (value: string) => {
-      const cell = document.createElement("div");
-      cell.className = "cm-table-cell";
-      cell.textContent = toDisplayText(value);
-      return cell;
-    };
-
     const renderHeader = () => {
       const thead = document.createElement("thead");
       const row = document.createElement("tr");
@@ -200,21 +186,17 @@ class TableWidget extends WidgetType {
       }
       headerRow.cells.forEach((cell, colIndex) => {
         const th = document.createElement("th");
-        if (this.isEditable) {
-          const input = createCellEditor(
-            cell.text,
-            (value) => {
-              cell.text = toMarkdownText(value);
-            },
-            (value) => {
-              cell.text = toMarkdownText(value);
-              commitTable();
-            }
-          );
-          th.appendChild(input);
-        } else {
-          th.appendChild(renderReadOnlyCell(cell.text));
-        }
+        const input = createCellEditor(
+          cell.text,
+          (value) => {
+            cell.text = toMarkdownText(value);
+          },
+          (value) => {
+            cell.text = toMarkdownText(value);
+            commitTable();
+          }
+        );
+        th.appendChild(input);
         th.dataset.colIndex = String(colIndex);
         row.appendChild(th);
       });
@@ -230,23 +212,19 @@ class TableWidget extends WidgetType {
         for (let colIndex = 0; colIndex < columnCount; colIndex += 1) {
           const cell = row.cells[colIndex] ?? { text: "", from: -1, to: -1 };
           const td = document.createElement("td");
-          if (this.isEditable) {
-            const input = createCellEditor(
-              cell.text,
-              (value) => {
-                cell.text = toMarkdownText(value);
-                row.cells[colIndex] = cell;
-              },
-              (value) => {
-                cell.text = toMarkdownText(value);
-                row.cells[colIndex] = cell;
-                commitTable();
-              }
-            );
-            td.appendChild(input);
-          } else {
-            td.appendChild(renderReadOnlyCell(cell.text));
-          }
+          const input = createCellEditor(
+            cell.text,
+            (value) => {
+              cell.text = toMarkdownText(value);
+              row.cells[colIndex] = cell;
+            },
+            (value) => {
+              cell.text = toMarkdownText(value);
+              row.cells[colIndex] = cell;
+              commitTable();
+            }
+          );
+          td.appendChild(input);
           td.dataset.rowIndex = String(rowIndex);
           td.dataset.colIndex = String(colIndex);
           tr.appendChild(td);
@@ -261,10 +239,8 @@ class TableWidget extends WidgetType {
 
     const controls = document.createElement("div");
     controls.className = "cm-table-controls";
-    if (this.isEditable) {
-      controls.appendChild(addRowButton);
-      controls.appendChild(addColumnButton);
-    }
+    controls.appendChild(addRowButton);
+    controls.appendChild(addColumnButton);
 
     wrapper.appendChild(table);
     wrapper.appendChild(controls);
@@ -273,7 +249,7 @@ class TableWidget extends WidgetType {
   }
 
   ignoreEvent(): boolean {
-    return this.isEditable;
+    return true;
   }
 }
 
@@ -366,15 +342,6 @@ function escapePipes(value: string): string {
   return value.replace(/\|/g, "\\|");
 }
 
-function isSelectionInside(state: EditorState, from: number, to: number): boolean {
-  return state.selection.ranges.some((range) => {
-    if (range.from === range.to) {
-      return range.from >= from && range.from <= to;
-    }
-    return range.from < to && range.to > from;
-  });
-}
-
 function collectTableData(state: EditorState, node: SyntaxNode): TableData {
   const headerNode = node.getChild("TableHeader");
   const rowNodes = node.getChildren("TableRow");
@@ -428,21 +395,11 @@ function buildDecorations(
     return builder.finish();
   }
 
-  const shouldRenderRich = (from: number, to: number) => {
-    if (options.editMode !== "sourceOnFocus") {
-      return true;
-    }
-    return !isSelectionInside(state, from, to);
-  };
-
   let tableId = 0;
 
   syntaxTree(state).iterate({
     enter: (node) => {
       if (node.name !== "Table") {
-        return;
-      }
-      if (!shouldRenderRich(node.from, node.to)) {
         return;
       }
 
@@ -463,7 +420,7 @@ function buildDecorations(
       };
 
       const widgetDecoration = Decoration.widget({
-        widget: new TableWidget(data, options.editMode === "inlineCellEdit", info),
+        widget: new TableWidget(data, info),
         block: true,
       });
       builder.add(firstLine.from, firstLine.from, widgetDecoration);

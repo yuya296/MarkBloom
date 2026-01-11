@@ -43,7 +43,6 @@ VS Code 拡張として Webview を提供し、CM6 ベースのエディタ（fe
 - `markbloom.livePreview.enabled`
 - `markbloom.livePreview.inlineRadius`
 - `markbloom.table.enabled`
-- `markbloom.table.editMode`
 
 ## 6. 受け入れ条件（Acceptance Criteria）
 - VS Code で `.md` を開くと MarkBloom Webview で編集できる

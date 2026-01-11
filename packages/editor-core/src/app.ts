@@ -174,10 +174,10 @@ function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
 function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension {
   switch (engine) {
     case "vanilla":
-      return vanillaTableEditor({ editMode: "inlineCellEdit" });
+      return vanillaTableEditor();
     case "none":
       return [];
     default:
-      return vanillaTableEditor({ editMode: "inlineCellEdit" });
+      return vanillaTableEditor();
   }
 }
