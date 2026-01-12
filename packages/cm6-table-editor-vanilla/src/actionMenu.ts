@@ -145,15 +145,15 @@ export const createActionMenu = ({
     floating.style.top = `${y}px`;
   };
 
-  const openMenu = () => {
-    closeAllMenus();
-    container.dataset.open = "true";
-    positionFloating(button, menu, "bottom-start");
-    menuCleanup = autoUpdate(button, menu, () => {
-      positionFloating(button, menu, "bottom-start");
-    });
-    addPointerTracking();
-  };
+    const openMenu = () => {
+      closeAllMenus();
+      container.dataset.open = "true";
+      void positionFloating(button, menu, "bottom-start");
+      menuCleanup = autoUpdate(button, menu, () => {
+        void positionFloating(button, menu, "bottom-start");
+      });
+      addPointerTracking();
+    };
 
   const closeMenu = () => {
     if (menuCleanup) {
@@ -190,9 +190,9 @@ export const createActionMenu = ({
           return;
         }
         submenuWrapper.dataset.open = "true";
-        positionFloating(submenuButton, submenu, "right-start");
+        void positionFloating(submenuButton, submenu, "right-start");
         const cleanup = autoUpdate(submenuButton, submenu, () => {
-          positionFloating(submenuButton, submenu, "right-start");
+          void positionFloating(submenuButton, submenu, "right-start");
         });
         (submenuWrapper as unknown as { _cleanup?: () => void })._cleanup = cleanup;
       };

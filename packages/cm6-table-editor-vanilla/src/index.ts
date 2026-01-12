@@ -108,7 +108,7 @@ class TableWidget extends WidgetType {
 
     wrapper.addEventListener("click", (event) => {
       const target = event.target;
-      if (!(target instanceof Node)) {
+      if (!(target instanceof Element)) {
         return;
       }
       if (!target.closest(".cm-table-action")) {
@@ -640,7 +640,7 @@ class TableWidget extends WidgetType {
 
 function dispatchOutsideUpdate(
   view: EditorView,
-  transaction: { changes: { from: number; to: number; insert: string }; annotations: Annotation<any> }
+  transaction: { changes: { from: number; to: number; insert: string }; annotations: Annotation<unknown> }
 ) {
   const dispatch = () => {
     setTimeout(() => view.dispatch(transaction), 0);
