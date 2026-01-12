@@ -224,13 +224,6 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
   </head>
   <body>
     <div id="app" class="webview-app">
-      <header class="app-header webview-header">
-        <div>
-          <div class="app-title">MarkBloom</div>
-          <div class="app-subtitle">Markdown Editor</div>
-        </div>
-        <div id="status" class="status">Ready</div>
-      </header>
       <main class="webview-main">
         <div id="editor" class="editor"></div>
       </main>
