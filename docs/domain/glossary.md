@@ -1,13 +1,15 @@
 # Glossary
 
 - Base Editor: CM6 を使った最小の Markdown 編集 Webapp。以降の機能の土台。
-- editor-core: Feature 001 のプロダクト名。Base Editor の実装パッケージ名として扱う。
+- webview-demo: Feature 001 のプロダクト名。Base Editor のデモ実装パッケージ名として扱う。
 - Live Preview: Markdown を保持したまま記号の露出を抑制する編集体験。
 - cm6-live-preview-core: 記号の表示切替ロジックのみを提供するパッケージ。
 - cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
 - cm6-table-editor-vanilla: 依存ゼロの HTML table で Markdown テーブルを表示・編集する CM6 パッケージ。
+- MarkBloom: VS Code 上で Markdown を編集するための拡張と Webview UI。
+- vscode-extension: MarkBloom の VS Code 拡張パッケージ。
 - Table Action Menu: 行/列操作のためのコンテキストメニュー（挿入/削除/整列）。
 - Rich: `renderState` が `rich` の表示状態。
 - Raw: `renderState` が `raw` の表示状態。

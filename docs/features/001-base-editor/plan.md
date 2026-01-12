@@ -1,28 +1,28 @@
 # Plan: Feature 001 Base Editor (CM6 Markdown Webapp)
 
 ## 方針
-- `packages/editor-core` を追加し、ブラウザで動く最小構成にする
+- `packages/webview-demo` を追加し、ブラウザで動く最小構成にする
 - Editor は「core + extensions 合成」で構築し、拡張差し替えは `Compartment` で行う
 - 変更通知は全文で `onChange(fullText)` を呼ぶ
 - UI は最小限（状態が分かる程度のトグル/数値入力）に留める
 
 ## 構成案
-- `packages/editor-core/src/createEditor.ts`
+- `packages/webview-demo/src/createEditor.ts`
   - `createEditor({ parent, initialText, extensions, onChange })`
   - `Compartment` を内包して runtime で再設定
   - `extensions` の合成ポイントを明示
-- `packages/editor-core/src/app.ts`（または同等）
+- `packages/webview-demo/src/app.ts`（または同等）
   - 初期テキストの投入
   - `onChange` で全文取得
   - 簡易 UI で拡張切替を検証
-- `packages/editor-core/index.html`（またはビルド入口）
+- `packages/webview-demo/index.html`（またはビルド入口）
   - 最小の画面構成
 
 ## 前提/未決
 - ビルド/起動方法は既存リポジトリの方針に合わせる（詳細は実装時に確定）
 
 ## 変更点（想定）
-- 新規パッケージ `packages/editor-core` 追加
+- 新規パッケージ `packages/webview-demo` 追加
 - 依存: `@codemirror/state`, `@codemirror/view`, `@codemirror/commands`, `@codemirror/lang-markdown`, `@codemirror/language`
 - 将来の拡張に備えた `Compartment` 設計
 

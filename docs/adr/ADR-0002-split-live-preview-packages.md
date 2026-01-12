@@ -18,7 +18,7 @@ Live Preview を以下のパッケージに分割する。
 - `cm6-typography-theme`: semantic class の見た目を定義
 - `cm6-live-preview`: 上記を束ねたプリセット
 
-`editor-core` は cm6-* への依存を持たず、アプリ側で必要な extension を組み合わせる。
+`webview-demo` は cm6-* への依存を持たず、アプリ側で必要な extension を組み合わせる。
 
 ## Consequences
 - 役割分担が明確になり、テーマ差し替えが容易になる

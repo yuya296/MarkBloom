@@ -1,0 +1,75 @@
+# ~/.codex/rules/pm2.rules
+# PM2: start/restart/stop 系は都度承認、参照系は自動承認
+
+# 1) 破壊/稼働変更系 → prompt
+prefix_rule(
+    pattern = ["pm2"],
+    decision = "prompt",
+    justification = "PM2 process lifecycle change: require approval.",
+    match = [
+        # start
+        "pm2 start",
+        "pm2 start ecosystem.config.cjs",
+
+        # restart / reload
+        "pm2 restart",
+        "pm2 reload",
+
+        # stop
+        "pm2 stop",
+
+        # delete (止める+削除なので、必要ならここも prompt のままでOK)
+        "pm2 delete",
+    ],
+)
+
+# 2) 参照系 → allow
+prefix_rule(
+    pattern = ["pm2"],
+    decision = "allow",
+    justification = "PM2 read-only commands: auto-approve.",
+    match = [
+        "pm2 status",
+        "pm2 list",
+        "pm2 ls",
+        "pm2 jlist",
+        "pm2 describe",
+        "pm2 show",
+        "pm2 info",
+
+        "pm2 logs",
+        "pm2 monit",
+
+        "pm2 ping",
+        "pm2 report",
+        "pm2 version",
+        "pm2 -v",
+        "pm2 help",
+        "pm2 --help",
+    ],
+)
+
+# 3) その他の pm2 は安全側に倒す（必要なら）
+#    例: startup / save / unstartup / update などは意図せず永続化するので prompt にする
+prefix_rule(
+    pattern = ["pm2"],
+    decision = "prompt",
+    justification = "PM2 persistent/system-level commands: require approval.",
+    match = [
+        "pm2 startup",
+        "pm2 save",
+        "pm2 resurrect",
+        "pm2 unstartup",
+        "pm2 update",
+        "pm2 install",
+        "pm2 uninstall",
+    ],
+)
+
+prefix_rule(
+    pattern = ["sudo"],
+    decision = "forbidden",
+    justification = "Do not run sudo via Codex. Run manually in your terminal.",
+    match = ["sudo chown -R 501:20 /Users/yuya/.pm2"],
+)
+

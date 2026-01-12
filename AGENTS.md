@@ -9,28 +9,29 @@
 ## Repository Overview (Quick Start)
 
 ### Purpose
-- CodeMirror 6ベースのエディタ関連パッケージ群。実装・検証の中心は`packages/editor-core`。
+- CodeMirror 6ベースのエディタ関連パッケージ群。実装・検証の中心は`packages/webview-demo`。
 
 ### Module Map (Where to Change)
-- `packages/editor-core`: デモ/統合アプリ。UI・テーマ・配線の入口。
+- `packages/webview-demo`: デモ/統合アプリ。UI・テーマ・配線の入口。
 - `packages/cm6-*`: CodeMirror拡張群（機能単位で分割）。
 - `packages/cm6-live-preview-core`: ライブプレビューの中核ロジック。
 - `packages/cm6-typography-theme`: タイポグラフィ/Markdown装飾テーマ。
 
 ### Fast Reading Path
-- `packages/editor-core/src/main.ts` → `app.ts` → `createEditor.ts`
+- `packages/webview-demo/src/main.ts` → `app.ts` → `createEditor.ts`
 - 拡張の組み合わせは`app.ts`の`buildExtensions`を見る。
-- UI/テーマは`packages/editor-core/src/style.scss`が入口。
+- UI/テーマは`packages/webview-demo/src/style.scss`が入口。
 
 ### Theme/Style Guidance
 - 色はCSS変数で定義（`style.scss`の`:root`/`[data-theme]`）。
 - CodeMirrorの見た目は`EditorView.theme`で定義（`editorTheme.ts`など）。
 
 ### Dev Workflow
-- 起動: `pnpm -C packages/editor-core dev`
+- 起動: `pnpm -C packages/webview-demo dev`
+- PM2起動: `pm2 start ecosystem.config.cjs`
 - 主要Lint/型チェック: 各パッケージの`package.json`参照。
 
 ### Change Checklist (Keep It Short)
 - 機能変更: 影響パッケージの責務を確認し、該当モジュールに最小変更。
-- UI/テーマ変更: `editor-core`のCSS変数とテーマ拡張の両方を確認。
+- UI/テーマ変更: `webview-demo`のCSS変数とテーマ拡張の両方を確認。
 - 検証: Chrome-devtools-mcpで動作確認すること。

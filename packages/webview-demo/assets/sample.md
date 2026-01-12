@@ -1,9 +1,9 @@
-# editor-core sample
+# webview-demo sample
 
 A rich Markdown sample covering common patterns.
 
 ## Table of contents
-- [editor-core sample](#editor-core-sample)
+- [webview-demo sample](#webview-demo-sample)
   - [Table of contents](#table-of-contents)
   - [Headings](#headings)
 - [H1](#h1)
@@ -84,8 +84,8 @@ export function greet(user: User) {
 
 Indented code block:
 
-    mkdir -p packages/editor-core
-    pnpm -C packages/editor-core run dev
+    mkdir -p packages/webview-demo
+    pnpm -C packages/webview-demo run dev
 
 ## Tables
 | Col A | Col B | Col C  |

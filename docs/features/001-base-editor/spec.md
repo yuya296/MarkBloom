@@ -1,6 +1,6 @@
 # Feature 001: Base Editor (CM6 Markdown Webapp)
 
-プロダクト名: `editor-core`
+プロダクト名: `webview-demo`
 
 ## 1. 目的
 CodeMirror 6 を用いて、Markdown を編集できる **Webapp の最小実装（実装ベース）**を作る。
@@ -20,7 +20,7 @@ CodeMirror 6 を用いて、Markdown を編集できる **Webapp の最小実装
 - テーブルのリッチ表示・編集
 
 ## 3. 成果物
-- `packages/editor-core`（名称は任意）
+- `packages/webview-demo`（名称は任意）
   - ブラウザで動く最小アプリ
   - `createEditor({ parent, initialText, extensions, onChange })` のような薄いラッパ
 - 簡単な設定 UI（例：トグル/数値入力）※将来の差し替え確認用

@@ -7,10 +7,10 @@
 - 既存は残し、TanStack TableのPoCモジュールを追加 - 並列評価ができ、段階的に検証可能
 
 ## Decision
-既存のtable-editor群は残したまま、TanStack Tableを使ったPoC用モジュールを追加する。React導入はeditor-core側で許容し、live-previewの中核にはReact依存を持ち込まない方針とする。
+既存のtable-editor群は残したまま、TanStack Tableを使ったPoC用モジュールを追加する。React導入はwebview-demo側で許容し、live-previewの中核にはReact依存を持ち込まない方針とする。
 
 ## Consequences
-PoCの実装/評価コストは発生するが、既存機能を維持したまま軽量UIの可能性を検証できる。React UIはeditor-core側に寄せるため、live-previewの依存関係は増やさない。将来的に移行可否の判断材料になる。
+PoCの実装/評価コストは発生するが、既存機能を維持したまま軽量UIの可能性を検証できる。React UIはwebview-demo側に寄せるため、live-previewの依存関係は増やさない。将来的に移行可否の判断材料になる。
 
 ## References
 - N/A

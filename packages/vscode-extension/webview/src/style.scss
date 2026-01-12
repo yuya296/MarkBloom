@@ -1,0 +1,170 @@
+:root {
+  color-scheme: light dark;
+  font-family: var(
+    --vscode-font-family,
+    "Noto Sans JP",
+    "Noto Sans",
+    "Yu Gothic",
+    "YuGothic",
+    "Hiragino Kaku Gothic ProN",
+    "Hiragino Kaku Gothic Pro",
+    sans-serif
+  );
+  background: var(--app-bg);
+  color: var(--app-text);
+  --app-bg: var(--vscode-editor-background, #ffffff);
+  --app-surface: var(--vscode-editor-background, #ffffff);
+  --app-text: var(--vscode-editor-foreground, #1f1e1c);
+  --app-muted: var(--vscode-descriptionForeground, #6a6257);
+  --app-subtle: var(--vscode-descriptionForeground, #4c463c);
+  --app-border: var(--vscode-editorWidget-border, #e5e7eb);
+  --app-pill-bg: var(--vscode-editorWidget-background, #f8fafc);
+  --app-pill-border: var(--vscode-editorWidget-border, #e5e7eb);
+  --app-button-bg: var(--vscode-button-secondaryBackground, #f3f4f6);
+  --app-button-border: var(
+    --vscode-button-secondaryBorder,
+    var(--vscode-editorWidget-border, #e5e7eb)
+  );
+  --app-input-bg: var(--vscode-input-background, #ffffff);
+  --app-input-border: var(--vscode-input-border, #d1d5db);
+  --editor-primary-color: var(--vscode-textLink-foreground, #0f5b9e);
+  --editor-secondary-color: var(--vscode-descriptionForeground, #8f8a7f);
+  --editor-surface: var(--vscode-editor-background, #ffffff);
+  --editor-border: var(--vscode-editorWidget-border, #e5e7eb);
+  --editor-text-color: var(--vscode-editor-foreground, #1f1e1c);
+  --editor-gutter-bg: var(--vscode-editorGutter-background, transparent);
+  --editor-gutter-color: var(--vscode-editorLineNumber-foreground, #8f8a7f);
+  --editor-selection-bg: var(
+    --vscode-editor-selectionBackground,
+    rgba(15, 91, 158, 0.2)
+  );
+  --editor-active-line-bg: var(
+    --vscode-editor-lineHighlightBackground,
+    rgba(15, 91, 158, 0.06)
+  );
+  --editor-active-line-gutter-bg: var(
+    --vscode-editor-lineHighlightBorder,
+    rgba(15, 91, 158, 0.08)
+  );
+  --editor-caret-color: var(--vscode-editorCursor-foreground, #0f5b9e);
+  --mb-font-mono: var(
+    --vscode-editor-font-family,
+    "JetBrains Mono",
+    "SF Mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace
+  );
+  --mb-inline-code-bg: var(
+    --vscode-editorHoverWidget-background,
+    rgba(15, 91, 158, 0.08)
+  );
+  --mb-code-block-bg: var(--vscode-textCodeBlock-background, #f2f2f2);
+  --mb-quote-border-color: var(--vscode-textBlockQuote-border, #b9b1a4);
+  --mb-hr-color: var(--vscode-editor-foreground, #6a6257);
+  --mb-link-color: var(--vscode-textLink-foreground, #0f5b9e);
+  --mb-heading-underline-color: var(
+    --vscode-editorWidget-border,
+    #d0d0d0
+  );
+  --syntax-comment: var(--vscode-editorTokenComment-foreground, #6a737d);
+  --syntax-keyword: var(--vscode-editorTokenKeyword-foreground, #d73a49);
+  --syntax-operator: var(--vscode-editorTokenOperator-foreground, #d73a49);
+  --syntax-string: var(--vscode-editorTokenString-foreground, #032f62);
+  --syntax-number: var(--vscode-editorTokenNumber-foreground, #005cc5);
+  --syntax-atom: var(--vscode-editorTokenConstant-foreground, #005cc5);
+  --syntax-function: var(--vscode-editorTokenFunction-foreground, #6f42c1);
+  --syntax-variable: var(--vscode-editorTokenVariable-foreground, #24292e);
+  --syntax-type: var(--vscode-editorTokenType-foreground, #6f42c1);
+  --syntax-property: var(--vscode-editorTokenProperty-foreground, #005cc5);
+  --syntax-tag: var(--vscode-editorTokenTag-foreground, #22863a);
+  --syntax-link: var(--vscode-textLink-foreground, #032f62);
+  --syntax-heading: var(--vscode-editor-foreground, #24292e);
+  --syntax-meta: var(--vscode-editorTokenComment-foreground, #6a737d);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
+  padding: 16px;
+  background: var(--app-bg);
+}
+
+.webview-main {
+  flex: 1;
+  display: flex;
+}
+
+.editor {
+  border-radius: 8px;
+  background: var(--editor-surface);
+  min-height: calc(100vh - 80px);
+  width: 100%;
+}
+
+footer.footer {
+  font-size: 12px;
+  color: var(--app-muted);
+}
+
+.cm-editor,
+.cm-editor .cm-content {
+  font-family: var(
+    --vscode-font-family,
+    "Noto Sans JP",
+    "Noto Sans",
+    "Yu Gothic",
+    "YuGothic",
+    "Hiragino Kaku Gothic ProN",
+    "Hiragino Kaku Gothic Pro",
+    sans-serif
+  );
+}
+
+.cm-editor {
+  height: 100%;
+  font-size: 14px;
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.cm-editor .cm-gutters {
+  background: var(--editor-gutter-bg);
+  border-right: 1px solid var(--editor-border);
+  color: var(--editor-gutter-color);
+}
+
+.cm-editor .cm-content {
+  padding: 12px;
+  line-height: 2;
+}
+
+.cm-editor .cm-line,
+.cm-editor .cm-lineWrapping {
+  line-height: 2;
+}
+
+.cm-editor .mb-syntax-secondary {
+  color: var(--editor-secondary-color);
+}
+
+.cm-editor .mb-preview-widget {
+  color: var(--editor-secondary-color);
+  font-style: italic;
+}
