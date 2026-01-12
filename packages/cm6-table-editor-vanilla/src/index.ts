@@ -203,13 +203,6 @@ class TableWidget extends WidgetType {
       return input;
     };
 
-    const createIconSpan = (iconName: string) => {
-      const icon = document.createElement("span");
-      icon.className = "cm-table-icon material-symbols-outlined";
-      icon.textContent = iconName;
-      return icon;
-    };
-
     const insertRow = (index: number) => {
       insertRowAt(data, index);
       commitTable();
@@ -296,15 +289,16 @@ class TableWidget extends WidgetType {
       }
       headerCells.forEach((cell, index) => {
         const cellRect = cell.getBoundingClientRect();
-        const handle = columnHandles.children[index];
-        if (!(handle instanceof HTMLElement)) {
+        const action = columnHandles.children[index];
+        if (!(action instanceof HTMLElement)) {
           return;
         }
-        const handleRect = handle.getBoundingClientRect();
-        const top = cellRect.top - handleRect.height + 2;
-        const left = cellRect.left + (cellRect.width - handleRect.width) / 2;
-        handle.style.top = `${top}px`;
-        handle.style.left = `${left}px`;
+        const button = action.querySelector<HTMLButtonElement>(".cm-table-action-button");
+        const rect = button?.getBoundingClientRect() ?? action.getBoundingClientRect();
+        const top = cellRect.top - rect.height + 2;
+        const left = cellRect.left + (cellRect.width - rect.width) / 2;
+        action.style.top = `${top}px`;
+        action.style.left = `${left}px`;
       });
     };
     scheduleColumnHandleLayout = () => {
@@ -427,32 +421,6 @@ class TableWidget extends WidgetType {
         );
         th.appendChild(input);
         headerCells.push(th);
-        const columnMenu = createActionMenu({
-          items: [
-            { label: "Insert column left", onSelect: () => insertColumn(colIndex) },
-            { label: "Insert column right", onSelect: () => insertColumn(colIndex + 1) },
-            {
-              label: "Delete column",
-              onSelect: () => deleteColumn(colIndex),
-              disabled: columnCount <= 1,
-            },
-            {
-              label: "Align",
-              submenu: [
-                { label: "Left", onSelect: () => applyColumnAlignment(colIndex, "left") },
-                { label: "Center", onSelect: () => applyColumnAlignment(colIndex, "center") },
-                { label: "Right", onSelect: () => applyColumnAlignment(colIndex, "right") },
-              ],
-            },
-          ],
-          menuLabel: "Column actions",
-          iconName: "more_horiz",
-          closeAllMenus,
-          signal,
-        });
-        actionMenus.push(columnMenu);
-        columnMenu.element.classList.add("cm-table-action--column");
-        th.appendChild(columnMenu.element);
         th.dataset.colIndex = String(colIndex);
         row.appendChild(th);
       });
@@ -565,28 +533,53 @@ class TableWidget extends WidgetType {
       });
     };
 
+    const columnCount = getColumnCount(data);
     headerCells.forEach((headerCell, colIndex) => {
-      const handle = document.createElement("button");
-      handle.type = "button";
-      handle.className = "cm-table-column-handle";
-      handle.appendChild(createIconSpan("drag_indicator"));
-      handle.setAttribute("aria-label", "Drag column");
-      handle.draggable = true;
-      handle.addEventListener("dragstart", (event) => {
-        dragSourceColumnIndex = colIndex;
-        dragTargetColumnIndex = colIndex;
-        event.dataTransfer?.setData("text/plain", String(colIndex));
-        event.dataTransfer?.setDragImage(handle, 0, 0);
+      const columnMenu = createActionMenu({
+        items: [
+          { label: "Insert column left", onSelect: () => insertColumn(colIndex) },
+          { label: "Insert column right", onSelect: () => insertColumn(colIndex + 1) },
+          {
+            label: "Delete column",
+            onSelect: () => deleteColumn(colIndex),
+            disabled: columnCount <= 1,
+          },
+          {
+            label: "Align",
+            submenu: [
+              { label: "Left", onSelect: () => applyColumnAlignment(colIndex, "left") },
+              { label: "Center", onSelect: () => applyColumnAlignment(colIndex, "center") },
+              { label: "Right", onSelect: () => applyColumnAlignment(colIndex, "right") },
+            ],
+          },
+        ],
+        menuLabel: "Column actions",
+        iconName: "drag_indicator",
+        closeAllMenus,
+        signal,
       });
-      handle.addEventListener("dragend", () => {
-        dragSourceColumnIndex = null;
-        clearColumnDropIndicator();
-      });
-      handle.addEventListener("mouseenter", () => setActiveColumnHandle(colIndex));
-      handle.addEventListener("mouseleave", () => setActiveColumnHandle(null));
+      actionMenus.push(columnMenu);
+      columnMenu.element.classList.add("cm-table-action--column");
+      const columnMenuButton =
+        columnMenu.element.querySelector<HTMLButtonElement>(".cm-table-action-button");
+      if (columnMenuButton) {
+        columnMenuButton.draggable = true;
+        columnMenuButton.addEventListener("dragstart", (event) => {
+          dragSourceColumnIndex = colIndex;
+          dragTargetColumnIndex = colIndex;
+          event.dataTransfer?.setData("text/plain", String(colIndex));
+          event.dataTransfer?.setDragImage(columnMenuButton, 0, 0);
+        });
+        columnMenuButton.addEventListener("dragend", () => {
+          dragSourceColumnIndex = null;
+          clearColumnDropIndicator();
+        });
+      }
+      columnMenu.element.addEventListener("mouseenter", () => setActiveColumnHandle(colIndex));
+      columnMenu.element.addEventListener("mouseleave", () => setActiveColumnHandle(null));
       headerCell.addEventListener("mouseenter", () => setActiveColumnHandle(colIndex));
       headerCell.addEventListener("mouseleave", () => setActiveColumnHandle(null));
-      columnHandles.appendChild(handle);
+      columnHandles.appendChild(columnMenu.element);
     });
 
     wrapper.appendChild(rowDropIndicator);
@@ -942,21 +935,14 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       pointerEvents: "none",
       zIndex: "10",
     },
-    ".cm-content .cm-table-editor .cm-table-column-handle": {
-      position: "absolute",
-      border: "none",
-      background: "transparent",
-      color: "var(--app-text)",
-      fontSize: "12px",
-      padding: "0",
+    ".cm-content .cm-table-editor .cm-table-column-handles .cm-table-action-button": {
       cursor: "grab",
-      pointerEvents: "auto",
       opacity: "0",
-      transition: "opacity 120ms ease",
     },
-    ".cm-content .cm-table-editor .cm-table-column-handle[data-active=\"true\"]": {
-      opacity: "0.8",
-    },
+    ".cm-content .cm-table-editor .cm-table-column-handles .cm-table-action[data-active=\"true\"] .cm-table-action-button":
+      {
+        opacity: "0.8",
+      },
     ".cm-content .cm-table-editor .cm-table-icon": {
       display: "inline-flex",
       alignItems: "center",
@@ -966,7 +952,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       lineHeight: "1",
       fontVariationSettings: "\"FILL\" 0, \"wght\" 400, \"GRAD\" 0, \"opsz\" 20",
     },
-    ".cm-content .cm-table-editor .cm-table-column-handle .cm-table-icon": {
+    ".cm-content .cm-table-editor .cm-table-column-handles .cm-table-icon": {
       transform: "rotate(90deg)",
     },
     ".cm-content .cm-table-editor .cm-table-row-drop-indicator": {
