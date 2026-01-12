@@ -28,6 +28,7 @@
 
 ### Dev Workflow
 - 起動: `pnpm -C packages/webview-demo dev`
+- PM2起動: `pm2 start ecosystem.config.cjs`
 - 主要Lint/型チェック: 各パッケージの`package.json`参照。
 
 ### Change Checklist (Keep It Short)
