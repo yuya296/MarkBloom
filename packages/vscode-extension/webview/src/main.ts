@@ -2,9 +2,9 @@ import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { livePreviewPreset } from "cm6-live-preview";
 import { tableEditor as vanillaTableEditor } from "cm6-table-editor-vanilla";
-import { createEditor, EditorHandle } from "../../../editor-core/src/createEditor";
-import { editorHighlightStyle } from "../../../editor-core/src/editorHighlightStyle";
-import { editorTheme } from "../../../editor-core/src/editorTheme";
+import { createEditor, EditorHandle } from "./editor/createEditor";
+import { editorHighlightStyle } from "./editor/editorHighlightStyle";
+import { editorTheme } from "./editor/editorTheme";
 import "./style.scss";
 
 type MarkBloomConfig = {
