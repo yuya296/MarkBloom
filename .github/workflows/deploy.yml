@@ -90,7 +90,7 @@ jobs:
       - name: Create git tag
         if: inputs.dry_run == false
         run: |
-          TAG_NAME="v$(node -p \"require('./packages/cm6-live-preview/package.json').version\")"
+          TAG_NAME="v$(node -p "require('./packages/cm6-live-preview/package.json').version")"
           if git tag -l "${TAG_NAME}" | grep -q "${TAG_NAME}"; then
             echo "Tag already exists: ${TAG_NAME}"
             exit 1
