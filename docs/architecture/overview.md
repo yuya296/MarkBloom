@@ -5,7 +5,7 @@
 | package | 役割 |
 | --- | --- |
 | `editor-core` | CodeMirror6 の土台（EditorState/EditorView/共通設定） |
-| `vscode-extension` | VS Code 拡張。Webview で editor-core を利用して Markdown を編集する |
+| `vscode-extension` | VS Code 拡張。Webview で CM6 + MarkBloom 拡張を組み合わせる |
 | `cm6-live-preview-core` | Markdown記号の表示状態を動的に切り替える（syntax hide / secondary / raw） |
 | `cm6-markdown-semantics` | Markdown要素を検出して範囲に semantic class を付与する |
 | `cm6-typography-theme` | semantic class に対する見た目（CSSテーマ）を提供する |
@@ -14,27 +14,17 @@
 
 ## Dependency DAG
 
-```
-editor-core
-  ↑（アプリ/VSCode/webview 等が利用）
-  └─ depends on: cm6-table-editor-vanilla
+```mermaid
+graph TD
+  editor-core --> cm6-live-preview
+  editor-core --> cm6-table-editor-vanilla
 
-vscode-extension
-  └─ depends on: editor-core
+  vscode-extension --> cm6-live-preview
+  vscode-extension --> cm6-table-editor-vanilla
 
-cm6-live-preview
-  ├─ depends on: cm6-live-preview-core
-  ├─ depends on: cm6-markdown-semantics
-  └─ depends on: cm6-typography-theme
-
-cm6-typography-theme
-  └─ depends on: (CodeMirror view系)
-
-cm6-markdown-semantics
-  └─ depends on: (CodeMirror language系 / markdown parser系)
-
-cm6-live-preview-core
-  └─ depends on: (CodeMirror state/view系)
+  cm6-live-preview --> cm6-live-preview-core
+  cm6-live-preview --> cm6-markdown-semantics
+  cm6-live-preview --> cm6-typography-theme
 ```
 
 ## Naming contract
