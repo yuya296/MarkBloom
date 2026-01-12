@@ -16,7 +16,8 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       lineHeight: "1.2",
       display: "block",
       width: "100%",
-      backgroundImage: "linear-gradient(#d0d0d0, #d0d0d0)",
+      backgroundImage:
+        "linear-gradient(var(--mb-heading-underline-color, var(--editor-border, #d0d0d0)), var(--mb-heading-underline-color, var(--editor-border, #d0d0d0)))",
       backgroundRepeat: "no-repeat",
       backgroundSize: "100% 1px",
       backgroundPosition: "0 calc(100% - 0.5rem)",
@@ -29,7 +30,8 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       lineHeight: "1.25",
       display: "block",
       width: "100%",
-      backgroundImage: "linear-gradient(#d0d0d0, #d0d0d0)",
+      backgroundImage:
+        "linear-gradient(var(--mb-heading-underline-color, var(--editor-border, #d0d0d0)), var(--mb-heading-underline-color, var(--editor-border, #d0d0d0)))",
       backgroundRepeat: "no-repeat",
       backgroundSize: "100% 1px",
       backgroundPosition: "0 calc(100% - 0.5rem)",
