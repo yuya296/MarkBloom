@@ -1178,7 +1178,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       top: "26px",
       left: "0",
       minWidth: "160px",
-      background: "#2f2f2f",
+      background: "var(--editor-surface)",
       border: "1px solid var(--editor-border)",
       borderRadius: "8px",
       boxShadow: "0 6px 18px rgba(0, 0, 0, 0.12)",
