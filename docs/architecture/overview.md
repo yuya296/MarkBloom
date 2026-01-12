@@ -4,7 +4,7 @@
 
 | package | 役割 |
 | --- | --- |
-| `editor-core` | CodeMirror6 の土台（EditorState/EditorView/共通設定） |
+| `webview-demo` | CodeMirror6 のデモ（EditorState/EditorView/共通設定） |
 | `vscode-extension` | VS Code 拡張。Webview で CM6 + MarkBloom 拡張を組み合わせる |
 | `cm6-live-preview-core` | Markdown記号の表示状態を動的に切り替える（syntax hide / secondary / raw） |
 | `cm6-markdown-semantics` | Markdown要素を検出して範囲に semantic class を付与する |
@@ -16,8 +16,8 @@
 
 ```mermaid
 graph TD
-  editor-core --> cm6-live-preview
-  editor-core --> cm6-table-editor-vanilla
+  webview-demo --> cm6-live-preview
+  webview-demo --> cm6-table-editor-vanilla
 
   vscode-extension --> cm6-live-preview
   vscode-extension --> cm6-table-editor-vanilla

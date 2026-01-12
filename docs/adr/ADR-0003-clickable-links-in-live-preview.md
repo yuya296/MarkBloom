@@ -10,7 +10,7 @@ live preview 上のリンクをクリック可能にしたいが、CodeMirror �
 semantics 側で data-href を付与し、editor 側で domEventHandlers を使ってリンクを開く方式にする。
 
 ## Consequences
-リンククリックの挙動は独自実装になるが、Live preview の表示層を崩さずに確実にクリックできる。今後の挙動変更は editor-core 側のハンドラ調整で対応する。
+リンククリックの挙動は独自実装になるが、Live preview の表示層を崩さずに確実にクリックできる。今後の挙動変更は webview-demo 側のハンドラ調整で対応する。
 
 ## References
 - N/A

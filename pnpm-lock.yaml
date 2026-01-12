@@ -129,46 +129,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/editor-core:
-    dependencies:
-      '@codemirror/commands':
-        specifier: 6.10.1
-        version: 6.10.1
-      '@codemirror/lang-markdown':
-        specifier: 6.5.0
-        version: 6.5.0
-      '@codemirror/language':
-        specifier: 6.12.1
-        version: 6.12.1
-      '@codemirror/language-data':
-        specifier: ^6.5.2
-        version: 6.5.2
-      '@codemirror/state':
-        specifier: 6.5.3
-        version: 6.5.3
-      '@codemirror/view':
-        specifier: 6.39.8
-        version: 6.39.8
-      '@lezer/highlight':
-        specifier: ^1.2.3
-        version: 1.2.3
-      '@lezer/markdown':
-        specifier: ^1.6.2
-        version: 1.6.2
-      cm6-live-preview:
-        specifier: workspace:*
-        version: link:../cm6-live-preview
-      cm6-table-editor-vanilla:
-        specifier: workspace:*
-        version: link:../cm6-table-editor-vanilla
-    devDependencies:
-      sass:
-        specifier: ^1.97.1
-        version: 1.97.1
-      vite:
-        specifier: ^7.3.0
-        version: 7.3.0(@types/node@24.10.7)(sass@1.97.1)(tsx@4.21.0)
-
   packages/vscode-extension:
     dependencies:
       '@codemirror/commands':
@@ -214,6 +174,46 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      vite:
+        specifier: ^7.3.0
+        version: 7.3.0(@types/node@24.10.7)(sass@1.97.1)(tsx@4.21.0)
+
+  packages/webview-demo:
+    dependencies:
+      '@codemirror/commands':
+        specifier: 6.10.1
+        version: 6.10.1
+      '@codemirror/lang-markdown':
+        specifier: 6.5.0
+        version: 6.5.0
+      '@codemirror/language':
+        specifier: 6.12.1
+        version: 6.12.1
+      '@codemirror/language-data':
+        specifier: ^6.5.2
+        version: 6.5.2
+      '@codemirror/state':
+        specifier: 6.5.3
+        version: 6.5.3
+      '@codemirror/view':
+        specifier: 6.39.8
+        version: 6.39.8
+      '@lezer/highlight':
+        specifier: ^1.2.3
+        version: 1.2.3
+      '@lezer/markdown':
+        specifier: ^1.6.2
+        version: 1.6.2
+      cm6-live-preview:
+        specifier: workspace:*
+        version: link:../cm6-live-preview
+      cm6-table-editor-vanilla:
+        specifier: workspace:*
+        version: link:../cm6-table-editor-vanilla
+    devDependencies:
+      sass:
+        specifier: ^1.97.1
+        version: 1.97.1
       vite:
         specifier: ^7.3.0
         version: 7.3.0(@types/node@24.10.7)(sass@1.97.1)(tsx@4.21.0)

@@ -1,7 +1,7 @@
 # Tasks: Feature 001 Base Editor (CM6 Markdown Webapp)
 
 ## 実装タスク
-- `packages/editor-core` 作成
+- `packages/webview-demo` 作成
 - 依存追加（CM6一式）
 - `index.html` とエントリーファイルを追加
 - `createEditor({ parent, initialText, extensions, onChange })` 実装

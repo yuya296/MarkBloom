@@ -1,4 +1,4 @@
-# editor-core
+# webview-demo
 
 Minimal CM6 Markdown editor for MarkBloom feature 001.
 

@@ -5,9 +5,9 @@
   "packageManager": "pnpm@10.27.0",
   "scripts": {
     "lint": "eslint .",
-    "lint:core": "pnpm -C packages/editor-core lint",
+    "lint:core": "pnpm -C packages/webview-demo lint",
     "typecheck": "pnpm -r typecheck",
-    "build:core": "pnpm -F editor-core build",
+    "build:core": "pnpm -F webview-demo build",
     "build": "pnpm -r build",
     "test:e2e": "playwright test"
   },
