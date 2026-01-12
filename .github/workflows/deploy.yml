@@ -12,7 +12,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -86,3 +86,14 @@ jobs:
           else
             pnpm -r --filter @yuya296/* publish --no-git-checks
           fi
+
+      - name: Create git tag
+        if: inputs.dry_run == false
+        run: |
+          TAG_NAME="v$(node -p \"require('./packages/cm6-live-preview/package.json').version\")"
+          if git tag -l "${TAG_NAME}" | grep -q "${TAG_NAME}"; then
+            echo "Tag already exists: ${TAG_NAME}"
+            exit 1
+          fi
+          git tag "${TAG_NAME}"
+          git push origin "${TAG_NAME}"
