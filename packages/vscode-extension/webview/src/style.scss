@@ -1,0 +1,22 @@
+@import "../../../editor-core/src/style.scss";
+
+.webview-app {
+  padding: 16px;
+  min-height: 100vh;
+}
+
+.webview-header {
+  max-width: none;
+}
+
+.webview-main {
+  flex: 1;
+  display: flex;
+}
+
+.editor {
+  max-width: none;
+  width: 100%;
+  min-height: calc(100vh - 140px);
+  border-radius: 8px;
+}

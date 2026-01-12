@@ -1,0 +1,67 @@
+{
+  "name": "vscode-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./dist/extension.js",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": ["onCustomEditor:markbloom.editor"],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "markbloom.editor",
+        "displayName": "MarkBloom Editor",
+        "selector": [{ "filenamePattern": "*.md" }],
+        "priority": "default"
+      }
+    ],
+    "configuration": {
+      "title": "MarkBloom",
+      "properties": {
+        "markbloom.livePreview.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MarkBloom live preview rendering."
+        },
+        "markbloom.livePreview.inlineRadius": {
+          "type": "number",
+          "default": 6,
+          "description": "Inline reveal radius for MarkBloom live preview."
+        },
+        "markbloom.table.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MarkBloom table editing UI."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:extension && pnpm run build:webview",
+    "build:extension": "tsc -p tsconfig.json",
+    "build:webview": "vite build --config webview/vite.config.ts",
+    "dev:webview": "vite --config webview/vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.10.1",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
+    "@lezer/highlight": "^1.2.3",
+    "@lezer/markdown": "^1.6.2",
+    "cm6-live-preview": "workspace:*",
+    "cm6-table-editor-vanilla": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "@types/vscode": "^1.90.0",
+    "sass": "^1.97.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0"
+  }
+}

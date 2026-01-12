@@ -5,6 +5,7 @@
 | package | 役割 |
 | --- | --- |
 | `editor-core` | CodeMirror6 の土台（EditorState/EditorView/共通設定） |
+| `vscode-extension` | VS Code 拡張。Webview で editor-core を利用して Markdown を編集する |
 | `cm6-live-preview-core` | Markdown記号の表示状態を動的に切り替える（syntax hide / secondary / raw） |
 | `cm6-markdown-semantics` | Markdown要素を検出して範囲に semantic class を付与する |
 | `cm6-typography-theme` | semantic class に対する見た目（CSSテーマ）を提供する |
@@ -17,6 +18,9 @@
 editor-core
   ↑（アプリ/VSCode/webview 等が利用）
   └─ depends on: cm6-table-editor-vanilla
+
+vscode-extension
+  └─ depends on: editor-core
 
 cm6-live-preview
   ├─ depends on: cm6-live-preview-core
