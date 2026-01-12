@@ -1,7 +1,7 @@
 import type { Extension } from "@codemirror/state";
-import { livePreview, type LivePreviewOptions } from "cm6-live-preview-core";
-import { markdownSemantics, type MarkdownSemanticsOptions } from "cm6-markdown-semantics";
-import { typographyTheme, type TypographyThemeOptions } from "cm6-typography-theme";
+import { livePreview, type LivePreviewOptions } from "@yuya296/cm6-live-preview-core";
+import { markdownSemantics, type MarkdownSemanticsOptions } from "@yuya296/cm6-markdown-semantics";
+import { typographyTheme, type TypographyThemeOptions } from "@yuya296/cm6-typography-theme";
 
 export type LivePreviewPresetOptions = {
   livePreview?: LivePreviewOptions;

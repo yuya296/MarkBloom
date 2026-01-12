@@ -1,24 +1,49 @@
 {
-  "name": "cm6-markdown-semantics",
+  "name": "@yuya296/cm6-markdown-semantics",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuya296/MarkBloom.git",
+    "directory": "packages/cm6-markdown-semantics"
+  },
+  "homepage": "https://github.com/yuya296/MarkBloom",
+  "bugs": {
+    "url": "https://github.com/yuya296/MarkBloom/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
+    "build": "pnpm -w exec tsup src/index.ts --format esm --dts --out-dir dist --clean",
     "lint": "eslint src --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.1",
     "@codemirror/state": "^6.5.3",
     "@codemirror/view": "^6.39.8"
   },
   "devDependencies": {
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
     "typescript": "^5.9.3"
   }
 }

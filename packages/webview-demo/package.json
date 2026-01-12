@@ -19,8 +19,8 @@
     "@codemirror/view": "^6.39.8",
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.2",
-    "cm6-live-preview": "workspace:*",
-    "cm6-table-editor-vanilla": "workspace:*"
+    "@yuya296/cm6-live-preview": "workspace:*",
+    "@yuya296/cm6-table-editor-vanilla": "workspace:*"
   },
   "devDependencies": {
     "sass": "^1.97.1",
