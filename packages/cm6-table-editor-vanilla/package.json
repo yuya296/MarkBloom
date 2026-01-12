@@ -29,7 +29,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm -w exec tsup src/index.ts --format esm --dts --out-dir dist --clean",
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist --clean",
     "lint": "eslint src --max-warnings 0",
     "test": "node --test --import tsx ./tests/**/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -47,6 +47,7 @@
     "@codemirror/language": "^6.12.1",
     "@codemirror/state": "^6.5.3",
     "@codemirror/view": "^6.39.8",
+    "tsup": "^8.5.1",
     "tsx": "^4.20.5",
     "typescript": "^5.9.3"
   }

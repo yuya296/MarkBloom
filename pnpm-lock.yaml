@@ -52,6 +52,9 @@ importers:
       '@codemirror/state':
         specifier: 6.5.3
         version: 6.5.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -70,6 +73,9 @@ importers:
       '@codemirror/view':
         specifier: 6.39.8
         version: 6.39.8
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -91,6 +97,9 @@ importers:
       '@lezer/common':
         specifier: ^1.5.0
         version: 1.5.0
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -113,6 +122,9 @@ importers:
       '@codemirror/view':
         specifier: 6.39.8
         version: 6.39.8
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
       tsx:
         specifier: ^4.20.5
         version: 4.21.0
@@ -128,6 +140,9 @@ importers:
       '@codemirror/view':
         specifier: 6.39.8
         version: 6.39.8
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
