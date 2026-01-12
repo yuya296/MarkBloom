@@ -142,11 +142,13 @@ class TableWidget extends WidgetType {
 
     const createCellEditor = (
       initialValue: string,
+      alignment: TableAlignment | null,
       onChange: (value: string) => void,
       onCommit: (value: string) => void
     ): HTMLTextAreaElement => {
       const input = document.createElement("textarea");
       input.className = "cm-table-input";
+      input.style.textAlign = toCssTextAlign(alignment);
       input.rows = 1;
       input.value = toDisplayText(initialValue);
       const resizeToContent = () => {
@@ -223,6 +225,17 @@ class TableWidget extends WidgetType {
       commitTable();
     };
 
+    const toCssTextAlign = (alignment: TableAlignment | null) => {
+      switch (alignment) {
+        case "center":
+          return "center";
+        case "right":
+          return "right";
+        default:
+          return "left";
+      }
+    };
+
     const deleteColumn = (index: number) => {
       deleteColumnAt(data, index);
       commitTable();
@@ -230,6 +243,16 @@ class TableWidget extends WidgetType {
 
     const applyColumnAlignment = (index: number, alignment: TableAlignment) => {
       setColumnAlignment(data, index, alignment);
+      const cssAlign = toCssTextAlign(alignment);
+      wrapper
+        .querySelectorAll<HTMLElement>(`[data-col-index="${index}"]`)
+        .forEach((cell) => {
+          cell.style.textAlign = cssAlign;
+          const input = cell.querySelector<HTMLTextAreaElement>("textarea.cm-table-input");
+          if (input) {
+            input.style.textAlign = cssAlign;
+          }
+        });
       commitTable();
     };
 
@@ -390,8 +413,10 @@ class TableWidget extends WidgetType {
       }
       headerRow.cells.forEach((cell, colIndex) => {
         const th = document.createElement("th");
+        th.style.textAlign = toCssTextAlign(data.alignments[colIndex] ?? null);
         const input = createCellEditor(
           cell.text,
+          data.alignments[colIndex] ?? null,
           (value) => {
             cell.text = toMarkdownText(value);
           },
@@ -443,8 +468,10 @@ class TableWidget extends WidgetType {
         for (let colIndex = 0; colIndex < columnCount; colIndex += 1) {
           const cell = row.cells[colIndex] ?? { text: "", from: -1, to: -1 };
           const td = document.createElement("td");
+          td.style.textAlign = toCssTextAlign(data.alignments[colIndex] ?? null);
           const input = createCellEditor(
             cell.text,
+            data.alignments[colIndex] ?? null,
             (value) => {
               cell.text = toMarkdownText(value);
               row.cells[colIndex] = cell;

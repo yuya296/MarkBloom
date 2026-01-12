@@ -6,6 +6,7 @@ import {
   parseAlignmentLine,
   parseAlignmentsFromLines,
 } from "../src/tableMarkdown";
+import { setColumnAlignment } from "../src/tableModel";
 
 test("parseAlignmentLine reads alignment markers", () => {
   const result = parseAlignmentLine("| :--- | ---: | :---: |", 3);
@@ -30,4 +31,32 @@ test("buildTableMarkdown preserves alignments", () => {
   };
   const markdown = buildTableMarkdown(data);
   assert.ok(markdown.includes("| :--- | ---: |"));
+});
+
+test("setColumnAlignment updates markdown output", () => {
+  const data: TableData = {
+    header: {
+      cells: [
+        { text: "Col A", from: -1, to: -1 },
+        { text: "Col B", from: -1, to: -1 },
+        { text: "Col C", from: -1, to: -1 },
+      ],
+    },
+    rows: [
+      {
+        cells: [
+          { text: "left", from: -1, to: -1 },
+          { text: "right", from: -1, to: -1 },
+          { text: "center", from: -1, to: -1 },
+        ],
+      },
+    ],
+    alignments: [null, null, null],
+  };
+
+  setColumnAlignment(data, 1, "right");
+  setColumnAlignment(data, 2, "center");
+
+  const lines = buildTableMarkdown(data).split("\n");
+  assert.equal(lines[1], "| --- | ---: | :---: |");
 });
