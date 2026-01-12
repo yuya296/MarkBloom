@@ -39,6 +39,7 @@ import {
   isWithinBounds,
   isWithinVerticalRange,
 } from "./geometry";
+import { createActionMenu } from "./actionMenu";
 
 export type TableEditorOptions = {
   enabled?: boolean;
@@ -99,16 +100,10 @@ class TableWidget extends WidgetType {
     let dragTargetIndex: number | null = null;
     let dragSourceColumnIndex: number | null = null;
     let dragTargetColumnIndex: number | null = null;
+    const actionMenus: Array<{ close: () => void }> = [];
 
     const closeAllMenus = () => {
-      wrapper
-        .querySelectorAll<HTMLElement>(".cm-table-action[data-open=\"true\"]")
-        .forEach((element) => {
-          element
-            .querySelector<HTMLElement>(".cm-table-action-menu")
-            ?.removeAttribute("style");
-          element.dataset.open = "false";
-        });
+      actionMenus.forEach((menu) => menu.close());
     };
 
     wrapper.addEventListener("click", (event) => {
@@ -238,110 +233,6 @@ class TableWidget extends WidgetType {
       commitTable();
     };
 
-    type ActionItem = {
-      label: string;
-      onSelect?: () => void;
-      submenu?: ActionItem[];
-      disabled?: boolean;
-    };
-
-    const createActionMenu = (
-      items: ActionItem[],
-      menuLabel: string,
-      iconName: string = "more_horiz"
-    ) => {
-      const container = document.createElement("div");
-      container.className = "cm-table-action";
-
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "cm-table-action-button";
-      button.appendChild(createIconSpan(iconName));
-      button.setAttribute("aria-label", menuLabel);
-
-      const menu = document.createElement("div");
-      menu.className = "cm-table-action-menu";
-
-      const renderMenuItem = (item: ActionItem) => {
-        if (item.submenu && item.submenu.length > 0) {
-          const submenuWrapper = document.createElement("div");
-          submenuWrapper.className = "cm-table-action-item cm-table-action-item--submenu";
-
-          const submenuButton = document.createElement("button");
-          submenuButton.type = "button";
-          submenuButton.className = "cm-table-action-item-button";
-          submenuButton.textContent = `${item.label} ▸`;
-          submenuButton.disabled = Boolean(item.disabled);
-
-          const submenu = document.createElement("div");
-          submenu.className = "cm-table-action-submenu";
-
-          item.submenu.forEach((subItem) => {
-            const subButton = document.createElement("button");
-            subButton.type = "button";
-            subButton.className = "cm-table-action-item-button";
-            subButton.textContent = subItem.label;
-            subButton.disabled = Boolean(subItem.disabled);
-            subButton.addEventListener("click", (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              subItem.onSelect?.();
-              closeAllMenus();
-            });
-            submenu.appendChild(subButton);
-          });
-
-          submenuWrapper.appendChild(submenuButton);
-          submenuWrapper.appendChild(submenu);
-          return submenuWrapper;
-        }
-
-        const itemButton = document.createElement("button");
-        itemButton.type = "button";
-        itemButton.className = "cm-table-action-item-button";
-        itemButton.textContent = item.label;
-        itemButton.disabled = Boolean(item.disabled);
-        itemButton.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          item.onSelect?.();
-          closeAllMenus();
-        });
-        return itemButton;
-      };
-
-      items.forEach((item) => {
-        menu.appendChild(renderMenuItem(item));
-      });
-
-      const positionMenu = () => {
-        const rect = button.getBoundingClientRect();
-        const top = rect.bottom + 6;
-        const left = rect.left;
-        menu.style.position = "fixed";
-        menu.style.top = `${top}px`;
-        menu.style.left = `${left}px`;
-        menu.style.maxWidth = "240px";
-        menu.style.zIndex = "2000";
-        menu.style.display = "grid";
-        menu.style.gap = "4px";
-      };
-
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const isOpen = container.dataset.open === "true";
-        closeAllMenus();
-        if (!isOpen) {
-          container.dataset.open = "true";
-          positionMenu();
-        }
-      });
-
-      container.appendChild(button);
-      container.appendChild(menu);
-      return container;
-    };
 
     const rowElements: HTMLTableRowElement[] = [];
     const headerCells: HTMLTableCellElement[] = [];
@@ -511,8 +402,8 @@ class TableWidget extends WidgetType {
         );
         th.appendChild(input);
         headerCells.push(th);
-        const columnMenu = createActionMenu(
-          [
+        const columnMenu = createActionMenu({
+          items: [
             { label: "Insert column left", onSelect: () => insertColumn(colIndex) },
             { label: "Insert column right", onSelect: () => insertColumn(colIndex + 1) },
             {
@@ -529,11 +420,14 @@ class TableWidget extends WidgetType {
               ],
             },
           ],
-          "Column actions",
-          "more_horiz"
-        );
-        columnMenu.classList.add("cm-table-action--column");
-        th.appendChild(columnMenu);
+          menuLabel: "Column actions",
+          iconName: "more_horiz",
+          closeAllMenus,
+          signal,
+        });
+        actionMenus.push(columnMenu);
+        columnMenu.element.classList.add("cm-table-action--column");
+        th.appendChild(columnMenu.element);
         th.dataset.colIndex = String(colIndex);
         row.appendChild(th);
       });
@@ -593,37 +487,42 @@ class TableWidget extends WidgetType {
     };
 
     rowElements.forEach((rowElement, rowIndex) => {
-      const rowMenu = createActionMenu(
-        [
+      const rowMenu = createActionMenu({
+        items: [
           { label: "Insert row above", onSelect: () => insertRow(rowIndex) },
           { label: "Insert row below", onSelect: () => insertRow(rowIndex + 1) },
           { label: "Delete row", onSelect: () => deleteRow(rowIndex) },
         ],
-        "Row actions",
-        "drag_indicator"
+        menuLabel: "Row actions",
+        iconName: "drag_indicator",
+        closeAllMenus,
+        signal,
+      });
+      actionMenus.push(rowMenu);
+      rowMenu.element.classList.add("cm-table-action--row");
+      const rowMenuButton = rowMenu.element.querySelector<HTMLButtonElement>(
+        ".cm-table-action-button"
       );
-      rowMenu.classList.add("cm-table-action--row");
-      const rowMenuButton = rowMenu.querySelector<HTMLButtonElement>(".cm-table-action-button");
       if (rowMenuButton) {
         rowMenuButton.draggable = true;
         rowMenuButton.addEventListener("dragstart", (event) => {
           dragSourceIndex = rowIndex;
           dragTargetIndex = rowIndex;
-          rowMenu.dataset.dragging = "true";
+          rowMenu.element.dataset.dragging = "true";
           event.dataTransfer?.setData("text/plain", String(rowIndex));
           event.dataTransfer?.setDragImage(rowMenuButton, 0, 0);
         });
         rowMenuButton.addEventListener("dragend", () => {
           dragSourceIndex = null;
-          rowMenu.removeAttribute("data-dragging");
+          rowMenu.element.removeAttribute("data-dragging");
           clearDropIndicator();
         });
       }
-      rowMenu.addEventListener("mouseenter", () => setActiveRowAction(rowIndex));
-      rowMenu.addEventListener("mouseleave", () => setActiveRowAction(null));
+      rowMenu.element.addEventListener("mouseenter", () => setActiveRowAction(rowIndex));
+      rowMenu.element.addEventListener("mouseleave", () => setActiveRowAction(null));
       rowElement.addEventListener("mouseenter", () => setActiveRowAction(rowIndex));
       rowElement.addEventListener("mouseleave", () => setActiveRowAction(null));
-      rowActions.appendChild(rowMenu);
+      rowActions.appendChild(rowMenu.element);
     });
 
     const setActiveColumnHandle = (activeIndex: number | null) => {
@@ -942,6 +841,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       top: "26px",
       left: "0",
       minWidth: "160px",
+      maxWidth: "240px",
       background: "var(--editor-surface)",
       border: "1px solid var(--editor-border)",
       borderRadius: "8px",
@@ -992,7 +892,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       padding: "6px",
       zIndex: "4",
     },
-    ".cm-content .cm-table-editor .cm-table-action-item--submenu:hover .cm-table-action-submenu": {
+    ".cm-content .cm-table-editor .cm-table-action-item--submenu[data-open=\"true\"] .cm-table-action-submenu":
+      {
       display: "grid",
       gap: "4px",
     },
