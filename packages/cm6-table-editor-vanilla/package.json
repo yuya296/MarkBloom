@@ -10,6 +10,7 @@
   },
   "scripts": {
     "lint": "eslint src --max-warnings 0",
+    "test": "node --test --import tsx ./tests/**/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -19,6 +20,7 @@
     "@lezer/common": "^1.5.0"
   },
   "devDependencies": {
+    "tsx": "^4.20.5",
     "typescript": "^5.9.3"
   }
 }

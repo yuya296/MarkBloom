@@ -13,28 +13,36 @@ import {
   WidgetType,
 } from "@codemirror/view";
 import type { SyntaxNode } from "@lezer/common";
+import type { TableAlignment, TableData } from "./types";
+import {
+  cloneTableData,
+  deleteColumnAt,
+  deleteRowAt,
+  ensureHeader,
+  getColumnCount,
+  insertColumnAt,
+  insertRowAt,
+  normalizeTableData,
+  reorderColumns,
+  reorderRows,
+  setColumnAlignment,
+} from "./tableModel";
+import {
+  buildTableMarkdown,
+  parseAlignmentsFromLines,
+  toDisplayText,
+  toMarkdownText,
+} from "./tableMarkdown";
+import {
+  getDropIndexByX,
+  getDropIndexByY,
+  isWithinBounds,
+  isWithinVerticalRange,
+} from "./geometry";
 
 export type TableEditorOptions = {
   enabled?: boolean;
   renderMode?: "widget" | "none";
-};
-
-type TableAlignment = "left" | "center" | "right" | null;
-
-type TableCell = {
-  text: string;
-  from: number;
-  to: number;
-};
-
-type TableRow = {
-  cells: TableCell[];
-};
-
-type TableData = {
-  header: TableRow | null;
-  rows: TableRow[];
-  alignments: TableAlignment[];
 };
 
 type TableInfo = {
@@ -206,66 +214,27 @@ class TableWidget extends WidgetType {
     };
 
     const insertRow = (index: number) => {
-      const columnCount = Math.max(1, getColumnCount(data));
-      normalizeTableData(data);
-      const nextIndex = Math.max(0, Math.min(index, data.rows.length));
-      data.rows.splice(nextIndex, 0, {
-        cells: Array.from({ length: columnCount }, () => ({ text: "", from: -1, to: -1 })),
-      });
+      insertRowAt(data, index);
       commitTable();
     };
 
     const deleteRow = (index: number) => {
-      if (index < 0 || index >= data.rows.length) {
-        return;
-      }
-      data.rows.splice(index, 1);
+      deleteRowAt(data, index);
       commitTable();
     };
 
     const insertColumn = (index: number) => {
-      normalizeTableData(data);
-      const columnCount = Math.max(1, getColumnCount(data));
-      const nextIndex = Math.max(0, Math.min(index, columnCount));
-      ensureHeader(data, columnCount + 1);
-      if (data.header) {
-        data.header.cells.splice(nextIndex, 0, {
-          text: `Col ${nextIndex + 1}`,
-          from: -1,
-          to: -1,
-        });
-      }
-      data.rows.forEach((row) => {
-        row.cells.splice(nextIndex, 0, { text: "", from: -1, to: -1 });
-      });
-      data.alignments.splice(nextIndex, 0, null);
+      insertColumnAt(data, index);
       commitTable();
     };
 
     const deleteColumn = (index: number) => {
-      const columnCount = Math.max(1, getColumnCount(data));
-      if (columnCount <= 1) {
-        return;
-      }
-      normalizeTableData(data);
-      const nextIndex = Math.max(0, Math.min(index, columnCount - 1));
-      if (data.header) {
-        data.header.cells.splice(nextIndex, 1);
-      }
-      data.rows.forEach((row) => {
-        row.cells.splice(nextIndex, 1);
-      });
-      data.alignments.splice(nextIndex, 1);
+      deleteColumnAt(data, index);
       commitTable();
     };
 
-    const setColumnAlignment = (index: number, alignment: TableAlignment) => {
-      normalizeTableData(data);
-      const columnCount = Math.max(1, getColumnCount(data));
-      if (index < 0 || index >= columnCount) {
-        return;
-      }
-      data.alignments[index] = alignment;
+    const applyColumnAlignment = (index: number, alignment: TableAlignment) => {
+      setColumnAlignment(data, index, alignment);
       commitTable();
     };
 
@@ -435,57 +404,35 @@ class TableWidget extends WidgetType {
       });
     };
 
-    const getDropIndex = (clientY: number) => {
-      for (let index = 0; index < rowElements.length; index += 1) {
-        const rowRect = rowElements[index].getBoundingClientRect();
-        if (clientY < rowRect.top + rowRect.height / 2) {
-          return index;
-        }
-      }
-      return rowElements.length;
-    };
-
-    const getColumnDropIndex = (clientX: number) => {
-      for (let index = 0; index < headerCells.length; index += 1) {
-        const cellRect = headerCells[index].getBoundingClientRect();
-        if (clientX < cellRect.left + cellRect.width / 2) {
-          return index;
-        }
-      }
-      return headerCells.length;
-    };
+    const getRowRects = () =>
+      rowElements.map((rowElement) => rowElement.getBoundingClientRect());
+    const getHeaderRects = () =>
+      headerCells.map((cell) => cell.getBoundingClientRect());
 
     const updateDropIndicator = (clientX: number, clientY: number) => {
       if (dragSourceIndex === null) {
         return;
       }
-      const firstRow = rowElements[0];
-      const lastRow = rowElements[rowElements.length - 1];
-      if (!firstRow || !lastRow) {
-        clearDropIndicator();
-        return;
-      }
-      const firstRect = firstRow.getBoundingClientRect();
-      const lastRect = lastRow.getBoundingClientRect();
-      const withinY = clientY >= firstRect.top && clientY <= lastRect.bottom;
+      const rowRects = getRowRects();
+      const withinY = isWithinVerticalRange(rowRects, clientY);
       if (!withinY) {
         clearDropIndicator();
         return;
       }
-      const dropIndex = getDropIndex(clientY);
+      const dropIndex = getDropIndexByY(rowRects, clientY);
       dragTargetIndex = dropIndex;
       const referenceIndex = Math.min(dropIndex, rowElements.length - 1);
-      const referenceRow = rowElements[referenceIndex];
-      if (!referenceRow) {
+      const referenceRect = rowRects[referenceIndex];
+      if (!referenceRect) {
         rowDropIndicator.style.display = "none";
         return;
       }
-      const rowRect = referenceRow.getBoundingClientRect();
-      const top = dropIndex >= rowElements.length ? rowRect.bottom : rowRect.top;
+      const top =
+        dropIndex >= rowRects.length ? referenceRect.bottom : referenceRect.top;
       rowDropIndicator.style.display = "block";
       rowDropIndicator.style.top = `${top}px`;
-      rowDropIndicator.style.left = `${rowRect.left}px`;
-      rowDropIndicator.style.width = `${rowRect.width}px`;
+      rowDropIndicator.style.left = `${referenceRect.left}px`;
+      rowDropIndicator.style.width = `${referenceRect.width}px`;
     };
 
     const clearDropIndicator = () => {
@@ -499,24 +446,21 @@ class TableWidget extends WidgetType {
       }
       const tableRect = table.getBoundingClientRect();
       const tolerance = 60;
-      const withinY =
-        clientY >= tableRect.top - tolerance && clientY <= tableRect.bottom + tolerance;
-      const withinX =
-        clientX >= tableRect.left - tolerance && clientX <= tableRect.right + tolerance;
-      if (!withinX || !withinY) {
+      if (!isWithinBounds(tableRect, clientX, clientY, tolerance)) {
         clearColumnDropIndicator();
         return;
       }
-      const dropIndex = getColumnDropIndex(clientX);
+      const headerRects = getHeaderRects();
+      const dropIndex = getDropIndexByX(headerRects, clientX);
       dragTargetColumnIndex = dropIndex;
       const referenceIndex = Math.min(dropIndex, headerCells.length - 1);
-      const referenceCell = headerCells[referenceIndex];
-      if (!referenceCell) {
+      const referenceRect = headerRects[referenceIndex];
+      if (!referenceRect) {
         columnDropIndicator.style.display = "none";
         return;
       }
-      const cellRect = referenceCell.getBoundingClientRect();
-      const left = dropIndex >= headerCells.length ? cellRect.right : cellRect.left;
+      const left =
+        dropIndex >= headerRects.length ? referenceRect.right : referenceRect.left;
       columnDropIndicator.style.display = "block";
       columnDropIndicator.style.top = `${tableRect.top}px`;
       columnDropIndicator.style.left = `${left}px`;
@@ -532,20 +476,7 @@ class TableWidget extends WidgetType {
       if (dragSourceIndex === null || dragTargetIndex === null) {
         return;
       }
-      const total = data.rows.length;
-      if (total <= 1) {
-        return;
-      }
-      const sourceIndex = dragSourceIndex;
-      let targetIndex = dragTargetIndex;
-      if (sourceIndex < targetIndex) {
-        targetIndex -= 1;
-      }
-      if (targetIndex < 0 || targetIndex >= total || targetIndex === sourceIndex) {
-        return;
-      }
-      const [moved] = data.rows.splice(sourceIndex, 1);
-      data.rows.splice(targetIndex, 0, moved);
+      reorderRows(data, dragSourceIndex, dragTargetIndex);
       commitTable();
     };
 
@@ -553,29 +484,7 @@ class TableWidget extends WidgetType {
       if (dragSourceColumnIndex === null || dragTargetColumnIndex === null) {
         return;
       }
-      normalizeTableData(data);
-      const columnCount = getColumnCount(data);
-      if (columnCount <= 1) {
-        return;
-      }
-      const sourceIndex = dragSourceColumnIndex;
-      let targetIndex = dragTargetColumnIndex;
-      if (sourceIndex < targetIndex) {
-        targetIndex -= 1;
-      }
-      if (targetIndex < 0 || targetIndex >= columnCount || targetIndex === sourceIndex) {
-        return;
-      }
-      if (data.header) {
-        const [movedHeader] = data.header.cells.splice(sourceIndex, 1);
-        data.header.cells.splice(targetIndex, 0, movedHeader);
-      }
-      data.rows.forEach((row) => {
-        const [movedCell] = row.cells.splice(sourceIndex, 1);
-        row.cells.splice(targetIndex, 0, movedCell);
-      });
-      const [movedAlign] = data.alignments.splice(sourceIndex, 1);
-      data.alignments.splice(targetIndex, 0, movedAlign);
+      reorderColumns(data, dragSourceColumnIndex, dragTargetColumnIndex);
       commitTable();
     };
 
@@ -614,9 +523,9 @@ class TableWidget extends WidgetType {
             {
               label: "Align",
               submenu: [
-                { label: "Left", onSelect: () => setColumnAlignment(colIndex, "left") },
-                { label: "Center", onSelect: () => setColumnAlignment(colIndex, "center") },
-                { label: "Right", onSelect: () => setColumnAlignment(colIndex, "right") },
+                { label: "Left", onSelect: () => applyColumnAlignment(colIndex, "left") },
+                { label: "Center", onSelect: () => applyColumnAlignment(colIndex, "center") },
+                { label: "Right", onSelect: () => applyColumnAlignment(colIndex, "right") },
               ],
             },
           ],
@@ -784,15 +693,18 @@ class TableWidget extends WidgetType {
         dragSourceColumnIndex = null;
         return;
       }
-      if (dragTargetIndex !== null) {
-        commitRowReorder();
+      if (dragSourceIndex !== null && dragTargetIndex !== null) {
+        const rowRects = getRowRects();
+        if (isWithinVerticalRange(rowRects, event.clientY)) {
+          commitRowReorder();
+        }
       }
       clearDropIndicator();
       dragSourceIndex = null;
     };
 
-    window.addEventListener("dragover", handleDragOver, { signal });
-    window.addEventListener("drop", handleDrop, { signal });
+    window.addEventListener("dragover", handleDragOver, { signal, capture: true });
+    window.addEventListener("drop", handleDrop, { signal, capture: true });
 
 
     return wrapper;
@@ -805,86 +717,6 @@ class TableWidget extends WidgetType {
   destroy(): void {
     this.menuAbort.abort();
   }
-}
-
-function cloneTableData(data: TableData): TableData {
-  return {
-    header: data.header
-      ? { cells: data.header.cells.map((cell) => ({ ...cell })) }
-      : null,
-    rows: data.rows.map((row) => ({
-      cells: row.cells.map((cell) => ({ ...cell })),
-    })),
-    alignments: [...data.alignments],
-  };
-}
-
-function normalizeTableData(data: TableData): void {
-  const columnCount = getColumnCount(data);
-  ensureHeader(data, columnCount);
-  if (data.header && data.header.cells.length < columnCount) {
-    for (let i = data.header.cells.length; i < columnCount; i += 1) {
-      data.header.cells.push({ text: `Col ${i + 1}`, from: -1, to: -1 });
-    }
-  }
-  data.rows.forEach((row) => {
-    for (let i = row.cells.length; i < columnCount; i += 1) {
-      row.cells.push({ text: "", from: -1, to: -1 });
-    }
-  });
-  if (!data.alignments) {
-    data.alignments = [];
-  }
-  if (data.alignments.length < columnCount) {
-    for (let i = data.alignments.length; i < columnCount; i += 1) {
-      data.alignments.push(null);
-    }
-  } else if (data.alignments.length > columnCount) {
-    data.alignments = data.alignments.slice(0, columnCount);
-  }
-}
-
-function ensureHeader(data: TableData, columnCount: number): void {
-  if (data.header) {
-    return;
-  }
-  data.header = {
-    cells: Array.from({ length: columnCount }, (_value, index) => ({
-      text: `Col ${index + 1}`,
-      from: -1,
-      to: -1,
-    })),
-  };
-}
-
-function getColumnCount(data: TableData): number {
-  return Math.max(
-    data.header?.cells.length ?? 0,
-    ...data.rows.map((row) => row.cells.length),
-    0
-  );
-}
-
-function buildTableMarkdown(data: TableData): string {
-  const columnCount = Math.max(1, getColumnCount(data));
-  normalizeTableData(data);
-  const alignments = data.alignments.slice(0, columnCount);
-  const headerCells = data.header?.cells ?? [];
-  const headerLine = `| ${headerCells
-    .slice(0, columnCount)
-    .map((cell, index) => formatCell(cell.text || `Col ${index + 1}`))
-    .join(" | ")} |`;
-  const separatorLine = `| ${alignments
-    .map((alignment) => formatAlignment(alignment))
-    .join(" | ")} |`;
-  const bodyLines = data.rows.map((row) => {
-    const cells = Array.from({ length: columnCount }, (_value, index) => {
-      const cell = row.cells[index];
-      return formatCell(cell?.text ?? "");
-    });
-    return `| ${cells.join(" | ")} |`;
-  });
-  return [headerLine, separatorLine, ...bodyLines].join("\n");
 }
 
 function dispatchOutsideUpdate(
@@ -901,15 +733,6 @@ function dispatchOutsideUpdate(
   dispatch();
 }
 
-function formatCell(value: string): string {
-  const normalized = escapePipes(value);
-  return normalized.trim();
-}
-
-function escapePipes(value: string): string {
-  return value.replace(/\|/g, "\\|");
-}
-
 function collectTableData(
   state: EditorState,
   node: SyntaxNode,
@@ -924,7 +747,7 @@ function collectTableData(
     ...rows.map((row) => row.cells.length),
     0
   );
-  const alignments = parseAlignmentsFromLines(lines, columnCount);
+  const alignments = parseAlignmentsFromLines(lines.map((line) => line.text), columnCount);
   return { header, rows, alignments };
 }
 
@@ -936,44 +759,6 @@ function collectTableLines(state: EditorState, from: number, to: number) {
     lines.push(state.doc.line(lineNumber));
   }
   return lines;
-}
-
-function parseAlignmentsFromLines(
-  lines: ReturnType<typeof collectTableLines>,
-  columnCount: number
-): TableAlignment[] {
-  if (columnCount <= 0) {
-    return [];
-  }
-  const separatorLine = lines[1]?.text;
-  if (!separatorLine) {
-    return Array.from({ length: columnCount }, () => null);
-  }
-  return parseAlignmentLine(separatorLine, columnCount);
-}
-
-function parseAlignmentLine(line: string, columnCount: number): TableAlignment[] {
-  const trimmed = line.trim();
-  const withoutEdges = trimmed.replace(/^\|/, "").replace(/\|$/, "");
-  const parts = withoutEdges.split("|").map((part) => part.trim());
-  const alignments = parts.map((part) => {
-    const startsWith = part.startsWith(":");
-    const endsWith = part.endsWith(":");
-    if (startsWith && endsWith) {
-      return "center";
-    }
-    if (startsWith) {
-      return "left";
-    }
-    if (endsWith) {
-      return "right";
-    }
-    return null;
-  });
-  if (alignments.length < columnCount) {
-    return alignments.concat(Array.from({ length: columnCount - alignments.length }, () => null));
-  }
-  return alignments.slice(0, columnCount);
 }
 
 function collectCells(
@@ -991,27 +776,6 @@ function collectCells(
     }
   }
   return cells;
-}
-
-function toDisplayText(value: string): string {
-  return value.replace(/<br\s*\/?>/gi, "\n");
-}
-
-function toMarkdownText(value: string): string {
-  return value.replace(/\r?\n/g, "<br>");
-}
-
-function formatAlignment(alignment: TableAlignment): string {
-  switch (alignment) {
-    case "left":
-      return ":---";
-    case "center":
-      return ":---:";
-    case "right":
-      return "---:";
-    default:
-      return "---";
-  }
 }
 
 function buildDecorations(
