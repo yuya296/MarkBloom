@@ -1,9 +1,9 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
-import { livePreviewPreset } from "cm6-live-preview";
+import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 import { createEditor } from "./createEditor";
-import { tableEditor as vanillaTableEditor } from "cm6-table-editor-vanilla";
+import { tableEditor as vanillaTableEditor } from "@yuya296/cm6-table-editor-vanilla";
 import { editorTheme } from "./editorTheme";
 import { editorHighlightStyle } from "./editorHighlightStyle";
 

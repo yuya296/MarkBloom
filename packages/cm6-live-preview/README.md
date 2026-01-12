@@ -5,7 +5,7 @@ Preset that bundles the Live Preview core with Markdown semantics and typography
 ## Usage
 
 ```ts
-import { livePreviewPreset } from "cm6-live-preview";
+import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 
 const extension = livePreviewPreset({
   livePreview: { blockRevealEnabled: true },
@@ -16,6 +16,6 @@ const extension = livePreviewPreset({
 
 ## Dependencies
 
-- cm6-live-preview-core
-- cm6-markdown-semantics
-- cm6-typography-theme
+- @yuya296/cm6-live-preview-core
+- @yuya296/cm6-markdown-semantics
+- @yuya296/cm6-typography-theme

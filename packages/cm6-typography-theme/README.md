@@ -5,7 +5,7 @@ CodeMirror 6 theme for semantic Markdown classes (provided by cm6-markdown-seman
 ## Usage
 
 ```ts
-import { typographyTheme } from "cm6-typography-theme";
+import { typographyTheme } from "@yuya296/cm6-typography-theme";
 
 const extension = typographyTheme({ classPrefix: "mb-" });
 ```

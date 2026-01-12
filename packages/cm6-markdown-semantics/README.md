@@ -5,7 +5,7 @@ CodeMirror 6 extension that assigns semantic classes to Markdown syntax ranges.
 ## Usage
 
 ```ts
-import { markdownSemantics } from "cm6-markdown-semantics";
+import { markdownSemantics } from "@yuya296/cm6-markdown-semantics";
 
 const extension = markdownSemantics({ classPrefix: "mb-" });
 ```

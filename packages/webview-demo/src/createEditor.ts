@@ -66,7 +66,7 @@ export function createEditor({
   const baseExtensions = [
     EditorView.domEventHandlers({
       click: (event) => {
-        if (!(event.target instanceof Element)) {
+        if (!(event.target instanceof HTMLElement)) {
           return false;
         }
         const link = event.target.closest(".mb-link[data-href]");
