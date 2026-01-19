@@ -1,0 +1,12 @@
+**/node_modules/**
+src/**
+webview/src/**
+webview/node_modules/**
+webview/vite.config.ts
+webview/**
+.map
+dist/**/*.map
+tsconfig.json
+.env
+.env.*
+*.map

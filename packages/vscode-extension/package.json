@@ -1,7 +1,17 @@
 {
-  "name": "vscode-extension",
-  "version": "0.1.0",
-  "private": true,
+  "name": "markbloom",
+  "version": "0.1.1",
+  "publisher": "yuya296",
+  "displayName": "MarkBloom",
+  "description": "A Markdown-first viewer/editor for efficiently reviewing and editing large volumes of AI-generated documents.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuya296/MarkBloom"
+  },
+  "license": "MIT",
+  "icon": "assets/logo.png",
+  "categories": ["Other"],
+  "keywords": ["markdown", "editor", "preview", "custom-editor"],
   "type": "commonjs",
   "main": "./dist/extension.js",
   "engines": {
@@ -39,11 +49,14 @@
     }
   },
   "scripts": {
-    "build": "pnpm run build:extension && pnpm run build:webview",
+    "build": "pnpm run build:deps && pnpm run build:extension && pnpm run build:webview",
+    "build:deps": "pnpm -r --filter \"@yuya296/cm6-*\" --filter \"!mark-bloom\" build",
     "build:extension": "tsc -p tsconfig.json",
     "build:webview": "vite build --config webview/vite.config.ts",
     "dev:webview": "vite --config webview/vite.config.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "package": "pnpm run build && npx @vscode/vsce package --no-dependencies",
+    "publish": "pnpm run build && npx @vscode/vsce publish --no-dependencies"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.1",
