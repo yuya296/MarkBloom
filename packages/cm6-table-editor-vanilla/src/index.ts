@@ -825,7 +825,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor .cm-table-action--column": {
       top: "6px",
-      right: "6px",
+      right: "auto",
       left: "auto",
     },
     ".cm-content .cm-table-editor .cm-table-action-button": {
