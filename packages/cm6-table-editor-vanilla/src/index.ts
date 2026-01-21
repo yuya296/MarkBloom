@@ -196,6 +196,9 @@ class TableWidget extends WidgetType {
           return;
         }
         if (event.key === "Enter" && !event.shiftKey) {
+          if (event.isComposing) {
+            return;
+          }
           event.preventDefault();
           commit();
         }
