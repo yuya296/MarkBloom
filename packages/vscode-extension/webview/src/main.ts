@@ -44,6 +44,7 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   tableEnabled: boolean;
+  editable: boolean;
 };
 
 declare function acquireVsCodeApi(): {
@@ -52,6 +53,13 @@ declare function acquireVsCodeApi(): {
 
 const vscode = acquireVsCodeApi();
 const editorHost = document.getElementById("editor");
+const appRoot = document.getElementById("app");
+const toggleEditModeButton = document.getElementById(
+  "toggle-edit-mode"
+) as HTMLButtonElement | null;
+const toggleWidthButton = document.getElementById(
+  "toggle-width"
+) as HTMLButtonElement | null;
 const status = document.getElementById("status");
 const changeInfo = document.getElementById("change-info");
 
@@ -67,6 +75,14 @@ let currentConfig: MarkBloomConfig = {
   table: { enabled: true },
 };
 let applyingRemoteUpdate = false;
+let isEditable = true;
+let widthMode: "default" | "wide" = "default";
+let toastTimer: number | null = null;
+
+const viewModeToast = document.createElement("div");
+viewModeToast.className = "view-mode-toast";
+viewModeToast.textContent = "View mode active. Switch to edit to make changes.";
+appRoot?.appendChild(viewModeToast);
 
 const postMessage = (message: WebviewMessage) => {
   vscode.postMessage(message);
@@ -77,6 +93,7 @@ const buildExtensions = ({
   tabSize,
   livePreviewEnabled,
   tableEnabled,
+  editable,
 }: ExtensionOptions): Extension[] => {
   const extensions: Extension[] = [];
 
@@ -90,6 +107,11 @@ const buildExtensions = ({
 
   extensions.push(editorHighlightStyle());
   extensions.push(editorTheme());
+
+  if (!editable) {
+    extensions.push(EditorView.editable.of(false));
+    extensions.push(EditorState.readOnly.of(true));
+  }
 
   if (livePreviewEnabled) {
     extensions.push(
@@ -118,6 +140,7 @@ const applyConfig = () => {
       tabSize: 4,
       livePreviewEnabled: currentConfig.livePreview.enabled,
       tableEnabled: currentConfig.table.enabled,
+      editable: isEditable,
     })
   );
 };
@@ -156,6 +179,7 @@ const ensureEditor = (text: string) => {
       tabSize: 4,
       livePreviewEnabled: currentConfig.livePreview.enabled,
       tableEnabled: currentConfig.table.enabled,
+      editable: isEditable,
     }),
     onChange: (nextText) => {
       if (applyingRemoteUpdate) {
@@ -207,3 +231,62 @@ window.addEventListener("keydown", (event) => {
 });
 
 postMessage({ type: "ready" });
+
+const updateEditModeUi = () => {
+  if (appRoot) {
+    appRoot.dataset.editable = isEditable ? "true" : "false";
+  }
+  if (toggleEditModeButton) {
+    toggleEditModeButton.setAttribute("aria-pressed", String(isEditable));
+    toggleEditModeButton.title = isEditable
+      ? "Switch to view mode"
+      : "Switch to edit mode";
+  }
+};
+
+const updateWidthUi = () => {
+  if (appRoot) {
+    appRoot.dataset.width = widthMode;
+  }
+  if (toggleWidthButton) {
+    const isWide = widthMode === "wide";
+    toggleWidthButton.setAttribute("aria-pressed", String(isWide));
+    toggleWidthButton.title = isWide
+      ? "Switch to default width"
+      : "Switch to wide layout";
+  }
+};
+
+toggleEditModeButton?.addEventListener("click", () => {
+  isEditable = !isEditable;
+  updateEditModeUi();
+  applyConfig();
+});
+
+toggleWidthButton?.addEventListener("click", () => {
+  widthMode = widthMode === "wide" ? "default" : "wide";
+  updateWidthUi();
+});
+
+updateEditModeUi();
+updateWidthUi();
+
+editorHost?.addEventListener(
+  "pointerdown",
+  (event) => {
+    if (isEditable) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    editor?.view.dom.blur();
+    viewModeToast.dataset.visible = "true";
+    if (toastTimer) {
+      window.clearTimeout(toastTimer);
+    }
+    toastTimer = window.setTimeout(() => {
+      viewModeToast.removeAttribute("data-visible");
+    }, 1600);
+  },
+  { capture: true }
+);

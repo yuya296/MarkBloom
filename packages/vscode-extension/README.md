@@ -17,3 +17,4 @@ MarkBloom is a Markdown-first viewer/editor for efficiently reviewing and editin
 - `markbloom.livePreview.enabled`: Enable live preview rendering.
 - `markbloom.livePreview.inlineRadius`: Inline reveal radius for live preview.
 - `markbloom.table.enabled`: Enable table editing UI.
+- `markbloom.view.openInMarkBloomByDefault`: Open Markdown files in MarkBloom by default.
