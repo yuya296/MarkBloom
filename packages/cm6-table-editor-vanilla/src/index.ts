@@ -52,6 +52,8 @@ type TableInfo = {
   to: number;
   startLineFrom: number;
   endLineTo: number;
+  startLineNumber: number;
+  endLineNumber: number;
 };
 
 const tableEditAnnotation = Annotation.define<boolean>();
@@ -131,11 +133,24 @@ class TableWidget extends WidgetType {
 
     const commitTable = () => {
       normalizeTableData(data);
-      const markdown = buildTableMarkdown(data);
+      const doc = view.state.doc;
+      const startLine = doc.line(this.tableInfo.startLineNumber);
+      const endLine = doc.line(this.tableInfo.endLineNumber);
+      const startLineFrom = startLine.from;
+      const endLineTo = endLine.to;
+      let suffix = "";
+      for (let pos = endLineTo; pos < doc.length; pos += 1) {
+        const char = doc.sliceString(pos, pos + 1);
+        if (char !== "\n") {
+          break;
+        }
+        suffix += "\n";
+      }
+      const markdown = `${buildTableMarkdown(data)}${suffix}`;
       dispatchOutsideUpdate(view, {
         changes: {
-          from: this.tableInfo.startLineFrom,
-          to: this.tableInfo.endLineTo,
+          from: startLineFrom,
+          to: endLineTo + suffix.length,
           insert: markdown,
         },
         annotations: tableEditAnnotation.of(true),
@@ -295,6 +310,7 @@ class TableWidget extends WidgetType {
       }
       const cell = cellMatrix[selectedCell.row]?.[selectedCell.col];
       cell?.classList.remove("cm-table-cell-selected");
+      wrapper.removeAttribute("data-active");
     };
 
     const restoreSelectionHighlight = () => {
@@ -723,10 +739,14 @@ class TableWidget extends WidgetType {
       }
       event.preventDefault();
       event.stopPropagation();
+      wrapper.dataset.active = "true";
       applySelection(rowIndex, colIndex);
     });
 
-    wrapper.addEventListener("keydown", (event) => {
+    const handleSelectionKeydown = (event: KeyboardEvent) => {
+      if (wrapper.dataset.active !== "true") {
+        return;
+      }
       if (isEditingCell) {
         return;
       }
@@ -764,12 +784,19 @@ class TableWidget extends WidgetType {
       event.preventDefault();
       event.stopPropagation();
       applySelection(nextRow, nextCol, false);
+    };
+
+    wrapper.addEventListener("keydown", handleSelectionKeydown);
+    view.dom.addEventListener("keydown", handleSelectionKeydown, {
+      capture: true,
+      signal,
     });
 
     wrapper.addEventListener("focusin", (event) => {
       if (!(event.target instanceof Node) || !wrapper.contains(event.target)) {
         return;
       }
+      wrapper.dataset.active = "true";
       restoreSelectionHighlight();
     });
 
@@ -871,6 +898,9 @@ function collectTableLines(state: EditorState, from: number, to: number) {
   for (let lineNumber = startLine.number; lineNumber <= endLine.number; lineNumber += 1) {
     lines.push(state.doc.line(lineNumber));
   }
+  while (lines.length > 0 && lines[lines.length - 1].text.trim() === "") {
+    lines.pop();
+  }
   return lines;
 }
 
@@ -923,6 +953,8 @@ function buildDecorations(
         to: node.to,
         startLineFrom: firstLine.from,
         endLineTo: lastLine.to,
+        startLineNumber: firstLine.number,
+        endLineNumber: lastLine.number,
       };
 
       const widgetDecoration = Decoration.widget({
@@ -971,6 +1003,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor .cm-table-cell-selected": {
       boxShadow: "inset 0 0 0 2px var(--editor-primary-color)",
+      backgroundColor: "rgba(15, 91, 158, 0.08)",
     },
     ".cm-content .cm-table-editor th": {
       backgroundColor: "var(--app-pill-bg)",
@@ -1192,3 +1225,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
 
   return [theme, decorations];
 }
+
+export * from "./types";
+export * from "./tableModel";
+export * from "./tableMarkdown";

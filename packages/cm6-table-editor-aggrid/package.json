@@ -1,0 +1,53 @@
+{
+  "name": "@yuya296/cm6-table-editor-aggrid",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuya296/MarkBloom.git",
+    "directory": "packages/cm6-table-editor-aggrid"
+  },
+  "homepage": "https://github.com/yuya296/MarkBloom",
+  "bugs": {
+    "url": "https://github.com/yuya296/MarkBloom/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist --clean",
+    "lint": "eslint src --max-warnings 0",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@yuya296/cm6-table-editor-vanilla": "workspace:*",
+    "@lezer/common": "^1.5.0",
+    "ag-grid-community": "^32.0.0"
+  },
+  "peerDependencies": {
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8"
+  },
+  "devDependencies": {
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}

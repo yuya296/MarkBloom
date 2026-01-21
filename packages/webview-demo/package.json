@@ -20,7 +20,14 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.2",
     "@yuya296/cm6-live-preview": "workspace:*",
-    "@yuya296/cm6-table-editor-vanilla": "workspace:*"
+    "@yuya296/cm6-table-editor-aggrid": "workspace:*",
+    "@yuya296/cm6-table-editor-handsontable5": "workspace:*",
+    "@yuya296/cm6-table-editor-tabulator": "workspace:*",
+    "@yuya296/cm6-table-editor-vanilla": "workspace:*",
+    "ag-grid-community": "^32.0.0",
+    "core-js": "^2.6.12",
+    "handsontable": "^5.0.0",
+    "tabulator-tables": "^6.0.0"
   },
   "devDependencies": {
     "sass": "^1.97.1",

@@ -3,6 +3,9 @@ import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 import { createEditor } from "./createEditor";
+import { tableEditor as agGridTableEditor } from "@yuya296/cm6-table-editor-aggrid";
+import { tableEditor as handsontableTableEditor } from "@yuya296/cm6-table-editor-handsontable5";
+import { tableEditor as tabulatorTableEditor } from "@yuya296/cm6-table-editor-tabulator";
 import { tableEditor as vanillaTableEditor } from "@yuya296/cm6-table-editor-vanilla";
 import { editorTheme } from "./editorTheme";
 import { editorHighlightStyle } from "./editorHighlightStyle";
@@ -13,7 +16,7 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
-  tableEngine: "vanilla" | "none";
+  tableEngine: "vanilla" | "handsontable5" | "tabulator" | "aggrid" | "none";
 };
 
 function buildExtensions({
@@ -165,7 +168,13 @@ export function setupApp() {
 }
 
 function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
-  if (value === "vanilla" || value === "none") {
+  if (
+    value === "vanilla" ||
+    value === "handsontable5" ||
+    value === "tabulator" ||
+    value === "aggrid" ||
+    value === "none"
+  ) {
     return value;
   }
   return "vanilla";
@@ -175,6 +184,12 @@ function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension 
   switch (engine) {
     case "vanilla":
       return vanillaTableEditor();
+    case "handsontable5":
+      return handsontableTableEditor();
+    case "tabulator":
+      return tabulatorTableEditor();
+    case "aggrid":
+      return agGridTableEditor();
     case "none":
       return [];
     default:
