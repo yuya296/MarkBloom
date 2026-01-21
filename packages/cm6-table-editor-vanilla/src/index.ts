@@ -62,6 +62,7 @@ const defaultOptions: Required<TableEditorOptions> = {
 
 class TableWidget extends WidgetType {
   private readonly menuAbort = new AbortController();
+  private static readonly selectionByTableId = new Map<number, { row: number; col: number }>();
 
   constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
@@ -78,6 +79,7 @@ class TableWidget extends WidgetType {
     const wrapper = document.createElement("div");
     wrapper.className = "cm-table-editor cm-table-editor-vanilla";
     wrapper.dataset.tableId = String(this.tableInfo.id);
+    wrapper.tabIndex = 0;
 
     const data = cloneTableData(this.data);
     const table = document.createElement("table");
@@ -252,6 +254,94 @@ class TableWidget extends WidgetType {
       commitTable();
     };
 
+    const cellMatrix: HTMLTableCellElement[][] = [];
+    const inputMatrix: HTMLTextAreaElement[][] = [];
+    let selectedCell: { row: number; col: number } | null = null;
+    let isEditingCell = false;
+
+    const clampIndex = (value: number, min: number, max: number) =>
+      Math.min(Math.max(value, min), max);
+
+    const applySelection = (row: number, col: number, focusWrapper = true) => {
+      if (cellMatrix.length === 0) {
+        return;
+      }
+      const rowIndex = clampIndex(row, 0, cellMatrix.length - 1);
+      const rowCells = cellMatrix[rowIndex] ?? [];
+      if (rowCells.length === 0) {
+        return;
+      }
+      const colIndex = clampIndex(col, 0, rowCells.length - 1);
+      const nextCell = rowCells[colIndex];
+      if (!nextCell) {
+        return;
+      }
+      if (selectedCell) {
+        const prevCell = cellMatrix[selectedCell.row]?.[selectedCell.col];
+        prevCell?.classList.remove("cm-table-cell-selected");
+      }
+      nextCell.classList.add("cm-table-cell-selected");
+      selectedCell = { row: rowIndex, col: colIndex };
+      TableWidget.selectionByTableId.set(this.tableInfo.id, selectedCell);
+      if (focusWrapper) {
+        wrapper.focus({ preventScroll: true });
+      }
+      updateInputMode();
+    };
+
+    const clearSelectionHighlight = () => {
+      if (!selectedCell) {
+        return;
+      }
+      const cell = cellMatrix[selectedCell.row]?.[selectedCell.col];
+      cell?.classList.remove("cm-table-cell-selected");
+    };
+
+    const restoreSelectionHighlight = () => {
+      if (!selectedCell) {
+        return;
+      }
+      const cell = cellMatrix[selectedCell.row]?.[selectedCell.col];
+      cell?.classList.add("cm-table-cell-selected");
+    };
+
+    const updateInputMode = () => {
+      inputMatrix.forEach((rowInputs, rowIndex) => {
+        rowInputs.forEach((input, colIndex) => {
+          const isSelected =
+            selectedCell?.row === rowIndex && selectedCell?.col === colIndex;
+          const shouldEdit = isEditingCell && isSelected;
+          input.readOnly = !shouldEdit;
+          input.tabIndex = shouldEdit ? 0 : -1;
+        });
+      });
+    };
+
+    const enterEditMode = () => {
+      if (!selectedCell) {
+        applySelection(0, 0, false);
+      }
+      if (!selectedCell) {
+        return;
+      }
+      isEditingCell = true;
+      updateInputMode();
+      const input = inputMatrix[selectedCell.row]?.[selectedCell.col];
+      if (input) {
+        input.focus();
+        const valueLength = input.value.length;
+        input.setSelectionRange(valueLength, valueLength);
+      }
+    };
+
+    const exitEditMode = () => {
+      if (!isEditingCell) {
+        return;
+      }
+      isEditingCell = false;
+      updateInputMode();
+      wrapper.focus({ preventScroll: true });
+    };
 
     const rowElements: HTMLTableRowElement[] = [];
     const headerCells: HTMLTableCellElement[] = [];
@@ -408,6 +498,8 @@ class TableWidget extends WidgetType {
       if (!headerRow) {
         return thead;
       }
+      const headerRowCells: HTMLTableCellElement[] = [];
+      const headerRowInputs: HTMLTextAreaElement[] = [];
       headerRow.cells.forEach((cell, colIndex) => {
         const th = document.createElement("th");
         th.style.textAlign = toCssTextAlign(data.alignments[colIndex] ?? null);
@@ -420,22 +512,31 @@ class TableWidget extends WidgetType {
           (value) => {
             cell.text = toMarkdownText(value);
             commitTable();
+            exitEditMode();
           }
         );
         th.appendChild(input);
         headerCells.push(th);
+        headerRowCells.push(th);
+        headerRowInputs.push(input);
         th.dataset.colIndex = String(colIndex);
+        th.dataset.rowIndex = "0";
         row.appendChild(th);
       });
       thead.appendChild(row);
+      cellMatrix.push(headerRowCells);
+      inputMatrix.push(headerRowInputs);
       return thead;
     };
 
     const renderBody = () => {
       const tbody = document.createElement("tbody");
       const columnCount = getColumnCount(data);
+      const rowOffset = cellMatrix.length;
       data.rows.forEach((row, rowIndex) => {
         const tr = document.createElement("tr");
+        const rowCells: HTMLTableCellElement[] = [];
+        const rowInputs: HTMLTextAreaElement[] = [];
         for (let colIndex = 0; colIndex < columnCount; colIndex += 1) {
           const cell = row.cells[colIndex] ?? { text: "", from: -1, to: -1 };
           const td = document.createElement("td");
@@ -451,14 +552,19 @@ class TableWidget extends WidgetType {
               cell.text = toMarkdownText(value);
               row.cells[colIndex] = cell;
               commitTable();
+              exitEditMode();
             }
           );
           td.appendChild(input);
-          td.dataset.rowIndex = String(rowIndex);
+          rowCells.push(td);
+          rowInputs.push(input);
+          td.dataset.rowIndex = String(rowOffset + rowIndex);
           td.dataset.colIndex = String(colIndex);
           tr.appendChild(td);
         }
         tbody.appendChild(tr);
+        cellMatrix.push(rowCells);
+        inputMatrix.push(rowInputs);
         rowElements.push(tr);
       });
       return tbody;
@@ -591,6 +697,90 @@ class TableWidget extends WidgetType {
     scheduleRowActionLayout();
     scheduleColumnHandleLayout();
 
+    const selectionCache =
+      TableWidget.selectionByTableId.get(this.tableInfo.id) ?? { row: 0, col: 0 };
+    applySelection(selectionCache.row, selectionCache.col, false);
+
+    wrapper.addEventListener("pointerdown", (event) => {
+      if (isEditingCell) {
+        return;
+      }
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      if (target.closest(".cm-table-action, .cm-table-action-menu")) {
+        return;
+      }
+      const cell = target.closest<HTMLTableCellElement>("th, td");
+      if (!cell) {
+        return;
+      }
+      const rowIndex = Number(cell.dataset.rowIndex);
+      const colIndex = Number(cell.dataset.colIndex);
+      if (!Number.isFinite(rowIndex) || !Number.isFinite(colIndex)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      applySelection(rowIndex, colIndex);
+    });
+
+    wrapper.addEventListener("keydown", (event) => {
+      if (isEditingCell) {
+        return;
+      }
+      if (!selectedCell) {
+        applySelection(0, 0, false);
+      }
+      if (!selectedCell) {
+        return;
+      }
+      if (event.isComposing) {
+        return;
+      }
+      let nextRow = selectedCell.row;
+      let nextCol = selectedCell.col;
+      switch (event.key) {
+        case "ArrowUp":
+          nextRow -= 1;
+          break;
+        case "ArrowDown":
+          nextRow += 1;
+          break;
+        case "ArrowLeft":
+          nextCol -= 1;
+          break;
+        case "ArrowRight":
+          nextCol += 1;
+          break;
+        case "Enter":
+          event.preventDefault();
+          enterEditMode();
+          return;
+        default:
+          return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      applySelection(nextRow, nextCol, false);
+    });
+
+    wrapper.addEventListener("focusin", (event) => {
+      if (!(event.target instanceof Node) || !wrapper.contains(event.target)) {
+        return;
+      }
+      restoreSelectionHighlight();
+    });
+
+    wrapper.addEventListener("focusout", (event) => {
+      const nextTarget = event.relatedTarget;
+      if (nextTarget instanceof Node && wrapper.contains(nextTarget)) {
+        return;
+      }
+      clearSelectionHighlight();
+    });
+
     const handleDragOver = (event: DragEvent) => {
       if (dragSourceIndex === null && dragSourceColumnIndex === null) {
         return;
@@ -628,6 +818,7 @@ class TableWidget extends WidgetType {
     window.addEventListener("dragover", handleDragOver, { signal, capture: true });
     window.addEventListener("drop", handleDrop, { signal, capture: true });
 
+    updateInputMode();
 
     return wrapper;
   }
@@ -777,6 +968,9 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       border: "1px solid var(--editor-border)",
       padding: "4px",
       verticalAlign: "top",
+    },
+    ".cm-content .cm-table-editor .cm-table-cell-selected": {
+      boxShadow: "inset 0 0 0 2px var(--editor-primary-color)",
     },
     ".cm-content .cm-table-editor th": {
       backgroundColor: "var(--app-pill-bg)",
