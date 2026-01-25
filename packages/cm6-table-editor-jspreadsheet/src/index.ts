@@ -240,6 +240,7 @@ class TableWidget extends WidgetType {
       }
       this.syncing = false;
       commitFromWorksheet();
+      decorateColumnHeaders();
     };
 
     const openMenu = (columnIndex: number, anchor: HTMLElement) => {
@@ -296,7 +297,7 @@ class TableWidget extends WidgetType {
       if (!(el instanceof Element)) {
         return null;
       }
-      const cell = el.closest("td");
+      const cell = el.closest("td, th");
       if (!cell || !wrapper.contains(cell)) {
         return null;
       }
@@ -322,6 +323,38 @@ class TableWidget extends WidgetType {
       container.querySelector<HTMLTableCellElement>(
         `tbody tr:first-child td[data-x="${columnIndex}"]`
       );
+
+    const decorateColumnHeaders = () => {
+      const headerCells = Array.from(
+        container.querySelectorAll<HTMLElement>("thead tr td, thead tr th")
+      );
+      headerCells.forEach((cell) => {
+        const dataX = cell.getAttribute("data-x");
+        if (!dataX) {
+          return;
+        }
+        const columnIndex = Number(dataX);
+        if (Number.isNaN(columnIndex)) {
+          return;
+        }
+        cell.classList.add("cm-jss-column-header");
+        let handle = cell.querySelector<HTMLButtonElement>(".cm-jss-column-handle");
+        if (!handle) {
+          handle = document.createElement("button");
+          handle.type = "button";
+          handle.className = "cm-jss-column-handle";
+          handle.setAttribute("aria-label", "Move column");
+          handle.tabIndex = -1;
+          handle.textContent = "===";
+          handle.addEventListener(
+            "pointerdown",
+            (event) => startDrag(columnIndex, event),
+            { signal: this.abortController.signal }
+          );
+          cell.appendChild(handle);
+        }
+      });
+    };
 
     const updateDropIndicator = (columnIndex: number | null) => {
       if (columnIndex === null) {
@@ -359,6 +392,7 @@ class TableWidget extends WidgetType {
       this.worksheet.moveColumn(source, target);
       this.syncing = false;
       commitFromWorksheet();
+      decorateColumnHeaders();
     };
 
     const startDrag = (columnIndex: number, event: PointerEvent) => {
@@ -420,25 +454,7 @@ class TableWidget extends WidgetType {
           { signal: this.abortController.signal }
         );
 
-        const handle = document.createElement("button");
-        handle.type = "button";
-        handle.className = "cm-jss-header-handle";
-        handle.setAttribute("aria-label", "Move column");
-        handle.tabIndex = -1;
-        handle.textContent = "===";
-        handle.addEventListener(
-          "pointerdown",
-          (event) => {
-            const currentIndex = Number(cell.getAttribute("data-x") ?? columnIndex);
-            if (!Number.isNaN(currentIndex)) {
-              startDrag(currentIndex, event);
-            }
-          },
-          { signal: this.abortController.signal }
-        );
-
         tools.appendChild(menuButton);
-        tools.appendChild(handle);
         cell.appendChild(tools);
       }
     };
@@ -467,6 +483,7 @@ class TableWidget extends WidgetType {
           return;
         }
         commitFromWorksheet();
+        decorateColumnHeaders();
       },
       worksheets: [
         {
@@ -503,6 +520,7 @@ class TableWidget extends WidgetType {
     };
     applyColumnPermissions();
     setTimeout(applyColumnPermissions, 0);
+    decorateColumnHeaders();
 
     const signal = this.abortController.signal;
     document.addEventListener(
@@ -701,7 +719,17 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "var(--editor-surface)",
     },
     ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead": {
-      display: "none",
+      display: "table-header-group",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead tr": {
+      height: "12px",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead td, .cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead th": {
+      height: "12px",
+      padding: "0",
+      color: "transparent",
+      background: "transparent",
+      borderColor: "transparent",
     },
     ".cm-content .cm-table-editor-jspreadsheet .jss_content": {
       background: "var(--editor-surface)",
@@ -740,16 +768,31 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       fontSize: "14px",
       cursor: "pointer",
     },
-    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-header-handle": {
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-handle": {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "22px",
+      height: "18px",
       border: "1px solid var(--editor-border)",
       background: "var(--editor-surface)",
       color: "var(--editor-secondary-color)",
-      borderRadius: "8px",
-      width: "22px",
-      height: "22px",
-      lineHeight: "20px",
-      fontSize: "12px",
+      borderRadius: "9px",
+      fontSize: "10px",
+      letterSpacing: "0.08em",
       cursor: "grab",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      opacity: "0",
+      transition: "opacity 120ms ease",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet:hover .cm-jss-column-handle": {
+      opacity: "1",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-header": {
+      position: "relative",
     },
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-menu": {
       position: "absolute",
