@@ -177,10 +177,10 @@ class TableWidget extends WidgetType {
     };
 
     const buildRows = () =>
-      data.rows.map((row) => {
+      [data.header?.cells ?? [], ...data.rows.map((row) => row.cells)].map((cells) => {
         const rowData: Record<string, string> = {};
         rowData.__row_handle = "";
-        row.cells.forEach((cell, index) => {
+        cells.forEach((cell, index) => {
           rowData[`col_${index}`] = toDisplayText(cell.text);
         });
         return rowData;
@@ -231,25 +231,30 @@ class TableWidget extends WidgetType {
       );
       const columnCount = columns.length;
       ensureAlignmentCount(columnCount);
-      data.header = {
-        cells: columns.map((column, index) => ({
-          text: toMarkdownText(
-            column.getDefinition().title ?? `Col ${index + 1}`
-          ),
-          from: -1,
-          to: -1,
-        })),
-      };
       data.alignments = columns.map((column) =>
         fromTabulatorAlign(column.getDefinition().hozAlign ?? null)
       );
       const rows = this.table.getData() as Array<Record<string, unknown>>;
-      data.rows = rows.map((row) => ({
-        cells: columns.map((column) => ({
+      const cellsFromRow = (row: Record<string, unknown>) =>
+        columns.map((column) => ({
           text: toMarkdownText(normalizeCellValue(row[column.getField()])),
           from: -1,
           to: -1,
-        })),
+        }));
+      const headerRow = rows[0];
+      data.header = {
+        cells: headerRow
+          ? cellsFromRow(headerRow)
+          : columns.map((column, index) => ({
+              text: toMarkdownText(
+                column.getDefinition().title ?? `Col ${index + 1}`
+              ),
+              from: -1,
+              to: -1,
+            })),
+      };
+      data.rows = rows.slice(1).map((row) => ({
+        cells: cellsFromRow(row),
       }));
     };
 
