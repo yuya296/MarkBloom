@@ -57,10 +57,16 @@ const defaultOptions: Required<TableEditorOptions> = {
 type TabulatorColumn = {
   getDefinition: () => { title?: string; field?: string; hozAlign?: string | null };
   getField: () => string;
+  getElement: () => HTMLElement;
 };
 
 type TabulatorRow = {
   getPosition: () => number;
+  getElement: () => HTMLElement;
+};
+
+type TabulatorCell = {
+  getColumn: () => TabulatorColumn;
 };
 
 const toTabulatorAlign = (alignment: TableAlignment): string | undefined => {
@@ -94,6 +100,9 @@ class TableWidget extends WidgetType {
   private table: InstanceType<typeof Tabulator> | null = null;
   private readonly abortController = new AbortController();
   private syncing = false;
+  private hoveredColumnEl: HTMLElement | null = null;
+  private hoveredRowEl: HTMLElement | null = null;
+  private hoveredRowHandleEl: HTMLElement | null = null;
 
   constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
@@ -133,7 +142,24 @@ class TableWidget extends WidgetType {
       const columnCount = Math.max(1, getColumnCount(data));
       ensureHeader(data, columnCount);
       ensureAlignmentCount(columnCount);
-      return Array.from({ length: columnCount }, (_value, index) => {
+      const handleColumn = {
+        title: "",
+        field: "__row_handle",
+        headerSort: false,
+        editor: false,
+        resizable: false,
+        movable: false,
+        frozen: true,
+        width: 22,
+        hozAlign: "center",
+        headerHozAlign: "center",
+        rowHandle: true,
+        formatter: () => "",
+        cssClass: "tabulator-row-handle",
+      };
+      return [
+        handleColumn,
+        ...Array.from({ length: columnCount }, (_value, index) => {
         const title = toDisplayText(data.header?.cells[index]?.text ?? `Col ${index + 1}`);
         const alignment = toTabulatorAlign(data.alignments[index] ?? null);
         return {
@@ -141,16 +167,19 @@ class TableWidget extends WidgetType {
           field: `col_${index}`,
           editor: "input",
           headerSort: false,
+          headerTooltip: title,
           hozAlign: alignment,
           headerHozAlign: alignment,
           headerMenu: (column: TabulatorColumn) => buildHeaderMenu(column),
         };
-      });
+        }),
+      ];
     };
 
     const buildRows = () =>
       data.rows.map((row) => {
         const rowData: Record<string, string> = {};
+        rowData.__row_handle = "";
         row.cells.forEach((cell, index) => {
           rowData[`col_${index}`] = toDisplayText(cell.text);
         });
@@ -197,7 +226,9 @@ class TableWidget extends WidgetType {
       if (!this.table) {
         return;
       }
-      const columns = this.table.getColumns() as TabulatorColumn[];
+      const columns = (this.table.getColumns() as TabulatorColumn[]).filter(
+        (column) => column.getField() !== "__row_handle"
+      );
       const columnCount = columns.length;
       ensureAlignmentCount(columnCount);
       data.header = {
@@ -234,10 +265,19 @@ class TableWidget extends WidgetType {
       if (!this.table) {
         return -1;
       }
-      return (this.table.getColumns() as TabulatorColumn[]).indexOf(column);
+      if (column.getField() === "__row_handle") {
+        return -1;
+      }
+      const columns = (this.table.getColumns() as TabulatorColumn[]).filter(
+        (candidate) => candidate.getField() !== "__row_handle"
+      );
+      return columns.indexOf(column);
     };
 
     const buildHeaderMenu = (column: TabulatorColumn) => {
+      if (column.getField() === "__row_handle") {
+        return [];
+      }
       const columnIndex = getColumnIndex(column);
       return [
         {
@@ -373,9 +413,98 @@ class TableWidget extends WidgetType {
 
     this.table = table;
 
-    table.on("cellEdited", commitFromTable);
-    table.on("rowMoved", commitFromTable);
-    table.on("columnMoved", commitFromTable);
+    const clearColumnHover = () => {
+      if (this.hoveredColumnEl) {
+        this.hoveredColumnEl.classList.remove("tabulator-col-hover");
+        this.hoveredColumnEl = null;
+      }
+    };
+
+    const clearRowHover = () => {
+      if (this.hoveredRowEl) {
+        this.hoveredRowEl.classList.remove("tabulator-row-hover");
+        this.hoveredRowEl = null;
+      }
+      if (this.hoveredRowHandleEl) {
+        this.hoveredRowHandleEl.classList.remove("tabulator-row-handle-hover");
+        this.hoveredRowHandleEl = null;
+      }
+    };
+
+    table.on("cellMouseOver", (_event, cell) => {
+      const columnEl = (cell as TabulatorCell).getColumn().getElement();
+      if (!columnEl || columnEl === this.hoveredColumnEl) {
+        return;
+      }
+      clearColumnHover();
+      columnEl.classList.add("tabulator-col-hover");
+      this.hoveredColumnEl = columnEl;
+    });
+
+    table.on("cellMouseOut", () => {
+      clearColumnHover();
+    });
+
+    table.on("rowMouseOver", (_event, row) => {
+      const rowEl = (row as TabulatorRow).getElement();
+      const handleEl = rowEl.querySelector(".tabulator-cell.tabulator-row-handle");
+      if (!rowEl || rowEl === this.hoveredRowEl) {
+        return;
+      }
+      clearRowHover();
+      rowEl.classList.add("tabulator-row-hover");
+      if (handleEl instanceof HTMLElement) {
+        handleEl.classList.add("tabulator-row-handle-hover");
+        this.hoveredRowHandleEl = handleEl;
+      }
+      this.hoveredRowEl = rowEl;
+    });
+
+    table.on("rowMouseOut", () => {
+      clearRowHover();
+    });
+
+    container.addEventListener("mouseleave", () => {
+      clearColumnHover();
+      clearRowHover();
+    });
+
+    const applyHeaderSizing = () => {
+      const header = container.querySelector(".tabulator-header");
+      if (!(header instanceof HTMLElement)) {
+        return;
+      }
+      header.style.height = "18px";
+      header.style.minHeight = "18px";
+      header
+        .querySelectorAll(
+          ".tabulator-col, .tabulator-col-content, .tabulator-col-title-holder"
+        )
+        .forEach((element) => {
+          if (element instanceof HTMLElement) {
+            element.style.height = "18px";
+          }
+        });
+    };
+
+    table.on("tableBuilt", applyHeaderSizing);
+    table.on("cellEdited", () => {
+      applyHeaderSizing();
+      commitFromTable();
+    });
+    table.on("rowMoved", () => {
+      applyHeaderSizing();
+      commitFromTable();
+    });
+    table.on("columnMoved", () => {
+      applyHeaderSizing();
+      commitFromTable();
+    });
+    table.on("columnResized", applyHeaderSizing);
+
+    requestAnimationFrame(applyHeaderSizing);
+    setTimeout(applyHeaderSizing, 0);
+    setTimeout(applyHeaderSizing, 100);
 
     const signal = this.abortController.signal;
     wrapper.addEventListener(
@@ -409,13 +538,19 @@ function dispatchOutsideUpdate(
   transaction: { changes: { from: number; to: number; insert: string }; annotations: Annotation<unknown> }
 ) {
   const dispatch = () => {
-    setTimeout(() => view.dispatch(transaction), 0);
+    const scrollTop = view.scrollDOM.scrollTop;
+    const scrollLeft = view.scrollDOM.scrollLeft;
+    view.dispatch({ ...transaction, scrollIntoView: false });
+    requestAnimationFrame(() => {
+      view.scrollDOM.scrollTop = scrollTop;
+      view.scrollDOM.scrollLeft = scrollLeft;
+    });
   };
   if (typeof view.requestMeasure === "function") {
     view.requestMeasure({ read() {}, write: dispatch });
     return;
   }
-  dispatch();
+  setTimeout(dispatch, 0);
 }
 
 function collectTableData(
@@ -535,6 +670,155 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-tabulator__container": {
       width: "100%",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator": {
+      border: "none !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-tableholder": {
+      border: "none !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row .tabulator-cell": {
+      background: "transparent !important",
+      borderRight: "1px solid var(--editor-border) !important",
+      borderBottom: "1px solid var(--editor-border) !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row": {
+      background: "transparent !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row.tabulator-row-odd": {
+      background: "transparent !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row.tabulator-row-even": {
+      background: "transparent !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-cell.tabulator-row-handle": {
+      padding: "0",
+      position: "relative",
+      color: "var(--editor-secondary-color)",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-cell.tabulator-row-handle::after": {
+      content: "\"\"",
+      position: "absolute",
+      left: "50%",
+      top: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "12px",
+      height: "3px",
+      background: "currentColor",
+      boxShadow: "0 5px 0 currentColor, 0 10px 0 currentColor",
+      opacity: "0",
+      pointerEvents: "none",
+      transition: "opacity 120ms ease",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row.tabulator-row-hover .tabulator-cell.tabulator-row-handle::after": {
+      opacity: "0.9 !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row:hover .tabulator-cell.tabulator-row-handle::after": {
+      opacity: "0.9 !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-cell.tabulator-row-handle.tabulator-row-handle-hover::after": {
+      opacity: "0.9 !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row .tabulator-cell.tabulator-selected": {
+      borderColor: "rgba(229, 231, 235, 0.45) !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row .tabulator-cell.tabulator-range-selected": {
+      borderColor: "rgba(229, 231, 235, 0.45) !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-row .tabulator-cell.tabulator-range-highlight": {
+      borderColor: "rgba(229, 231, 235, 0.45) !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header": {
+      background: "transparent !important",
+      border: "none !important",
+      minHeight: "18px !important",
+      height: "18px !important",
+      padding: "0",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-headers": {
+      background: "var(--editor-surface) !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header-contents": {
+      background: "transparent !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header .tabulator-col": {
+      position: "relative",
+      height: "18px !important",
+      padding: "0",
+      background: "transparent !important",
+      borderRight: "1px solid var(--editor-border) !important",
+      borderBottom: "1px solid var(--editor-border) !important",
+      lineHeight: "18px",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header .tabulator-col-content": {
+      height: "18px !important",
+      padding: "0",
+      background: "transparent !important",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header .tabulator-col-title-holder": {
+      height: "18px !important",
+      padding: "0",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header .tabulator-col-title": {
+      padding: "0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100%",
+      color: "transparent",
+      lineHeight: "18px",
+      position: "relative",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header-popup-button": {
+      opacity: "0.25",
+      width: "18px",
+      height: "18px",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "16px",
+      color: "transparent",
+      transition: "opacity 120ms ease",
+      userSelect: "none",
+      borderRadius: "4px",
+      background: "rgba(255, 255, 255, 0.12) !important",
+      position: "absolute",
+      top: "0",
+      right: "0",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-col:hover .tabulator-header-popup-button": {
+      opacity: "1",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-header-popup-button::before": {
+      content: "\"⋮\"",
+      color: "var(--editor-secondary-color)",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-col[tabulator-field=\"__row_handle\"] .tabulator-col-title": {
+      display: "none",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-col[tabulator-field=\"__row_handle\"] .tabulator-header-popup-button": {
+      display: "none",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-col::after": {
+      content: "\"\"",
+      position: "absolute",
+      top: "3px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: "12px",
+      height: "3px",
+      background: "currentColor",
+      boxShadow: "0 5px 0 currentColor, 0 10px 0 currentColor",
+      color: "var(--editor-secondary-color)",
+      opacity: "0",
+      pointerEvents: "none",
+      transition: "opacity 120ms ease",
+    },
+    ".cm-content .cm-table-editor-tabulator:hover .tabulator-col:hover::after": {
+      opacity: "0.9",
+    },
+    ".cm-content .cm-table-editor-tabulator .tabulator-col.tabulator-col-hover::after": {
+      opacity: "0.9",
     },
   });
 
