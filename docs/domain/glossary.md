@@ -8,6 +8,7 @@
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
 - cm6-table-editor-vanilla: 依存ゼロの HTML table で Markdown テーブルを表示・編集する CM6 パッケージ。
+- Jspreadsheet CE: テーブル編集 UI を提供するコミュニティ版スプレッドシートライブラリ。
 - MarkBloom: VS Code 上で Markdown を編集するための拡張と Webview UI。
 - vscode-extension: MarkBloom の VS Code 拡張パッケージ。
 - Table Action Menu: 行/列操作のためのコンテキストメニュー（挿入/削除/整列）。

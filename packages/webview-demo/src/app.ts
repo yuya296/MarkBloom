@@ -5,6 +5,7 @@ import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 import { createEditor } from "./createEditor";
 import { tableEditor as agGridTableEditor } from "@yuya296/cm6-table-editor-aggrid";
 import { tableEditor as handsontableTableEditor } from "@yuya296/cm6-table-editor-handsontable5";
+import { tableEditor as jspreadsheetTableEditor } from "@yuya296/cm6-table-editor-jspreadsheet";
 import { tableEditor as tabulatorTableEditor } from "@yuya296/cm6-table-editor-tabulator";
 import { tableEditor as vanillaTableEditor } from "@yuya296/cm6-table-editor-vanilla";
 import { editorTheme } from "./editorTheme";
@@ -16,7 +17,13 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
-  tableEngine: "vanilla" | "handsontable5" | "tabulator" | "aggrid" | "none";
+  tableEngine:
+    | "vanilla"
+    | "handsontable5"
+    | "tabulator"
+    | "aggrid"
+    | "jspreadsheet"
+    | "none";
 };
 
 function buildExtensions({
@@ -173,6 +180,7 @@ function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
     value === "handsontable5" ||
     value === "tabulator" ||
     value === "aggrid" ||
+    value === "jspreadsheet" ||
     value === "none"
   ) {
     return value;
@@ -190,6 +198,8 @@ function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension 
       return tabulatorTableEditor();
     case "aggrid":
       return agGridTableEditor();
+    case "jspreadsheet":
+      return jspreadsheetTableEditor();
     case "none":
       return [];
     default:

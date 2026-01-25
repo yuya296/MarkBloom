@@ -163,6 +163,37 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/cm6-table-editor-jspreadsheet:
+    dependencies:
+      '@lezer/common':
+        specifier: ^1.5.0
+        version: 1.5.0
+      '@yuya296/cm6-table-editor-vanilla':
+        specifier: workspace:*
+        version: link:../cm6-table-editor-vanilla
+      jspreadsheet-ce:
+        specifier: ^5.0.4
+        version: 5.0.4
+      jsuites:
+        specifier: ^6.1.1
+        version: 6.1.1
+    devDependencies:
+      '@codemirror/language':
+        specifier: 6.12.1
+        version: 6.12.1
+      '@codemirror/state':
+        specifier: 6.5.3
+        version: 6.5.3
+      '@codemirror/view':
+        specifier: 6.39.8
+        version: 6.39.8
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/cm6-table-editor-tabulator:
     dependencies:
       '@lezer/common':
@@ -318,6 +349,9 @@ importers:
       '@yuya296/cm6-table-editor-handsontable5':
         specifier: workspace:*
         version: link:../cm6-table-editor-handsontable5
+      '@yuya296/cm6-table-editor-jspreadsheet':
+        specifier: workspace:*
+        version: link:../cm6-table-editor-jspreadsheet
       '@yuya296/cm6-table-editor-tabulator':
         specifier: workspace:*
         version: link:../cm6-table-editor-tabulator
@@ -333,6 +367,12 @@ importers:
       handsontable:
         specifier: ^5.0.0
         version: 5.0.2
+      jspreadsheet-ce:
+        specifier: ^5.0.4
+        version: 5.0.4
+      jsuites:
+        specifier: ^6.1.1
+        version: 6.1.1
       tabulator-tables:
         specifier: ^6.0.0
         version: 6.3.1
@@ -664,6 +704,39 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@jspreadsheet/formula@2.0.2':
+    resolution: {integrity: sha512-PDQYf9REQA53I7tVYkvkeyQxrd5jcjUeHgItYnRpjN2QiIQwawSqBDtGGEVQTSboTG+JwgGCuhvOpj7FxeKwew==}
+
+  '@jsuites/utils@6.0.3':
+    resolution: {integrity: sha512-mLk2KH/y8bSEu85PohiglldoOn2Rkjb/1FJ3x3loiPB5vohwMYPbvbSIK9AGg4q1IQQKmKLv2ww/FDUD1IoYEg==}
+
+  '@lemonadejs/calendar@5.8.3':
+    resolution: {integrity: sha512-9ZRtos28CMPryMt1hsHfi9NRw5WIy/RdF26G5djRfin6e9xx3xZy0CmEEvx+hxjI43qtqvmDriRzVdT59Zvwaw==}
+
+  '@lemonadejs/color@5.8.0':
+    resolution: {integrity: sha512-ep9yJAgRvRPrrx56p/3hGVctqcXgc5F3wJtefjvwKJv/CVMY19clZ3+vRoZm7Ndth6kN8h+Q6Pu5EkHkl/WLZQ==}
+
+  '@lemonadejs/contextmenu@5.8.0':
+    resolution: {integrity: sha512-2bLHxA1tMSsUMvvO2m6zUUuLvZElRv3jJq917KEKN0VD/RfgNKEGSdvMQKnclPdfz3P+pZKY2Da2ajTuXmIbzw==}
+
+  '@lemonadejs/dropdown@5.8.1':
+    resolution: {integrity: sha512-Okkwa8Z+p2DrpVd5rbUYlTGNpXYb3d166bh7gvt24QjA9MHlVKeBkt4/L9/sHVGmfLqTrWJjl5DWHh7egIi9SA==}
+
+  '@lemonadejs/modal@5.8.1':
+    resolution: {integrity: sha512-+u+UEsRZZyfzQuCsRoAx0z/Ze86fYyoXxUSjVYD4ogk8loswWyeVfoN9WvYofHy2b3Km/Y/Yl7jML2ziztPhNg==}
+
+  '@lemonadejs/rating@5.8.1':
+    resolution: {integrity: sha512-g/FJVJ/ay1BmcdqHDHX/2CHBQ1vBViJipWuEMdsqnwbnGGpkKf2q5Ml3xI2GMwCVw8ovvcy/++3UP1xs9GLyMQ==}
+
+  '@lemonadejs/switch@5.8.0':
+    resolution: {integrity: sha512-EpqK5iCpQj3o1bN8wW+jka6O4aMIKP5IbLXtD9iTv/ipasyQgxz2oZNkHD8yS6JrpGffSd87FNi37qm/XcJN3w==}
+
+  '@lemonadejs/tabs@5.8.0':
+    resolution: {integrity: sha512-nyqHOVwqKnFvqOxwidT5VFzKuFJ/Bzdfvqs7QY30LK9CXK3MrQBgLrijpQOTL3Als1Qp6qp3Q0HRQqUsLARhyA==}
+
+  '@lemonadejs/topmenu@5.8.0':
+    resolution: {integrity: sha512-mkWnaiE+0c/i+wv9cz88d2U4GOTxVIVj4aEOad4rQ2JCKkQfw02sP6PS/NaXWJMgDsF1cJOMnO3BThnP5/BqVw==}
 
   '@lezer/common@1.5.0':
     resolution: {integrity: sha512-PNGcolp9hr4PJdXR4ix7XtixDrClScvtSCYW3rQG106oVMOOI+jFb+0+J3mbeL/53g1Zd6s0kJzaw6Ri68GmAA==}
@@ -1277,8 +1350,20 @@ packages:
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
 
+  jspreadsheet-ce@5.0.4:
+    resolution: {integrity: sha512-ra1JI1n+tEGgRMzTzNkPZjG0HZz8W6bFGAiTiHl+eYarXdRmS5qDc/ua3l2ev7oZ6Og9kjfrXYHVLUWiVc308w==}
+
+  jsuites@5.13.5:
+    resolution: {integrity: sha512-cvkcpy/v5I3+IAcNPE4UP38PFCEfUQw9JI5NN61dlcXLwkD+2UTIOsRPvgMLeqI1eDWHL4AHfrbcE/+TFciUsw==}
+
+  jsuites@6.1.1:
+    resolution: {integrity: sha512-YWZd/nhGPO+A7ykfvUwTU7FtNSOwgst+R0+U9sXIK94RRwe4K2twBn5HROuieUTBqwgqIV4idCPbsJIs6lSikA==}
+
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
+
+  lemonadejs@5.3.6:
+    resolution: {integrity: sha512-GfmoZvCcnesiRsU9oC3OJDZ2VU+U4TsOJKD3A+rEV7dwm2IBO0xaBkLYtpgY3kcoFQjm7u5k9KSQXEtIkanjHQ==}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -2039,6 +2124,53 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@jspreadsheet/formula@2.0.2': {}
+
+  '@jsuites/utils@6.0.3': {}
+
+  '@lemonadejs/calendar@5.8.3':
+    dependencies:
+      '@jsuites/utils': 6.0.3
+      '@lemonadejs/modal': 5.8.1
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/color@5.8.0':
+    dependencies:
+      '@lemonadejs/modal': 5.8.1
+      '@lemonadejs/tabs': 5.8.0
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/contextmenu@5.8.0':
+    dependencies:
+      '@lemonadejs/modal': 5.8.1
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/dropdown@5.8.1':
+    dependencies:
+      '@lemonadejs/modal': 5.8.1
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/modal@5.8.1':
+    dependencies:
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/rating@5.8.1':
+    dependencies:
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/switch@5.8.0':
+    dependencies:
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/tabs@5.8.0':
+    dependencies:
+      lemonadejs: 5.3.6
+
+  '@lemonadejs/topmenu@5.8.0':
+    dependencies:
+      '@lemonadejs/contextmenu': 5.8.0
+      lemonadejs: 5.3.6
+
   '@lezer/common@1.5.0': {}
 
   '@lezer/cpp@1.1.5':
@@ -2658,9 +2790,31 @@ snapshots:
 
   json-stable-stringify-without-jsonify@1.0.1: {}
 
+  jspreadsheet-ce@5.0.4:
+    dependencies:
+      '@jspreadsheet/formula': 2.0.2
+      jsuites: 5.13.5
+
+  jsuites@5.13.5: {}
+
+  jsuites@6.1.1:
+    dependencies:
+      '@jsuites/utils': 6.0.3
+      '@lemonadejs/calendar': 5.8.3
+      '@lemonadejs/color': 5.8.0
+      '@lemonadejs/contextmenu': 5.8.0
+      '@lemonadejs/dropdown': 5.8.1
+      '@lemonadejs/modal': 5.8.1
+      '@lemonadejs/rating': 5.8.1
+      '@lemonadejs/switch': 5.8.0
+      '@lemonadejs/tabs': 5.8.0
+      '@lemonadejs/topmenu': 5.8.0
+
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
+
+  lemonadejs@5.3.6: {}
 
   levn@0.4.1:
     dependencies:
