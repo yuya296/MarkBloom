@@ -44,10 +44,17 @@ type TableInfo = {
 };
 
 type ColumnAction = "insert-left" | "insert-right" | "delete";
+type RowAction = "insert-above" | "insert-below" | "delete";
 
 type DragState = {
   source: number | null;
-  target: number | null;
+  insertIndex: number | null;
+  indicator: HTMLDivElement;
+};
+
+type RowDragState = {
+  source: number | null;
+  insertIndex: number | null;
   indicator: HTMLDivElement;
 };
 
@@ -84,7 +91,12 @@ class TableWidget extends WidgetType {
   private syncing = false;
   private readonly dragState: DragState = {
     source: null,
-    target: null,
+    insertIndex: null,
+    indicator: document.createElement("div"),
+  };
+  private readonly rowDragState: RowDragState = {
+    source: null,
+    insertIndex: null,
     indicator: document.createElement("div"),
   };
 
@@ -115,8 +127,16 @@ class TableWidget extends WidgetType {
     menu.setAttribute("role", "menu");
     wrapper.appendChild(menu);
 
+    const rowMenu = document.createElement("div");
+    rowMenu.className = "cm-jss-row-menu";
+    rowMenu.setAttribute("role", "menu");
+    wrapper.appendChild(rowMenu);
+
     this.dragState.indicator.className = "cm-jss-column-drop-indicator";
     wrapper.appendChild(this.dragState.indicator);
+
+    this.rowDragState.indicator.className = "cm-jss-row-drop-indicator";
+    wrapper.appendChild(this.rowDragState.indicator);
 
     const data = cloneTableData(this.data);
     normalizeTableData(data);
@@ -219,6 +239,45 @@ class TableWidget extends WidgetType {
       commitTable();
     };
 
+    const ensureWorksheetFocus = () => {
+      const textarea = container.querySelector<HTMLTextAreaElement>(".jss_textarea");
+      if (textarea) {
+        try {
+          textarea.focus({ preventScroll: true });
+        } catch {
+          textarea.focus();
+        }
+        return;
+      }
+      try {
+        wrapper.focus({ preventScroll: true });
+      } catch {
+        wrapper.focus();
+      }
+    };
+
+    const applyRowOperation = (action: RowAction, rowIndex: number) => {
+      if (!this.worksheet) {
+        return;
+      }
+      this.syncing = true;
+      switch (action) {
+        case "insert-above":
+          this.worksheet.insertRow(1, rowIndex, 1);
+          break;
+        case "insert-below":
+          this.worksheet.insertRow(1, rowIndex, 0);
+          break;
+        case "delete":
+          this.worksheet.deleteRow(rowIndex, 1);
+          break;
+      }
+      this.syncing = false;
+      commitFromWorksheet();
+      decorateRowHeaders();
+      ensureWorksheetFocus();
+    };
+
     const applyColumnOperation = (action: ColumnAction, columnIndex: number) => {
       if (!this.worksheet) {
         return;
@@ -241,6 +300,7 @@ class TableWidget extends WidgetType {
       this.syncing = false;
       commitFromWorksheet();
       decorateColumnHeaders();
+      ensureWorksheetFocus();
     };
 
     const openMenu = (columnIndex: number, anchor: HTMLElement) => {
@@ -252,9 +312,20 @@ class TableWidget extends WidgetType {
       menu.dataset.column = String(columnIndex);
     };
 
+    const openRowMenu = (rowIndex: number, anchor: HTMLElement) => {
+      const rect = anchor.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+      rowMenu.style.left = `${rect.right - wrapperRect.left - 8}px`;
+      rowMenu.style.top = `${rect.top - wrapperRect.top}px`;
+      rowMenu.dataset.open = "true";
+      rowMenu.dataset.row = String(rowIndex);
+    };
+
     const closeMenu = () => {
       delete menu.dataset.open;
       delete menu.dataset.column;
+      delete rowMenu.dataset.open;
+      delete rowMenu.dataset.row;
     };
 
     const onMenuClick = (event: Event) => {
@@ -271,6 +342,22 @@ class TableWidget extends WidgetType {
       event.stopPropagation();
       closeMenu();
       applyColumnOperation(action, column);
+    };
+
+    const onRowMenuClick = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const action = target.dataset.action as RowAction | undefined;
+      const row = rowMenu.dataset.row ? Number(rowMenu.dataset.row) : null;
+      if (!action || row === null || Number.isNaN(row)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      closeMenu();
+      applyRowOperation(action, row);
     };
 
     const setupMenu = () => {
@@ -290,6 +377,23 @@ class TableWidget extends WidgetType {
         menu.appendChild(button);
       }
       menu.addEventListener("click", onMenuClick, { signal: this.abortController.signal });
+
+      rowMenu.innerHTML = "";
+      const rowItems: Array<{ label: string; action: RowAction }> = [
+        { label: "Insert row above", action: "insert-above" },
+        { label: "Insert row below", action: "insert-below" },
+        { label: "Delete row", action: "delete" },
+      ];
+      for (const item of rowItems) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "cm-jss-row-menu__item";
+        button.textContent = item.label;
+        button.dataset.action = item.action;
+        button.tabIndex = -1;
+        rowMenu.appendChild(button);
+      }
+      rowMenu.addEventListener("click", onRowMenuClick, { signal: this.abortController.signal });
     };
 
     const getCellAtPoint = (x: number, y: number) => {
@@ -319,10 +423,36 @@ class TableWidget extends WidgetType {
       return index;
     };
 
+    const getRowIndexFromCell = (cell: HTMLTableCellElement | null) => {
+      if (!cell) {
+        return null;
+      }
+      const y = cell.getAttribute("data-y");
+      if (!y) {
+        return null;
+      }
+      const index = Number(y);
+      if (Number.isNaN(index)) {
+        return null;
+      }
+      return index;
+    };
+
     const getHeaderCellByColumn = (columnIndex: number) =>
       container.querySelector<HTMLTableCellElement>(
-        `tbody tr:first-child td[data-x="${columnIndex}"]`
+        `thead tr td[data-x="${columnIndex}"], thead tr th[data-x="${columnIndex}"]`
       );
+
+    const getRowHeaderCellByRow = (rowIndex: number) =>
+      container.querySelector<HTMLTableCellElement>(
+        `tbody tr td.jss_row[data-y="${rowIndex}"]`
+      );
+
+    const getColumnCountFromDom = () =>
+      container.querySelectorAll("thead tr td[data-x], thead tr th[data-x]").length;
+
+    const getRowCountFromDom = () =>
+      container.querySelectorAll("tbody tr td.jss_row").length;
 
     const decorateColumnHeaders = () => {
       const headerCells = Array.from(
@@ -336,6 +466,18 @@ class TableWidget extends WidgetType {
         const columnIndex = Number(dataX);
         if (Number.isNaN(columnIndex)) {
           return;
+        }
+        cell.style.height = "10px";
+        cell.style.lineHeight = "10px";
+        cell.style.fontSize = "0px";
+        cell.style.overflow = "visible";
+        cell.style.padding = "0";
+        cell.style.borderWidth = "0";
+        const row = cell.parentElement;
+        if (row instanceof HTMLElement) {
+          row.style.height = "10px";
+          row.style.lineHeight = "10px";
+          row.style.overflow = "visible";
         }
         cell.classList.add("cm-jss-column-header");
         let handle = cell.querySelector<HTMLButtonElement>(".cm-jss-column-handle");
@@ -356,64 +498,210 @@ class TableWidget extends WidgetType {
       });
     };
 
-    const updateDropIndicator = (columnIndex: number | null) => {
-      if (columnIndex === null) {
+    const decorateRowHeaders = () => {
+      const headerCells = Array.from(
+        container.querySelectorAll<HTMLTableCellElement>("tbody td.jss_row")
+      );
+      headerCells.forEach((cell) => {
+        const rowIndex = getRowIndexFromCell(cell);
+        if (rowIndex === null) {
+          return;
+        }
+        cell.classList.add("cm-jss-row-header");
+        let handle = cell.querySelector<HTMLButtonElement>(".cm-jss-row-handle");
+        if (!handle) {
+          handle = document.createElement("button");
+          handle.type = "button";
+          handle.className = "cm-jss-row-handle";
+          handle.setAttribute("aria-label", "Move row");
+          handle.tabIndex = -1;
+          handle.textContent = "===";
+          handle.addEventListener(
+            "pointerdown",
+            (event) => startRowDrag(rowIndex, event),
+            { signal: this.abortController.signal }
+          );
+          cell.appendChild(handle);
+        }
+      });
+    };
+
+    const updateDropIndicator = (insertIndex: number | null, columnCount: number) => {
+      if (insertIndex === null) {
         this.dragState.indicator.style.display = "none";
         return;
       }
-      const targetCell = getHeaderCellByColumn(columnIndex);
       const content = container.querySelector<HTMLElement>(".jss_content");
-      if (!targetCell || !content) {
+      if (!content || columnCount === 0) {
+        this.dragState.indicator.style.display = "none";
+        return;
+      }
+      const clampedIndex = Math.max(0, Math.min(columnCount, insertIndex));
+      const boundaryIndex = Math.min(clampedIndex, columnCount - 1);
+      const targetCell = getHeaderCellByColumn(boundaryIndex);
+      if (!targetCell) {
         this.dragState.indicator.style.display = "none";
         return;
       }
       const cellRect = targetCell.getBoundingClientRect();
       const contentRect = content.getBoundingClientRect();
       const wrapperRect = wrapper.getBoundingClientRect();
+      const isEnd = clampedIndex >= columnCount;
+      const left = isEnd ? cellRect.right : cellRect.left;
       this.dragState.indicator.style.display = "block";
-      this.dragState.indicator.style.left = `${cellRect.left - wrapperRect.left}px`;
+      this.dragState.indicator.style.left = `${left - wrapperRect.left}px`;
       this.dragState.indicator.style.top = `${contentRect.top - wrapperRect.top}px`;
       this.dragState.indicator.style.height = `${contentRect.height}px`;
     };
 
-    const finishDrag = () => {
+    const updateRowDropIndicator = (insertIndex: number | null, rowCount: number) => {
+      if (insertIndex === null) {
+        this.rowDragState.indicator.style.display = "none";
+        return;
+      }
+      const content = container.querySelector<HTMLElement>(".jss_content");
+      if (!content || rowCount === 0) {
+        this.rowDragState.indicator.style.display = "none";
+        return;
+      }
+      const clampedIndex = Math.max(0, Math.min(rowCount, insertIndex));
+      const boundaryIndex = Math.min(clampedIndex, rowCount - 1);
+      const targetCell = getRowHeaderCellByRow(boundaryIndex);
+      if (!targetCell) {
+        this.rowDragState.indicator.style.display = "none";
+        return;
+      }
+      const cellRect = targetCell.getBoundingClientRect();
+      const contentRect = content.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const isEnd = clampedIndex >= rowCount;
+      const top = isEnd ? cellRect.bottom : cellRect.top;
+      this.rowDragState.indicator.style.display = "block";
+      this.rowDragState.indicator.style.left = `${contentRect.left - wrapperRect.left}px`;
+      this.rowDragState.indicator.style.top = `${top - wrapperRect.top}px`;
+      this.rowDragState.indicator.style.width = `${contentRect.width}px`;
+    };
+
+    const finishDrag = (columnCount: number) => {
       const source = this.dragState.source;
-      const target = this.dragState.target;
+      const insertIndex = this.dragState.insertIndex;
       this.dragState.source = null;
-      this.dragState.target = null;
-      updateDropIndicator(null);
+      this.dragState.insertIndex = null;
+      updateDropIndicator(null, columnCount);
       wrapper.classList.remove("cm-jss-column-dragging");
-      if (!this.worksheet || source === null || target === null || source === target) {
+      if (!this.worksheet || source === null || insertIndex === null) {
+        return;
+      }
+      const normalizedInsert = insertIndex > source ? insertIndex - 1 : insertIndex;
+      if (normalizedInsert === source) {
         return;
       }
       const alignment = data.alignments.splice(source, 1)[0] ?? null;
-      data.alignments.splice(target, 0, alignment);
+      data.alignments.splice(normalizedInsert, 0, alignment);
       this.syncing = true;
-      this.worksheet.moveColumn(source, target);
+      this.worksheet.moveColumn(source, normalizedInsert);
       this.syncing = false;
       commitFromWorksheet();
       decorateColumnHeaders();
+      ensureWorksheetFocus();
+    };
+
+    const finishRowDrag = (rowCount: number) => {
+      const source = this.rowDragState.source;
+      const insertIndex = this.rowDragState.insertIndex;
+      this.rowDragState.source = null;
+      this.rowDragState.insertIndex = null;
+      updateRowDropIndicator(null, rowCount);
+      wrapper.classList.remove("cm-jss-row-dragging");
+      if (!this.worksheet || source === null || insertIndex === null) {
+        return;
+      }
+      const normalizedInsert = insertIndex > source ? insertIndex - 1 : insertIndex;
+      if (normalizedInsert === source) {
+        return;
+      }
+      const moveRow = this.worksheet.moveRow as
+        | ((from: number, to: number) => void)
+        | undefined;
+      if (typeof moveRow !== "function") {
+        return;
+      }
+      this.syncing = true;
+      moveRow(source, normalizedInsert);
+      this.syncing = false;
+      commitFromWorksheet();
+      decorateRowHeaders();
+      ensureWorksheetFocus();
     };
 
     const startDrag = (columnIndex: number, event: PointerEvent) => {
       event.preventDefault();
       event.stopPropagation();
       this.dragState.source = columnIndex;
-      this.dragState.target = columnIndex;
+      this.dragState.insertIndex = columnIndex;
+      const columnCount = getColumnCountFromDom() || columns.length;
       wrapper.classList.add("cm-jss-column-dragging");
-      updateDropIndicator(columnIndex);
+      updateDropIndicator(columnIndex, columnCount);
 
       const onMove = (moveEvent: PointerEvent) => {
         const cell = getCellAtPoint(moveEvent.clientX, moveEvent.clientY);
         const targetIndex = getColumnIndexFromCell(cell);
-        this.dragState.target = targetIndex;
-        updateDropIndicator(targetIndex);
+        if (targetIndex === null) {
+          this.dragState.insertIndex = null;
+          updateDropIndicator(null, columnCount);
+          return;
+        }
+        if (!cell) {
+          return;
+        }
+        const rect = cell.getBoundingClientRect();
+        const before = moveEvent.clientX < rect.left + rect.width / 2;
+        const insertIndex = before ? targetIndex : targetIndex + 1;
+        this.dragState.insertIndex = insertIndex;
+        updateDropIndicator(insertIndex, columnCount);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
-        finishDrag();
+        finishDrag(columnCount);
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    };
+
+    const startRowDrag = (rowIndex: number, event: PointerEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.rowDragState.source = rowIndex;
+      this.rowDragState.insertIndex = rowIndex;
+      const rowCount = getRowCountFromDom() || rows.length;
+      wrapper.classList.add("cm-jss-row-dragging");
+      updateRowDropIndicator(rowIndex, rowCount);
+
+      const onMove = (moveEvent: PointerEvent) => {
+        const cell = getCellAtPoint(moveEvent.clientX, moveEvent.clientY);
+        const targetIndex = getRowIndexFromCell(cell);
+        if (targetIndex === null) {
+          this.rowDragState.insertIndex = null;
+          updateRowDropIndicator(null, rowCount);
+          return;
+        }
+        if (!cell) {
+          return;
+        }
+        const rect = cell.getBoundingClientRect();
+        const before = moveEvent.clientY < rect.top + rect.height / 2;
+        const insertIndex = before ? targetIndex : targetIndex + 1;
+        this.rowDragState.insertIndex = insertIndex;
+        updateRowDropIndicator(insertIndex, rowCount);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        finishRowDrag(rowCount);
       };
 
       window.addEventListener("pointermove", onMove);
@@ -446,6 +734,11 @@ class TableWidget extends WidgetType {
         }
         commitFromWorksheet();
         decorateColumnHeaders();
+        decorateRowHeaders();
+        ensureWorksheetFocus();
+      },
+      oneditionend: () => {
+        ensureWorksheetFocus();
       },
       contextMenu: () => null,
       worksheets: [
@@ -456,9 +749,9 @@ class TableWidget extends WidgetType {
           tableHeight: estimateTableHeight(rowCount),
           columnDrag: false,
           rowDrag: false,
-          allowInsertRow: false,
+          allowInsertRow: true,
           allowInsertColumn: true,
-          allowDeleteRow: false,
+          allowDeleteRow: true,
           allowDeleteColumn: true,
           allowComments: false,
         },
@@ -466,7 +759,6 @@ class TableWidget extends WidgetType {
     })[0];
 
     this.worksheet = worksheet;
-    this.worksheet.hideIndex();
     const applyColumnPermissions = () => {
       const element =
         this.container as unknown as
@@ -479,18 +771,25 @@ class TableWidget extends WidgetType {
       this.worksheet = instance;
       instance.options.allowInsertColumn = true;
       instance.options.allowDeleteColumn = true;
-      instance.options.allowInsertRow = false;
-      instance.options.allowDeleteRow = false;
+      instance.options.allowInsertRow = true;
+      instance.options.allowDeleteRow = true;
       instance.options.allowComments = false;
       const content = this.container?.querySelector<HTMLElement>(".jss_content");
       if (content) {
         // Jspreadsheet sets inline box-shadow when tableOverflow is enabled.
         content.style.setProperty("box-shadow", "none", "important");
       }
+      const colgroup = this.container?.querySelector<HTMLTableColElement>(
+        ".jss_worksheet colgroup col:first-child"
+      );
+      if (colgroup) {
+        colgroup.style.width = "10px";
+      }
     };
     applyColumnPermissions();
     setTimeout(applyColumnPermissions, 0);
     decorateColumnHeaders();
+    decorateRowHeaders();
 
     const signal = this.abortController.signal;
     document.addEventListener(
@@ -507,13 +806,25 @@ class TableWidget extends WidgetType {
         if (!cell) {
           return;
         }
-        const columnIndex = getColumnIndexFromCell(cell);
-        if (columnIndex === null) {
+        if (cell.closest("thead")) {
+          const columnIndex = getColumnIndexFromCell(cell);
+          if (columnIndex === null) {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          openMenu(columnIndex, cell);
           return;
         }
-        event.preventDefault();
-        event.stopPropagation();
-        openMenu(columnIndex, cell);
+        if (cell.classList.contains("jss_row")) {
+          const rowIndex = getRowIndexFromCell(cell);
+          if (rowIndex === null) {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          openRowMenu(rowIndex, cell);
+        }
       },
       { signal }
     );
@@ -532,7 +843,7 @@ class TableWidget extends WidgetType {
         if (!(target instanceof Element)) {
           return;
         }
-        if (!target.closest(".cm-jss-column-menu")) {
+        if (!target.closest(".cm-jss-column-menu") && !target.closest(".cm-jss-row-menu")) {
           closeMenu();
         }
       },
@@ -545,12 +856,14 @@ class TableWidget extends WidgetType {
 
     wrapper.addEventListener(
       "focusout",
-      (event) => {
-        const related = event.relatedTarget;
-        if (related instanceof Node && wrapper.contains(related)) {
-          return;
-        }
-        this.worksheet?.resetSelection();
+      () => {
+        setTimeout(() => {
+          const active = document.activeElement;
+          if (active instanceof Node && wrapper.contains(active)) {
+            return;
+          }
+          this.worksheet?.resetSelection();
+        }, 0);
       },
       { signal }
     );
@@ -717,12 +1030,18 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       display: "table-header-group",
     },
     ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead tr": {
-      height: "12px",
+      height: "10px",
     },
     ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead td, .cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead th": {
-      height: "12px",
+      height: "10px",
       padding: "0",
       color: "transparent",
+      background: "transparent",
+      borderColor: "transparent",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .jss_selectall": {
+      width: "10px",
+      padding: "0",
       background: "transparent",
       borderColor: "transparent",
     },
@@ -732,6 +1051,12 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-jspreadsheet td": {
       borderColor: "var(--editor-border)",
       background: "transparent",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet td.jss_row": {
+      color: "transparent",
+      background: "transparent",
+      padding: "0",
+      borderColor: "transparent",
     },
     ".cm-content .cm-table-editor-jspreadsheet td.cm-jss-header-cell": {
       position: "sticky",
@@ -760,7 +1085,33 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       opacity: "0",
       transition: "opacity 120ms ease",
     },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-row-header": {
+      position: "relative",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-row-handle": {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%) rotate(90deg)",
+      width: "22px",
+      height: "18px",
+      border: "1px solid var(--editor-border)",
+      background: "var(--editor-surface)",
+      color: "var(--editor-secondary-color)",
+      borderRadius: "9px",
+      fontSize: "10px",
+      letterSpacing: "0.08em",
+      cursor: "grab",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      opacity: "0",
+      transition: "opacity 120ms ease",
+    },
     ".cm-content .cm-table-editor-jspreadsheet:hover .cm-jss-column-handle": {
+      opacity: "1",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet:hover .cm-jss-row-handle": {
       opacity: "1",
     },
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-header": {
@@ -780,6 +1131,20 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-menu[data-open='true']": {
       display: "block",
     },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-row-menu": {
+      position: "absolute",
+      minWidth: "160px",
+      background: "var(--editor-surface)",
+      border: "1px solid var(--editor-border)",
+      borderRadius: "10px",
+      boxShadow: "0 10px 22px rgba(0, 0, 0, 0.18)",
+      padding: "6px",
+      display: "none",
+      zIndex: "30",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-row-menu[data-open='true']": {
+      display: "block",
+    },
     ".cm-content .cm-table-editor-jspreadsheet .jss_contextmenu": {
       display: "none",
     },
@@ -796,12 +1161,36 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-menu__item:hover": {
       background: "var(--editor-surface-hover)",
     },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-row-menu__item": {
+      width: "100%",
+      textAlign: "left",
+      background: "transparent",
+      border: "none",
+      color: "var(--editor-foreground)",
+      padding: "6px 8px",
+      borderRadius: "6px",
+      cursor: "pointer",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-row-menu__item:hover": {
+      background: "var(--editor-surface-hover)",
+    },
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-drop-indicator": {
       position: "absolute",
-      width: "2px",
-      background: "var(--editor-accent)",
+      width: "3px",
+      background: "var(--editor-primary-color)",
+      boxShadow: "0 0 0 1px var(--editor-surface), 0 0 6px var(--editor-accent)",
       display: "none",
-      zIndex: "20",
+      zIndex: "120",
+      pointerEvents: "none",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-row-drop-indicator": {
+      position: "absolute",
+      height: "3px",
+      background: "var(--editor-primary-color)",
+      boxShadow: "0 0 0 1px var(--editor-surface), 0 0 6px var(--editor-accent)",
+      display: "none",
+      zIndex: "120",
+      pointerEvents: "none",
     },
     ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet .highlight": {
       backgroundColor: "var(--editor-selection-bg)",
