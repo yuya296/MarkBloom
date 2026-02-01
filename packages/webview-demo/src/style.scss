@@ -107,6 +107,14 @@ body {
   color: var(--app-text);
 }
 
+.cm-table-editor-jspreadsheet .jss_content {
+  box-shadow: none !important;
+}
+
+.cm-table-editor-jspreadsheet .jss_worksheet {
+  border: none !important;
+}
+
 #app {
   display: flex;
   flex-direction: column;

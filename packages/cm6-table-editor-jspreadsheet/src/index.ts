@@ -423,40 +423,6 @@ class TableWidget extends WidgetType {
     const decorateHeaderCell = (cell: HTMLTableCellElement, columnIndex: number) => {
       cell.classList.add("cm-jss-header-cell");
       cell.dataset.cmHeaderCell = "true";
-      let tools = cell.querySelector<HTMLElement>(".cm-jss-header-tools");
-      if (!tools) {
-        tools = document.createElement("div");
-        tools.className = "cm-jss-header-tools";
-        const menuButton = document.createElement("button");
-        menuButton.type = "button";
-        menuButton.className = "cm-jss-header-menu";
-        menuButton.setAttribute("aria-label", "Column menu");
-        menuButton.tabIndex = -1;
-        menuButton.textContent = "...";
-        menuButton.addEventListener(
-          "pointerdown",
-          (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-          },
-          { signal: this.abortController.signal }
-        );
-        menuButton.addEventListener(
-          "click",
-          (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const currentIndex = Number(cell.getAttribute("data-x") ?? columnIndex);
-            if (!Number.isNaN(currentIndex)) {
-              openMenu(currentIndex, cell);
-            }
-          },
-          { signal: this.abortController.signal }
-        );
-
-        tools.appendChild(menuButton);
-        cell.appendChild(tools);
-      }
     };
 
     const clearHeaderDecoration = (cell: HTMLTableCellElement) => {
@@ -465,10 +431,6 @@ class TableWidget extends WidgetType {
       }
       cell.classList.remove("cm-jss-header-cell");
       delete cell.dataset.cmHeaderCell;
-      const tools = cell.querySelector<HTMLElement>(".cm-jss-header-tools");
-      if (tools) {
-        tools.remove();
-      }
     };
 
     setupMenu();
@@ -485,6 +447,7 @@ class TableWidget extends WidgetType {
         commitFromWorksheet();
         decorateColumnHeaders();
       },
+      contextMenu: () => null,
       worksheets: [
         {
           data: rows,
@@ -497,6 +460,7 @@ class TableWidget extends WidgetType {
           allowInsertColumn: true,
           allowDeleteRow: false,
           allowDeleteColumn: true,
+          allowComments: false,
         },
       ],
     })[0];
@@ -517,12 +481,43 @@ class TableWidget extends WidgetType {
       instance.options.allowDeleteColumn = true;
       instance.options.allowInsertRow = false;
       instance.options.allowDeleteRow = false;
+      instance.options.allowComments = false;
+      const content = this.container?.querySelector<HTMLElement>(".jss_content");
+      if (content) {
+        // Jspreadsheet sets inline box-shadow when tableOverflow is enabled.
+        content.style.setProperty("box-shadow", "none", "important");
+      }
     };
     applyColumnPermissions();
     setTimeout(applyColumnPermissions, 0);
     decorateColumnHeaders();
 
     const signal = this.abortController.signal;
+    document.addEventListener(
+      "contextmenu",
+      (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+        if (!wrapper.contains(target)) {
+          return;
+        }
+        const cell = target.closest<HTMLTableCellElement>("td, th");
+        if (!cell) {
+          return;
+        }
+        const columnIndex = getColumnIndexFromCell(cell);
+        if (columnIndex === null) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        openMenu(columnIndex, cell);
+      },
+      { signal }
+    );
+
     document.addEventListener(
       "click",
       (event) => {
@@ -715,7 +710,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "transparent",
     },
     ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet": {
-      border: "1px solid var(--editor-border)",
+      border: "none",
       background: "var(--editor-surface)",
     },
     ".cm-content .cm-table-editor-jspreadsheet .jss_worksheet thead": {
@@ -744,29 +739,6 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       zIndex: "2",
       background: "var(--editor-surface)",
       boxShadow: "0 1px 0 var(--editor-border)",
-    },
-    ".cm-content .cm-table-editor-jspreadsheet td.cm-jss-header-cell .cm-jss-header-tools": {
-      position: "absolute",
-      right: "4px",
-      top: "4px",
-      display: "flex",
-      gap: "4px",
-      opacity: "0",
-      transition: "opacity 120ms ease",
-    },
-    ".cm-content .cm-table-editor-jspreadsheet td.cm-jss-header-cell:hover .cm-jss-header-tools": {
-      opacity: "1",
-    },
-    ".cm-content .cm-table-editor-jspreadsheet .cm-jss-header-menu": {
-      border: "1px solid var(--editor-border)",
-      background: "var(--editor-surface)",
-      color: "var(--editor-secondary-color)",
-      borderRadius: "8px",
-      width: "22px",
-      height: "22px",
-      lineHeight: "20px",
-      fontSize: "14px",
-      cursor: "pointer",
     },
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-handle": {
       position: "absolute",
@@ -807,6 +779,9 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-menu[data-open='true']": {
       display: "block",
+    },
+    ".cm-content .cm-table-editor-jspreadsheet .jss_contextmenu": {
+      display: "none",
     },
     ".cm-content .cm-table-editor-jspreadsheet .cm-jss-column-menu__item": {
       width: "100%",
