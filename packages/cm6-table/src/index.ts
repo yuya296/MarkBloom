@@ -1005,6 +1005,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       },
     ".cm-content .cm-table-editor-notion .cm-table-scroll": {
       overflowX: "auto",
+      paddingLeft: "8px",
+      paddingTop: "8px",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
       borderRadius: "0",
       background: "var(--editor-bg, #fff)",
