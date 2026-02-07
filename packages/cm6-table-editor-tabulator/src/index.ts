@@ -268,6 +268,15 @@ class TableWidget extends WidgetType {
           if (!(firstCell instanceof HTMLElement)) {
             return;
           }
+          if (!rowElement.dataset.mbRowHandleBound) {
+            rowElement.dataset.mbRowHandleBound = "1";
+            rowElement.addEventListener("mouseenter", () => {
+              rowElement.classList.add("mb-row-hover");
+            });
+            rowElement.addEventListener("mouseleave", () => {
+              rowElement.classList.remove("mb-row-hover");
+            });
+          }
           if (firstCell.querySelector(".mb-row-handle-btn")) {
             return;
           }
@@ -276,7 +285,7 @@ class TableWidget extends WidgetType {
           handle.className = "mb-row-handle-btn";
           handle.tabIndex = -1;
           handle.setAttribute("aria-label", "Select row");
-          handle.textContent = ":::";
+          handle.textContent = "⋮⋮";
           handle.addEventListener("mousedown", (event) => {
             event.preventDefault();
           });
@@ -658,6 +667,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       color: "var(--editor-foreground, #202124)",
       borderRadius: "8px",
       boxShadow: "0 1px 2px rgba(60,64,67,0.18)",
+      overflow: "visible !important",
     },
     ".cm-content .cm-table-editor-tabulator .tabulator-tableholder": {
       overflowX: "visible !important",
@@ -692,6 +702,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-tabulator .tabulator-row .tabulator-cell:first-child": {
       borderLeft: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 70%, transparent)",
       position: "relative",
+      overflow: "visible !important",
+      paddingLeft: "24px",
     },
     ".cm-content .cm-table-editor-tabulator .mb-col-header": {
       position: "relative",
@@ -722,22 +734,25 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-tabulator .mb-row-handle-btn": {
       position: "absolute",
-      left: "-12px",
+      left: "4px",
       top: "50%",
       transform: "translateY(-50%)",
       opacity: "0",
       pointerEvents: "none",
-      border: "none",
-      background: "transparent",
+      border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
+      borderRadius: "999px",
+      background: "var(--editor-bg, #fff)",
       color: "var(--editor-secondary-color, #5f6368)",
       lineHeight: "1",
-      fontSize: "11px",
+      fontSize: "10px",
+      width: "14px",
+      height: "18px",
       letterSpacing: "-1px",
-      zIndex: "2",
+      zIndex: "5",
       cursor: "pointer",
-      padding: "0",
+      padding: "0 1px",
     },
-    ".cm-content .cm-table-editor-tabulator .tabulator-row:hover .mb-row-handle-btn, .cm-content .cm-table-editor-tabulator .tabulator-row .tabulator-cell:first-child:hover .mb-row-handle-btn": {
+    ".cm-content .cm-table-editor-tabulator .tabulator-row:hover .mb-row-handle-btn, .cm-content .cm-table-editor-tabulator .tabulator-row.mb-row-hover .mb-row-handle-btn, .cm-content .cm-table-editor-tabulator .tabulator-row .tabulator-cell:first-child:hover .mb-row-handle-btn": {
       opacity: "1",
       pointerEvents: "auto",
       color: "var(--editor-secondary-color, #5f6368)",
