@@ -420,7 +420,6 @@ class TableWidget extends WidgetType {
       const handle = document.createElement("button");
       handle.type = "button";
       handle.className = "cm-table-col-handle";
-      handle.textContent = ":::";
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select column ${col + 1}`);
       handle.addEventListener(
@@ -488,7 +487,6 @@ class TableWidget extends WidgetType {
           const handle = document.createElement("button");
           handle.type = "button";
           handle.className = "cm-table-row-handle";
-          handle.textContent = "⋮⋮";
           handle.tabIndex = -1;
           handle.setAttribute("aria-label", `Select row ${rowIndex + 1}`);
           handle.addEventListener(
@@ -783,7 +781,8 @@ class TableWidget extends WidgetType {
           return;
         }
         if (!isEditing) {
-          wrapper.removeAttribute("data-selection");
+          selection = null;
+          applySelectionClasses();
         }
       },
       { signal }
@@ -957,7 +956,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion .cm-table-scroll": {
       overflowX: "auto",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
-      borderRadius: "8px",
+      borderRadius: "0",
       background: "var(--editor-bg, #fff)",
     },
     ".cm-content .cm-table-editor-notion table.cm-table": {
@@ -992,7 +991,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       lineHeight: "1.35",
     },
     ".cm-content .cm-table-editor-notion .cm-table-cell--first": {
-      paddingLeft: "26px",
+      paddingLeft: "10px",
     },
     ".cm-content .cm-table-editor-notion .cm-table-cell-selected": {
       boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
@@ -1006,39 +1005,52 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle": {
       position: "absolute",
-      top: "-2px",
+      top: "0",
       left: "50%",
-      transform: "translateX(-50%)",
+      transform: "translate(-50%, -50%)",
+      width: "16px",
+      height: "10px",
+      padding: "0",
       border: "none",
       background: "transparent",
-      color: "var(--editor-secondary-color, #5f6368)",
-      fontSize: "11px",
-      lineHeight: "1",
       opacity: "0",
       cursor: "pointer",
-      padding: "0",
-      letterSpacing: "0.03em",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle::before": {
+      content: '""',
+      display: "block",
+      width: "10px",
+      height: "2px",
+      margin: "4px auto 0",
+      borderRadius: "999px",
+      background:
+        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-header-cell:hover .cm-table-col-handle, .cm-content .cm-table-editor-notion .cm-table-col-handle[data-selected='true']": {
       opacity: "0.95",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle": {
       position: "absolute",
-      left: "4px",
+      left: "0",
       top: "50%",
-      transform: "translateY(-50%)",
-      border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 85%, transparent)",
-      borderRadius: "999px",
+      transform: "translate(-50%, -50%)",
+      width: "10px",
+      height: "16px",
+      padding: "0",
+      border: "none",
       background: "var(--editor-bg, #fff)",
-      color: "var(--editor-secondary-color, #5f6368)",
-      fontSize: "10px",
-      lineHeight: "1",
-      letterSpacing: "-1px",
-      width: "14px",
-      height: "18px",
-      padding: "0 1px",
       opacity: "0",
       cursor: "pointer",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-row-handle::before": {
+      content: '""',
+      display: "block",
+      width: "2px",
+      height: "10px",
+      margin: "3px 0 0 4px",
+      borderRadius: "999px",
+      background:
+        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row:hover .cm-table-row-handle, .cm-content .cm-table-editor-notion .cm-table-row-handle[data-selected='true']": {
       opacity: "1",
