@@ -260,19 +260,27 @@ class TableWidget extends WidgetType {
       if (!this.worksheet) {
         return;
       }
+      let didMutate = true;
       this.syncing = true;
       switch (action) {
         case "insert-above":
-          this.worksheet.insertRow(1, rowIndex, 1);
+          this.worksheet.insertRow(1, Math.max(1, rowIndex), 1);
           break;
         case "insert-below":
           this.worksheet.insertRow(1, rowIndex, 0);
           break;
         case "delete":
+          if (rowIndex <= 0) {
+            didMutate = false;
+            break;
+          }
           this.worksheet.deleteRow(rowIndex, 1);
           break;
       }
       this.syncing = false;
+      if (!didMutate) {
+        return;
+      }
       commitFromWorksheet();
       decorateRowHeaders();
       ensureWorksheetFocus();
@@ -507,6 +515,12 @@ class TableWidget extends WidgetType {
         if (rowIndex === null) {
           return;
         }
+        if (rowIndex === 0) {
+          cell
+            .querySelector(".cm-jss-row-handle")
+            ?.remove();
+          return;
+        }
         cell.classList.add("cm-jss-row-header");
         let handle = cell.querySelector<HTMLButtonElement>(".cm-jss-row-handle");
         if (!handle) {
@@ -616,7 +630,12 @@ class TableWidget extends WidgetType {
       if (!this.worksheet || source === null || insertIndex === null) {
         return;
       }
-      const normalizedInsert = insertIndex > source ? insertIndex - 1 : insertIndex;
+      if (source <= 0) {
+        return;
+      }
+      const clampedInsert = Math.max(1, Math.min(rowCount, insertIndex));
+      const normalizedInsert =
+        clampedInsert > source ? clampedInsert - 1 : clampedInsert;
       if (normalizedInsert === source) {
         return;
       }
@@ -672,6 +691,9 @@ class TableWidget extends WidgetType {
     };
 
     const startRowDrag = (rowIndex: number, event: PointerEvent) => {
+      if (rowIndex <= 0) {
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
       this.rowDragState.source = rowIndex;
@@ -693,7 +715,7 @@ class TableWidget extends WidgetType {
         }
         const rect = cell.getBoundingClientRect();
         const before = moveEvent.clientY < rect.top + rect.height / 2;
-        const insertIndex = before ? targetIndex : targetIndex + 1;
+        const insertIndex = Math.max(1, before ? targetIndex : targetIndex + 1);
         this.rowDragState.insertIndex = insertIndex;
         updateRowDropIndicator(insertIndex, rowCount);
       };
