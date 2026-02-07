@@ -185,7 +185,7 @@ function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
   ) {
     return value;
   }
-  return "vanilla";
+  return "tabulator";
 }
 
 function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension {

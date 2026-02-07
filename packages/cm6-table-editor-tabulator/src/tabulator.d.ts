@@ -1,4 +1,8 @@
 declare module "tabulator-tables" {
+  type TabulatorRange = {
+    remove: () => void;
+  };
+
   export const TabulatorFull: new (
     element: HTMLElement,
     options: Record<string, unknown>
@@ -6,8 +10,11 @@ declare module "tabulator-tables" {
     setColumns: (columns: unknown[]) => void;
     setData: (data: unknown[]) => void;
     getColumns: () => unknown[];
+    getRows: () => unknown[];
     getData: () => unknown[];
-    on: (event: string, callback: (...args: unknown[]) => void) => void;
+    getRanges: () => TabulatorRange[];
+    addRange: (start: unknown, end?: unknown) => unknown;
+    on: (event: string, callback: (...args: any[]) => void) => void;
     destroy: () => void;
     deselectRow?: () => void;
   };
