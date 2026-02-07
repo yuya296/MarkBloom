@@ -998,9 +998,11 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 12%, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-selected": {
+      boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
       background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-column-selected": {
+      boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
       background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle": {
