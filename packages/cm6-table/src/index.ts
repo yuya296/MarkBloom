@@ -683,7 +683,7 @@ class TableWidget extends WidgetType {
         if (event.isComposing) {
           return;
         }
-        let active = ensureCellSelection();
+        const active = ensureCellSelection();
         let next: CellSelection | null = null;
 
         switch (event.key) {
