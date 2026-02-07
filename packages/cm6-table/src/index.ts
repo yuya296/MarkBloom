@@ -127,7 +127,12 @@ class TableWidget extends WidgetType {
     editor.dataset.open = "false";
     editor.rows = 1;
 
+    const selectionOutline = document.createElement("div");
+    selectionOutline.className = "cm-table-selection-outline";
+    selectionOutline.dataset.open = "false";
+
     wrapper.appendChild(scrollArea);
+    wrapper.appendChild(selectionOutline);
     wrapper.appendChild(menu);
     wrapper.appendChild(editor);
 
@@ -226,6 +231,41 @@ class TableWidget extends WidgetType {
       menuState = null;
     };
 
+    const updateRangeOutline = () => {
+      selectionOutline.dataset.open = "false";
+      if (!selection || selection.kind === "cell") {
+        return;
+      }
+
+      const startCell =
+        selection.kind === "row"
+          ? cellElements[selection.row + 1]?.[0]
+          : cellElements[0]?.[selection.col];
+      const endCell =
+        selection.kind === "row"
+          ? cellElements[selection.row + 1]?.[columnCount - 1]
+          : cellElements[getTotalRows() - 1]?.[selection.col];
+
+      if (!startCell || !endCell) {
+        return;
+      }
+
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const startRect = startCell.getBoundingClientRect();
+      const endRect = endCell.getBoundingClientRect();
+
+      const left = Math.min(startRect.left, endRect.left) - wrapperRect.left;
+      const top = Math.min(startRect.top, endRect.top) - wrapperRect.top;
+      const right = Math.max(startRect.right, endRect.right) - wrapperRect.left;
+      const bottom = Math.max(startRect.bottom, endRect.bottom) - wrapperRect.top;
+
+      selectionOutline.style.left = `${left}px`;
+      selectionOutline.style.top = `${top}px`;
+      selectionOutline.style.width = `${Math.max(0, right - left)}px`;
+      selectionOutline.style.height = `${Math.max(0, bottom - top)}px`;
+      selectionOutline.dataset.open = "true";
+    };
+
     const applySelectionClasses = () => {
       cellElements.forEach((rowCells) => {
         rowCells.forEach((cell) => {
@@ -241,12 +281,14 @@ class TableWidget extends WidgetType {
 
       if (!selection) {
         wrapper.removeAttribute("data-selection");
+        updateRangeOutline();
         return;
       }
 
       wrapper.dataset.selection = selection.kind;
       if (selection.kind === "cell") {
         cellElements[selection.row]?.[selection.col]?.classList.add("cm-table-cell-selected");
+        updateRangeOutline();
         return;
       }
       if (selection.kind === "row") {
@@ -255,12 +297,14 @@ class TableWidget extends WidgetType {
           cell.classList.add("cm-table-row-selected")
         );
         rowHandleButtons[selection.row]?.setAttribute("data-selected", "true");
+        updateRangeOutline();
         return;
       }
       for (let row = 0; row < getTotalRows(); row += 1) {
         cellElements[row]?.[selection.col]?.classList.add("cm-table-column-selected");
       }
       columnHandleButtons[selection.col]?.setAttribute("data-selected", "true");
+      updateRangeOutline();
     };
 
     const setSelection = (next: SelectionState, focusWrapper = true) => {
@@ -745,6 +789,9 @@ class TableWidget extends WidgetType {
         if (isEditing && selection && selection.kind === "cell") {
           positionEditor(selection);
         }
+        if (selection && selection.kind !== "cell") {
+          updateRangeOutline();
+        }
         if (menuState) {
           closeMenu();
         }
@@ -757,6 +804,9 @@ class TableWidget extends WidgetType {
       () => {
         if (isEditing && selection && selection.kind === "cell") {
           positionEditor(selection);
+        }
+        if (selection && selection.kind !== "cell") {
+          updateRangeOutline();
         }
       },
       { signal }
@@ -998,12 +1048,21 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 12%, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-selected": {
-      boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
       background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-column-selected": {
-      boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
       background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-bg, #fff))",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-selection-outline": {
+      position: "absolute",
+      border: "2px solid var(--editor-primary-color, #1a73e8)",
+      boxSizing: "border-box",
+      pointerEvents: "none",
+      zIndex: "12",
+      display: "none",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-selection-outline[data-open='true']": {
+      display: "block",
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle": {
       position: "absolute",
