@@ -950,6 +950,10 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       margin: "0.5rem 0",
       position: "relative",
     },
+    ".cm-content .cm-table-editor-notion:focus, .cm-content .cm-table-editor-notion:focus-visible":
+      {
+        outline: "none",
+      },
     ".cm-content .cm-table-editor-notion .cm-table-scroll": {
       overflowX: "auto",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
