@@ -4,7 +4,7 @@
 # 1) 破壊/稼働変更系 → prompt
 prefix_rule(
     pattern = ["pm2"],
-    decision = "prompt",
+    decision = "allow",
     justification = "PM2 process lifecycle change: require approval.",
     match = [
         # start
@@ -20,15 +20,6 @@ prefix_rule(
 
         # delete (止める+削除なので、必要ならここも prompt のままでOK)
         "pm2 delete",
-    ],
-)
-
-# 2) 参照系 → allow
-prefix_rule(
-    pattern = ["pm2"],
-    decision = "allow",
-    justification = "PM2 read-only commands: auto-approve.",
-    match = [
         "pm2 status",
         "pm2 list",
         "pm2 ls",
