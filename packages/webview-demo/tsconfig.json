@@ -10,6 +10,7 @@
     "baseUrl": ".",
     "paths": {
       "@yuya296/cm6-live-preview": ["../cm6-live-preview/src/index.ts"],
+      "@yuya296/cm6-table": ["../cm6-table/src/index.ts"],
       "@yuya296/cm6-table-editor-jspreadsheet": [
         "../cm6-table-editor-jspreadsheet/src/index.ts"
       ],

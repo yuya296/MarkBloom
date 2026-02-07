@@ -20,6 +20,7 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.2",
     "@yuya296/cm6-live-preview": "workspace:*",
+    "@yuya296/cm6-table": "workspace:*",
     "@yuya296/cm6-table-editor-aggrid": "workspace:*",
     "@yuya296/cm6-table-editor-handsontable5": "workspace:*",
     "@yuya296/cm6-table-editor-jspreadsheet": "workspace:*",

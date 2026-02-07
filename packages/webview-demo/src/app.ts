@@ -2,6 +2,7 @@ import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
+import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
 import { createEditor } from "./createEditor";
 import { tableEditor as agGridTableEditor } from "@yuya296/cm6-table-editor-aggrid";
 import { tableEditor as handsontableTableEditor } from "@yuya296/cm6-table-editor-handsontable5";
@@ -18,6 +19,7 @@ type ExtensionOptions = {
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
   tableEngine:
+    | "cm6table"
     | "vanilla"
     | "handsontable5"
     | "tabulator"
@@ -176,6 +178,7 @@ export function setupApp() {
 
 function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
   if (
+    value === "cm6table" ||
     value === "vanilla" ||
     value === "handsontable5" ||
     value === "tabulator" ||
@@ -185,11 +188,13 @@ function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
   ) {
     return value;
   }
-  return "tabulator";
+  return "cm6table";
 }
 
 function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension {
   switch (engine) {
+    case "cm6table":
+      return cm6TableEditor();
     case "vanilla":
       return vanillaTableEditor();
     case "handsontable5":

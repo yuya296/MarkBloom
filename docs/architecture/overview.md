@@ -11,6 +11,7 @@
 | `cm6-typography-theme` | semantic class に対する見た目（CSSテーマ）を提供する |
 | `cm6-live-preview` | 上記3つを束ね、プリセットとして配布する |
 | `cm6-table-editor-vanilla` | 依存ゼロの HTML table で Markdown テーブル編集 UI |
+| `cm6-table` | Notionライクなライトテーブル編集 UI（2モード編集 + 行列ハンドル） |
 
 ## Dependency DAG
 
@@ -18,6 +19,7 @@
 graph TD
   webview-demo --> cm6-live-preview
   webview-demo --> cm6-table-editor-vanilla
+  webview-demo --> cm6-table
 
   vscode-extension --> cm6-live-preview
   vscode-extension --> cm6-table-editor-vanilla
