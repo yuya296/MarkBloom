@@ -131,8 +131,12 @@ class TableWidget extends WidgetType {
     selectionOutline.className = "cm-table-selection-outline";
     selectionOutline.dataset.open = "false";
 
+    const handleLayer = document.createElement("div");
+    handleLayer.className = "cm-table-handle-layer";
+
     wrapper.appendChild(scrollArea);
     wrapper.appendChild(selectionOutline);
+    wrapper.appendChild(handleLayer);
     wrapper.appendChild(menu);
     wrapper.appendChild(editor);
 
@@ -151,6 +155,8 @@ class TableWidget extends WidgetType {
     let menuState: MenuState = null;
     let isEditing = false;
     let isComposing = false;
+    let hoveredRow: number | null = null;
+    let hoveredCol: number | null = null;
 
     const getTotalRows = () => data.rows.length + 1;
 
@@ -231,6 +237,39 @@ class TableWidget extends WidgetType {
       menuState = null;
     };
 
+    const setHoveredRow = (next: number | null) => {
+      if (hoveredRow === next) {
+        return;
+      }
+      hoveredRow = next;
+      rowHandleButtons.forEach((button, rowIndex) => {
+        if (hoveredRow === rowIndex) {
+          button.dataset.visible = "true";
+        } else {
+          button.removeAttribute("data-visible");
+        }
+      });
+    };
+
+    const setHoveredCol = (next: number | null) => {
+      if (hoveredCol === next) {
+        return;
+      }
+      hoveredCol = next;
+      columnHandleButtons.forEach((button, colIndex) => {
+        if (hoveredCol === colIndex) {
+          button.dataset.visible = "true";
+        } else {
+          button.removeAttribute("data-visible");
+        }
+      });
+    };
+
+    const clearHoveredHandles = () => {
+      setHoveredRow(null);
+      setHoveredCol(null);
+    };
+
     const updateRangeOutline = () => {
       selectionOutline.dataset.open = "false";
       if (!selection || selection.kind === "cell") {
@@ -264,6 +303,37 @@ class TableWidget extends WidgetType {
       selectionOutline.style.width = `${Math.max(0, right - left)}px`;
       selectionOutline.style.height = `${Math.max(0, bottom - top)}px`;
       selectionOutline.dataset.open = "true";
+    };
+
+    const updateHandlePositions = () => {
+      const wrapperRect = wrapper.getBoundingClientRect();
+      columnHandleButtons.forEach((button, col) => {
+        const cell = cellElements[0]?.[col];
+        if (!cell) {
+          button.style.left = "-9999px";
+          button.style.top = "-9999px";
+          return;
+        }
+        const rect = cell.getBoundingClientRect();
+        const left = rect.left - wrapperRect.left + rect.width / 2;
+        const top = rect.top - wrapperRect.top;
+        button.style.left = `${left}px`;
+        button.style.top = `${top}px`;
+      });
+
+      rowHandleButtons.forEach((button, row) => {
+        const cell = cellElements[row + 1]?.[0];
+        if (!cell) {
+          button.style.left = "-9999px";
+          button.style.top = "-9999px";
+          return;
+        }
+        const rect = cell.getBoundingClientRect();
+        const left = rect.left - wrapperRect.left;
+        const top = rect.top - wrapperRect.top + rect.height / 2;
+        button.style.left = `${left}px`;
+        button.style.top = `${top}px`;
+      });
     };
 
     const applySelectionClasses = () => {
@@ -461,47 +531,11 @@ class TableWidget extends WidgetType {
       content.className = "cm-table-cell-content";
       content.textContent = toDisplayText(data.header?.cells[col]?.text ?? `Col ${col + 1}`);
 
-      const handle = document.createElement("button");
-      handle.type = "button";
-      handle.className = "cm-table-col-handle";
-      handle.tabIndex = -1;
-      handle.setAttribute("aria-label", `Select column ${col + 1}`);
-      handle.addEventListener(
-        "mousedown",
-        (event) => {
-          event.preventDefault();
-        },
-        { signal }
-      );
-      handle.addEventListener(
-        "click",
-        (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          stopEditing(true);
-          setSelection({ kind: "column", col });
-        },
-        { signal }
-      );
-      handle.addEventListener(
-        "contextmenu",
-        (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          stopEditing(true);
-          setSelection({ kind: "column", col });
-          openContextMenu("column", col, event.clientX, event.clientY);
-        },
-        { signal }
-      );
-
-      th.appendChild(handle);
       th.appendChild(content);
       headerTr.appendChild(th);
 
       headerRowCells.push(th);
       headerRowContents.push(content);
-      columnHandleButtons.push(handle);
     }
 
     cellElements.push(headerRowCells);
@@ -527,44 +561,6 @@ class TableWidget extends WidgetType {
         content.textContent = toDisplayText(row.cells[col]?.text ?? "");
         td.appendChild(content);
 
-        if (col === 0) {
-          const handle = document.createElement("button");
-          handle.type = "button";
-          handle.className = "cm-table-row-handle";
-          handle.tabIndex = -1;
-          handle.setAttribute("aria-label", `Select row ${rowIndex + 1}`);
-          handle.addEventListener(
-            "mousedown",
-            (event) => {
-              event.preventDefault();
-            },
-            { signal }
-          );
-          handle.addEventListener(
-            "click",
-            (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              stopEditing(true);
-              setSelection({ kind: "row", row: rowIndex });
-            },
-            { signal }
-          );
-          handle.addEventListener(
-            "contextmenu",
-            (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              stopEditing(true);
-              setSelection({ kind: "row", row: rowIndex });
-              openContextMenu("row", rowIndex, event.clientX, event.clientY);
-            },
-            { signal }
-          );
-          td.appendChild(handle);
-          rowHandleButtons[rowIndex] = handle;
-        }
-
         tr.appendChild(td);
         rowCells.push(td);
         rowContents.push(content);
@@ -578,6 +574,114 @@ class TableWidget extends WidgetType {
     table.appendChild(thead);
     table.appendChild(tbody);
 
+    for (let col = 0; col < columnCount; col += 1) {
+      const handle = document.createElement("button");
+      handle.type = "button";
+      handle.className = "cm-table-col-handle";
+      handle.style.left = "-9999px";
+      handle.style.top = "-9999px";
+      handle.tabIndex = -1;
+      handle.setAttribute("aria-label", `Select column ${col + 1}`);
+      handle.addEventListener(
+        "mousedown",
+        (event) => {
+          event.preventDefault();
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "pointerenter",
+        () => {
+          setHoveredCol(col);
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "pointerleave",
+        () => {
+          setHoveredCol(null);
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          stopEditing(true);
+          setSelection({ kind: "column", col });
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "contextmenu",
+        (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          stopEditing(true);
+          setSelection({ kind: "column", col });
+          openContextMenu("column", col, event.clientX, event.clientY);
+        },
+        { signal }
+      );
+      handleLayer.appendChild(handle);
+      columnHandleButtons.push(handle);
+    }
+
+    data.rows.forEach((_row, rowIndex) => {
+      const handle = document.createElement("button");
+      handle.type = "button";
+      handle.className = "cm-table-row-handle";
+      handle.style.left = "-9999px";
+      handle.style.top = "-9999px";
+      handle.tabIndex = -1;
+      handle.setAttribute("aria-label", `Select row ${rowIndex + 1}`);
+      handle.addEventListener(
+        "mousedown",
+        (event) => {
+          event.preventDefault();
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "pointerenter",
+        () => {
+          setHoveredRow(rowIndex);
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "pointerleave",
+        () => {
+          setHoveredRow(null);
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          stopEditing(true);
+          setSelection({ kind: "row", row: rowIndex });
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "contextmenu",
+        (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          stopEditing(true);
+          setSelection({ kind: "row", row: rowIndex });
+          openContextMenu("row", rowIndex, event.clientX, event.clientY);
+        },
+        { signal }
+      );
+      handleLayer.appendChild(handle);
+      rowHandleButtons[rowIndex] = handle;
+    });
+
     const moveCellByOffset = (current: CellSelection, delta: number): CellSelection => {
       const totalCells = getTotalRows() * columnCount;
       const flat = current.row * columnCount + current.col;
@@ -586,6 +690,45 @@ class TableWidget extends WidgetType {
       const nextCol = nextFlat % columnCount;
       return { kind: "cell", row: nextRow, col: nextCol };
     };
+
+    const updateHoveredHandlesFromTarget = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) {
+        clearHoveredHandles();
+        return;
+      }
+      if (target.closest(".cm-table-col-handle") || target.closest(".cm-table-row-handle")) {
+        return;
+      }
+      const cell = target.closest<HTMLTableCellElement>(".cm-table-cell");
+      if (!cell) {
+        clearHoveredHandles();
+        return;
+      }
+      const row = Number(cell.dataset.row);
+      const col = Number(cell.dataset.col);
+      if (!Number.isFinite(row) || !Number.isFinite(col)) {
+        clearHoveredHandles();
+        return;
+      }
+      setHoveredCol(col);
+      setHoveredRow(row > 0 ? row - 1 : null);
+    };
+
+    wrapper.addEventListener(
+      "pointermove",
+      (event) => {
+        updateHoveredHandlesFromTarget(event.target);
+      },
+      { signal, passive: true }
+    );
+
+    wrapper.addEventListener(
+      "pointerleave",
+      () => {
+        clearHoveredHandles();
+      },
+      { signal }
+    );
 
     wrapper.addEventListener(
       "pointerdown",
@@ -789,6 +932,7 @@ class TableWidget extends WidgetType {
         if (isEditing && selection && selection.kind === "cell") {
           positionEditor(selection);
         }
+        updateHandlePositions();
         if (selection && selection.kind !== "cell") {
           updateRangeOutline();
         }
@@ -805,6 +949,7 @@ class TableWidget extends WidgetType {
         if (isEditing && selection && selection.kind === "cell") {
           positionEditor(selection);
         }
+        updateHandlePositions();
         if (selection && selection.kind !== "cell") {
           updateRangeOutline();
         }
@@ -833,6 +978,7 @@ class TableWidget extends WidgetType {
         if (!isEditing) {
           selection = null;
           applySelectionClasses();
+          clearHoveredHandles();
         }
       },
       { signal }
@@ -844,6 +990,9 @@ class TableWidget extends WidgetType {
     } else {
       setSelection({ kind: "cell", row: data.rows.length > 0 ? 1 : 0, col: 0 }, false);
     }
+    requestAnimationFrame(() => {
+      updateHandlePositions();
+    });
 
     return wrapper;
   }
@@ -998,6 +1147,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion": {
       margin: "0.5rem 0",
       position: "relative",
+      overflow: "visible",
     },
     ".cm-content .cm-table-editor-notion:focus, .cm-content .cm-table-editor-notion:focus-visible":
       {
@@ -1005,8 +1155,6 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       },
     ".cm-content .cm-table-editor-notion .cm-table-scroll": {
       overflowX: "auto",
-      paddingLeft: "8px",
-      paddingTop: "8px",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
       borderRadius: "0",
       background: "var(--editor-surface, var(--editor-bg, #fff))",
@@ -1068,10 +1216,15 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion .cm-table-selection-outline[data-open='true']": {
       display: "block",
     },
+    ".cm-content .cm-table-editor-notion .cm-table-handle-layer": {
+      position: "absolute",
+      inset: "0",
+      overflow: "visible",
+      pointerEvents: "none",
+      zIndex: "18",
+    },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle": {
       position: "absolute",
-      top: "0",
-      left: "50%",
       transform: "translate(-50%, -50%)",
       width: "22px",
       height: "14px",
@@ -1080,6 +1233,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "transparent",
       opacity: "0",
       cursor: "pointer",
+      pointerEvents: "auto",
       transition: "opacity 120ms ease, transform 120ms ease",
       outline: "none",
     },
@@ -1094,7 +1248,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
       transition: "width 120ms ease, height 120ms ease, background 120ms ease",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-header-cell:hover .cm-table-col-handle, .cm-content .cm-table-editor-notion .cm-table-col-handle[data-selected='true']": {
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle[data-selected='true']": {
       opacity: "0.95",
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle:hover, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible": {
@@ -1109,8 +1263,6 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle": {
       position: "absolute",
-      left: "0",
-      top: "50%",
       transform: "translate(-50%, -50%)",
       width: "14px",
       height: "22px",
@@ -1119,6 +1271,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "var(--editor-surface, var(--editor-bg, #fff))",
       opacity: "0",
       cursor: "pointer",
+      pointerEvents: "auto",
       transition: "opacity 120ms ease, transform 120ms ease",
       outline: "none",
     },
@@ -1133,7 +1286,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
       transition: "width 120ms ease, height 120ms ease, background 120ms ease",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row:hover .cm-table-row-handle, .cm-content .cm-table-editor-notion .cm-table-row-handle[data-selected='true']": {
+    ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle[data-selected='true']": {
       opacity: "1",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle:hover, .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible": {
