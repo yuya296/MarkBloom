@@ -9,6 +9,10 @@
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
 - cm6-table-editor-vanilla: 依存ゼロの HTML table で Markdown テーブルを表示・編集する CM6 パッケージ。
 - Jspreadsheet CE: テーブル編集 UI を提供するコミュニティ版スプレッドシートライブラリ。
+- Virtual Header: Markdown実データに含めず、UI操作のためにのみ表示する行/列ヘッダ。
+- Row Header: Tabulator上で行操作・行選択の導線に使う仮想ヘッダ列。
+- Column Header Handle: 列ホバー時に表示し、列全選択やメニュー起点になるハンドルUI。
+- Row Header Handle: 行ホバー時に表示し、行全選択やメニュー起点になるハンドルUI。
 - MarkBloom: VS Code 上で Markdown を編集するための拡張と Webview UI。
 - vscode-extension: MarkBloom の VS Code 拡張パッケージ。
 - Table Action Menu: 行/列操作のためのコンテキストメニュー（挿入/削除/整列）。
