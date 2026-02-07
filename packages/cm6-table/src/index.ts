@@ -330,7 +330,9 @@ class TableWidget extends WidgetType {
       isEditing = true;
       wrapper.dataset.mode = "edit";
       editor.dataset.open = "true";
-      editor.value = toDisplayText(getCellText(cell));
+      const modelValue = toDisplayText(getCellText(cell));
+      const displayedValue = contentElements[cell.row]?.[cell.col]?.textContent ?? "";
+      editor.value = modelValue.length > 0 ? modelValue : displayedValue;
       positionEditor(cell);
       requestAnimationFrame(() => {
         editor.focus({ preventScroll: true });
