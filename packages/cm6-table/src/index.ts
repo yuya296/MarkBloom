@@ -1009,20 +1009,21 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       paddingTop: "8px",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
       borderRadius: "0",
-      background: "var(--editor-bg, #fff)",
+      background: "var(--editor-surface, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion table.cm-table": {
       width: "100%",
       minWidth: "360px",
       borderCollapse: "collapse",
       tableLayout: "fixed",
-      background: "var(--editor-bg, #fff)",
+      background: "var(--editor-surface, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row": {
-      background: "var(--editor-bg, #fff)",
+      background: "var(--editor-surface, var(--editor-bg, #fff))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-header-cell": {
-      background: "color-mix(in srgb, var(--editor-bg, #fff) 92%, var(--editor-border, #dadce0))",
+      background:
+        "color-mix(in srgb, var(--editor-surface, var(--editor-bg, #fff)) 92%, var(--editor-border, #dadce0))",
       color: "var(--editor-secondary-color, #5f6368)",
       fontWeight: "600",
       position: "relative",
@@ -1034,7 +1035,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       minHeight: "36px",
       verticalAlign: "middle",
       position: "relative",
-      color: "var(--editor-foreground, #202124)",
+      color: "var(--editor-text-color, var(--editor-foreground, #202124))",
       overflow: "visible",
     },
     ".cm-content .cm-table-editor-notion .cm-table-cell-content": {
@@ -1049,10 +1050,12 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-selected": {
-      background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-bg, #fff))",
+      background:
+        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-surface, var(--editor-bg, #fff)))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-column-selected": {
-      background: "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-bg, #fff))",
+      background:
+        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-surface, var(--editor-bg, #fff)))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-selection-outline": {
       position: "absolute",
@@ -1088,7 +1091,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       margin: "6px auto 0",
       borderRadius: "999px",
       background:
-        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-bg, #fff))",
+        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
       transition: "width 120ms ease, height 120ms ease, background 120ms ease",
     },
     ".cm-content .cm-table-editor-notion .cm-table-header-cell:hover .cm-table-col-handle, .cm-content .cm-table-editor-notion .cm-table-col-handle[data-selected='true']": {
@@ -1113,7 +1116,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       height: "22px",
       padding: "0",
       border: "none",
-      background: "var(--editor-bg, #fff)",
+      background: "var(--editor-surface, var(--editor-bg, #fff))",
       opacity: "0",
       cursor: "pointer",
       transition: "opacity 120ms ease, transform 120ms ease",
@@ -1127,7 +1130,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       margin: "6px 0 0 6px",
       borderRadius: "999px",
       background:
-        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-bg, #fff))",
+        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
       transition: "width 120ms ease, height 120ms ease, background 120ms ease",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row:hover .cm-table-row-handle, .cm-content .cm-table-editor-notion .cm-table-row-handle[data-selected='true']": {
@@ -1146,7 +1149,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion .cm-table-context-menu": {
       position: "absolute",
       minWidth: "164px",
-      background: "var(--editor-bg, #fff)",
+      background: "var(--editor-surface, var(--editor-bg, #fff))",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 88%, transparent)",
       borderRadius: "8px",
       boxShadow: "0 12px 24px rgba(0, 0, 0, 0.14)",
@@ -1161,7 +1164,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion .cm-table-context-menu-item": {
       border: "none",
       background: "transparent",
-      color: "var(--editor-foreground, #202124)",
+      color: "var(--editor-text-color, var(--editor-foreground, #202124))",
       borderRadius: "6px",
       textAlign: "left",
       padding: "6px 8px",
@@ -1171,7 +1174,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-notion .cm-table-context-menu-item:hover": {
       background:
-        "color-mix(in srgb, var(--editor-bg, #fff) 86%, var(--editor-border, #dadce0))",
+        "color-mix(in srgb, var(--editor-surface, var(--editor-bg, #fff)) 86%, var(--editor-border, #dadce0))",
     },
     ".cm-content .cm-table-editor-notion .cm-table-overlay-input": {
       position: "absolute",
@@ -1182,8 +1185,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       outline: "none",
       margin: "0",
       padding: "7px 9px",
-      background: "var(--editor-bg, #fff)",
-      color: "var(--editor-foreground, #202124)",
+      background: "var(--editor-surface, var(--editor-bg, #fff))",
+      color: "var(--editor-text-color, var(--editor-foreground, #202124))",
       font: "inherit",
       lineHeight: "1.35",
       boxSizing: "border-box",
