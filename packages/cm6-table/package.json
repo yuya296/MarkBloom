@@ -31,6 +31,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --out-dir dist --clean",
     "lint": "eslint src --max-warnings 0",
+    "test": "tsx --test tests/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -42,10 +43,14 @@
     "@codemirror/view": "^6.39.8"
   },
   "devDependencies": {
+    "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.1",
     "@codemirror/state": "^6.5.3",
     "@codemirror/view": "^6.39.8",
+    "@lezer/markdown": "^1.6.2",
+    "jsdom": "^26.1.0",
     "tsup": "^8.5.1",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.3"
   }
 }
