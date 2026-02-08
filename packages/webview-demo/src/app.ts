@@ -2,8 +2,8 @@ import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
+import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
 import { createEditor } from "./createEditor";
-import { tableEditor as vanillaTableEditor } from "@yuya296/cm6-table-editor-vanilla";
 import { editorTheme } from "./editorTheme";
 import { editorHighlightStyle } from "./editorHighlightStyle";
 
@@ -13,7 +13,6 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
-  tableEngine: "vanilla" | "none";
 };
 
 function buildExtensions({
@@ -22,7 +21,6 @@ function buildExtensions({
   tabSize,
   livePreviewEnabled,
   blockRevealEnabled,
-  tableEngine,
 }: ExtensionOptions): Extension[] {
   const extensions: Extension[] = [];
 
@@ -53,9 +51,7 @@ function buildExtensions({
     );
   }
 
-  if (tableEngine !== "none") {
-    extensions.push(resolveTableEditor(tableEngine));
-  }
+  extensions.push(cm6TableEditor());
 
   return extensions;
 }
@@ -76,7 +72,6 @@ export function setupApp() {
     blockReveal: document.getElementById("toggle-block-reveal"),
     themeToggle: document.getElementById("toggle-theme"),
     tabSize: document.getElementById("tab-size"),
-    tableEngine: document.getElementById("table-engine"),
     apply: document.getElementById("apply"),
     settingsMenu: document.getElementById("settings-menu"),
   };
@@ -88,7 +83,6 @@ export function setupApp() {
     !(controls.blockReveal instanceof HTMLInputElement) ||
     !(controls.themeToggle instanceof HTMLButtonElement) ||
     !(controls.tabSize instanceof HTMLInputElement) ||
-    !(controls.tableEngine instanceof HTMLSelectElement) ||
     !(controls.apply instanceof HTMLButtonElement)
   ) {
     throw new Error("Missing control elements");
@@ -100,7 +94,6 @@ export function setupApp() {
   const blockRevealControl = controls.blockReveal;
   const themeToggleControl = controls.themeToggle;
   const tabSizeControl = controls.tabSize;
-  const tableEngineControl = controls.tableEngine;
   const applyControl = controls.apply;
   const settingsMenu = controls.settingsMenu;
 
@@ -131,7 +124,6 @@ export function setupApp() {
       livePreviewEnabled: livePreviewControl.checked,
       blockRevealEnabled: blockRevealControl.checked,
       tabSize: Number(tabSizeControl.value),
-      tableEngine: resolveTableEngine(tableEngineControl.value),
     }),
     onChange: (text) => {
       if (status) {
@@ -151,7 +143,6 @@ export function setupApp() {
         livePreviewEnabled: livePreviewControl.checked,
         blockRevealEnabled: blockRevealControl.checked,
         tabSize: Number(tabSizeControl.value),
-        tableEngine: resolveTableEngine(tableEngineControl.value),
       })
     );
     if (settingsMenu instanceof HTMLDetailsElement) {
@@ -162,22 +153,4 @@ export function setupApp() {
   applyControl.addEventListener("click", applyExtensions);
 
   return editor;
-}
-
-function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
-  if (value === "vanilla" || value === "none") {
-    return value;
-  }
-  return "vanilla";
-}
-
-function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension {
-  switch (engine) {
-    case "vanilla":
-      return vanillaTableEditor();
-    case "none":
-      return [];
-    default:
-      return vanillaTableEditor();
-  }
 }

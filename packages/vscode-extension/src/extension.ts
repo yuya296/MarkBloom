@@ -223,9 +223,54 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
     <title>MarkBloom Editor</title>
   </head>
   <body>
-    <div id="app" class="webview-app">
+    <div id="app" class="webview-app" data-width="default" data-editable="true">
+      <div class="webview-toolbar">
+        <div class="toolbar-group">
+          <button
+            id="toggle-edit-mode"
+            class="slide-toggle"
+            type="button"
+            title="Switch to view mode"
+            aria-pressed="true"
+            aria-label="Toggle edit mode"
+          >
+            <span class="slide-toggle-track" aria-hidden="true">
+              <span class="slide-toggle-icon slide-toggle-icon--left material-symbols-outlined">
+                visibility
+              </span>
+              <span class="slide-toggle-icon slide-toggle-icon--right material-symbols-outlined">
+                edit
+              </span>
+              <span class="slide-toggle-thumb">
+                <span class="material-symbols-outlined" data-thumb-icon="visibility">
+                  visibility
+                </span>
+                <span class="material-symbols-outlined" data-thumb-icon="edit">
+                  edit
+                </span>
+              </span>
+            </span>
+          </button>
+          <button
+            id="toggle-width"
+            class="icon-button"
+            type="button"
+            title="Switch to wide layout"
+            aria-pressed="false"
+          >
+            <span class="icon material-symbols-outlined" data-icon="width-normal" aria-hidden="true">
+              arrow_range
+            </span>
+            <span class="icon material-symbols-outlined" data-icon="width-full" aria-hidden="true">
+              arrow_range
+            </span>
+          </button>
+        </div>
+      </div>
       <main class="webview-main">
-        <div id="editor" class="editor"></div>
+        <div class="editor-shell">
+          <div id="editor" class="editor"></div>
+        </div>
       </main>
       <footer class="footer">
         <span id="change-info">No changes yet.</span>
@@ -240,6 +285,76 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new MarkBloomEditorProvider(context);
 
+  const resolveCommandUri = (resource?: unknown): vscode.Uri | undefined => {
+    if (resource instanceof vscode.Uri) {
+      return resource;
+    }
+    if (
+      resource &&
+      typeof resource === "object" &&
+      "uri" in resource &&
+      (resource as { uri?: unknown }).uri instanceof vscode.Uri
+    ) {
+      return (resource as { uri: vscode.Uri }).uri;
+    }
+    return vscode.window.activeTextEditor?.document.uri;
+  };
+
+  const openWith = async (resource: unknown, viewType: string) => {
+    const uri = resolveCommandUri(resource);
+    if (!uri) {
+      return;
+    }
+    await vscode.commands.executeCommand(
+      "vscode.openWith",
+      uri,
+      viewType,
+      vscode.ViewColumn.Active
+    );
+  };
+
+  const getAssociationTarget = () =>
+    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+      ? vscode.ConfigurationTarget.Workspace
+      : vscode.ConfigurationTarget.Global;
+
+  const syncEditorAssociation = async () => {
+    const config = vscode.workspace.getConfiguration("markbloom");
+    const openInMarkBloom = config.get("view.openInMarkBloomByDefault", true);
+    const workbenchConfig = vscode.workspace.getConfiguration();
+    const associations =
+      workbenchConfig.get<Record<string, string>>("workbench.editorAssociations") ??
+      {};
+
+    if (Array.isArray(associations)) {
+      return;
+    }
+
+    const nextAssociations = { ...associations };
+    const current = nextAssociations["*.md"];
+    let changed = false;
+
+    if (openInMarkBloom) {
+      if (current !== "markbloom.editor") {
+        nextAssociations["*.md"] = "markbloom.editor";
+        changed = true;
+      }
+    } else if (current === "markbloom.editor") {
+      delete nextAssociations["*.md"];
+      changed = true;
+    }
+
+    if (!changed) {
+      return;
+    }
+
+    await workbenchConfig.update(
+      "workbench.editorAssociations",
+      nextAssociations,
+      getAssociationTarget()
+    );
+  };
+
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider("markbloom.editor", provider, {
       webviewOptions: {
@@ -249,12 +364,29 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("markbloom.openInMarkBloom", (resource) =>
+      openWith(resource, "markbloom.editor")
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("markbloom.openSource", (resource) =>
+      openWith(resource, "default")
+    )
+  );
+
+  context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("markbloom")) {
         provider.broadcastConfig();
+        if (event.affectsConfiguration("markbloom.view.openInMarkBloomByDefault")) {
+          void syncEditorAssociation();
+        }
       }
     })
   );
+
+  void syncEditorAssociation();
 }
 
 export function deactivate(): void {}

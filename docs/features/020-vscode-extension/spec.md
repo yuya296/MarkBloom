@@ -43,6 +43,7 @@ VS Code 拡張として Webview を提供し、CM6 ベースのエディタ（fe
 - `markbloom.livePreview.enabled`
 - `markbloom.livePreview.inlineRadius`
 - `markbloom.table.enabled`
+- `markbloom.view.openInMarkBloomByDefault`（boolean）
 
 ## 6. 受け入れ条件（Acceptance Criteria）
 - VS Code で `.md` を開くと MarkBloom Webview で編集できる
@@ -50,3 +51,31 @@ VS Code 拡張として Webview を提供し、CM6 ベースのエディタ（fe
 - 設定変更が Webview に反映される（少なくとも再読み込みでOK、できればランタイム反映）
 - `cm6-live-preview` を有効化すると露出制御が効く
 - `cm6-table-editor-vanilla` を有効化するとテーブル表示が効く（v1）
+
+## 7. 追加仕様（VS Code 拡張 UI/UX）
+### 7.1 既定のビュー選択
+- 設定 `markbloom.view.openInMarkBloomByDefault` を追加
+  - `true`: `.md` を開いたとき MarkBloom を既定ビューにする
+  - `false`: `.md` を開いたとき通常のテキストエディタを既定にする
+- 既定ビューを切り替えても、ユーザーが明示的に選択した「Open With」は尊重される
+
+### 7.2 右上のビュー切り替えボタン
+- MarkBloom 表示時:
+  - 右上にソースアイコンを表示（ツールチップ: "Open Source"）
+  - クリックで同じファイルを通常のテキストエディタで開く
+- 通常のテキスト表示時:
+  - 右上に MarkBloom アイコンを表示（ツールチップ: "Open in MarkBloom"）
+  - クリックで同じファイルを MarkBloom で開く
+- VS Code の editor/title もしくは webview 内ツールバーとして実装
+
+### 7.3 Editable / View トグル
+- MarkBloom 内に「Editable / View」トグルを追加
+  - Editable: 既存の編集 UI を有効化（入力可）
+  - View: 読み取り専用（入力不可）でプレビューに集中
+  - UI は鉛筆アイコン ←→ 目アイコンのトグル
+
+### 7.4 Wide / Default トグル
+- MarkBloom 内にレイアウト幅を切り替えるトグルを追加
+  - Wide: full width
+  - Default: `max-width: 600px` 程度
+  - 表示状態はセッション内で保持（永続化は不要）

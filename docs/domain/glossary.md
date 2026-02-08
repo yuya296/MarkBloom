@@ -7,7 +7,11 @@
 - cm6-markdown-semantics: Markdown構文を解析し semantic class を付与するパッケージ。
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
-- cm6-table-editor-vanilla: 依存ゼロの HTML table で Markdown テーブルを表示・編集する CM6 パッケージ。
+- cm6-table: 現行の唯一の table editor パッケージ。Navigation/Editing の2モードで操作する。
+- Column Header Handle: 列ホバー時に表示し、列全選択やメニュー起点になるハンドルUI。
+- Row Header Handle: 行ホバー時に表示し、行全選択やメニュー起点になるハンドルUI。
+- Navigation Mode: テーブル内のセル移動・行列選択を行うモード。直接テキスト入力はしない。
+- Editing Mode: 単一のオーバーレイ入力でセル編集を行うモード。Enterで確定、Escでキャンセルする。
 - MarkBloom: VS Code 上で Markdown を編集するための拡張と Webview UI。
 - vscode-extension: MarkBloom の VS Code 拡張パッケージ。
 - Table Action Menu: 行/列操作のためのコンテキストメニュー（挿入/削除/整列）。

@@ -17,16 +17,47 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "activationEvents": ["onCustomEditor:markbloom.editor"],
+  "activationEvents": [
+    "onCustomEditor:markbloom.editor",
+    "onCommand:markbloom.openInMarkBloom",
+    "onCommand:markbloom.openSource",
+    "onStartupFinished"
+  ],
   "contributes": {
     "customEditors": [
       {
         "viewType": "markbloom.editor",
         "displayName": "MarkBloom Editor",
         "selector": [{ "filenamePattern": "*.md" }],
-        "priority": "default"
+        "priority": "option"
       }
     ],
+    "commands": [
+      {
+        "command": "markbloom.openInMarkBloom",
+        "title": "Open in MarkBloom",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "markbloom.openSource",
+        "title": "Open Source",
+        "icon": "$(file-code)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "markbloom.openSource",
+          "when": "activeCustomEditorId == markbloom.editor",
+          "group": "navigation"
+        },
+        {
+          "command": "markbloom.openInMarkBloom",
+          "when": "resourceExtname == .md && !activeCustomEditorId",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "MarkBloom",
       "properties": {
@@ -44,6 +75,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enable MarkBloom table editing UI."
+        },
+        "markbloom.view.openInMarkBloomByDefault": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open Markdown files in MarkBloom by default."
         }
       }
     }
@@ -68,7 +104,7 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.2",
     "@yuya296/cm6-live-preview": "workspace:*",
-    "@yuya296/cm6-table-editor-vanilla": "workspace:*"
+    "@yuya296/cm6-table": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.3.1",

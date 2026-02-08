@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0");
+
 :root {
   color-scheme: light dark;
   font-family: var(
@@ -98,15 +100,204 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   min-height: 100vh;
-  padding: 16px;
+  padding: 12px;
   background: var(--app-bg);
+}
+
+.webview-toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 40;
+}
+
+.toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--app-pill-bg);
+  border: 1px solid var(--app-pill-border);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--app-text);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.icon-button:hover {
+  background: var(--app-button-bg);
+  border-color: var(--app-button-border);
+}
+
+.icon-button[aria-pressed="true"] {
+  background: var(--app-pill-bg);
+  border-color: var(--app-pill-border);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.icon-button .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-button .material-symbols-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Material Symbols Outlined";
+  font-size: 20px;
+  line-height: 1;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+}
+
+.icon-button [data-icon="width-normal"] {
+  transform: scaleX(-1);
+}
+
+.slide-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-text);
+  cursor: pointer;
+}
+
+.slide-toggle:hover {
+  border-color: var(--app-button-border);
+  background: var(--app-button-bg);
+}
+
+.slide-toggle-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 64px;
+  height: 28px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.slide-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-family: "Material Symbols Outlined";
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.slide-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #d7dbe2;
+  color: #2a3038;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease;
+}
+
+.slide-toggle-thumb .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-size: 16px;
+  line-height: 1;
+}
+
+.webview-app[data-editable="true"] .slide-toggle-icon--right,
+.webview-app[data-editable="false"] .slide-toggle-icon--left {
+  visibility: hidden;
+}
+
+.webview-app[data-editable="true"] .slide-toggle-thumb {
+  transform: translateX(36px);
+}
+
+.webview-app[data-editable="true"] [data-thumb-icon="visibility"],
+.webview-app[data-editable="false"] [data-thumb-icon="edit"] {
+  display: none;
+}
+
+.webview-app[data-editable="true"] [data-icon="visibility"],
+.webview-app[data-editable="false"] [data-icon="edit"],
+.webview-app[data-width="default"] [data-icon="width-full"],
+.webview-app[data-width="wide"] [data-icon="width-normal"] {
+  display: none;
+}
+
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-overlay-input,
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-context-menu,
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-col-handle,
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-row-handle {
+  display: none;
+}
+
+.view-mode-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(20, 24, 30, 0.9);
+  color: #f2f4f8;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.view-mode-toast[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .webview-main {
   flex: 1;
   display: flex;
+}
+
+.editor-shell {
+  width: 100%;
+}
+
+.webview-app[data-width="default"] .editor-shell {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.webview-app[data-width="wide"] .editor-shell {
+  max-width: none;
 }
 
 .editor {

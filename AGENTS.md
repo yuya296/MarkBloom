@@ -33,5 +33,6 @@
 
 ### Change Checklist (Keep It Short)
 - 機能変更: 影響パッケージの責務を確認し、該当モジュールに最小変更。
+- 作業後（毎回）: `pnpm -C packages/webview-demo build` と `pm2 start ecosystem.config.cjs` で確認。
 - UI/テーマ変更: `webview-demo`のCSS変数とテーマ拡張の両方を確認。
-- 検証: Chrome-devtools-mcpで動作確認すること。
+- 検証: agent-browserで動作確認すること。
