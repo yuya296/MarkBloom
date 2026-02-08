@@ -306,30 +306,6 @@ class TableWidget extends WidgetType {
       return null;
     };
 
-    const bindCellHoverEvents = (cell: HTMLTableCellElement) => {
-      cell.addEventListener(
-        "pointerenter",
-        () => {
-          applyHoveredCell(cell);
-        },
-        { signal }
-      );
-      cell.addEventListener(
-        "pointerleave",
-        (event) => {
-          const related = event.relatedTarget;
-          if (
-            related instanceof Element &&
-            related.closest(".cm-table-cell, .cm-table-col-handle, .cm-table-row-handle")
-          ) {
-            return;
-          }
-          clearHoveredHandles();
-        },
-        { signal }
-      );
-    };
-
     const updateRangeOutline = () => {
       selectionOutline.dataset.open = "false";
       if (!selection || selection.kind === "cell") {
@@ -593,7 +569,6 @@ class TableWidget extends WidgetType {
 
       th.appendChild(content);
       headerTr.appendChild(th);
-      bindCellHoverEvents(th);
 
       headerRowCells.push(th);
       headerRowContents.push(content);
@@ -623,7 +598,6 @@ class TableWidget extends WidgetType {
         td.appendChild(content);
 
         tr.appendChild(td);
-        bindCellHoverEvents(td);
         rowCells.push(td);
         rowContents.push(content);
       }
@@ -773,6 +747,21 @@ class TableWidget extends WidgetType {
       { signal, passive: true }
     );
 
+    document.addEventListener(
+      "pointermove",
+      (event) => {
+        const target = event.target;
+        if (!(target instanceof Node)) {
+          clearHoveredHandles();
+          return;
+        }
+        if (!wrapper.contains(target)) {
+          clearHoveredHandles();
+        }
+      },
+      { signal, capture: true, passive: true }
+    );
+
     wrapper.addEventListener(
       "pointerleave",
       (event) => {
@@ -802,6 +791,8 @@ class TableWidget extends WidgetType {
           closeMenu();
           return;
         }
+        // Keep hover strictly pointer-driven: selecting a cell must not pin handles.
+        clearHoveredHandles();
         const row = Number(cell.dataset.row);
         const col = Number(cell.dataset.col);
         if (!Number.isFinite(row) || !Number.isFinite(col)) {
@@ -1280,8 +1271,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion .cm-table-col-handle": {
       position: "absolute",
       transform: "translate(-50%, -50%)",
-      width: "24px",
-      height: "16px",
+      width: "30px",
+      height: "20px",
       padding: "0",
       border: "none",
       background: "transparent",
@@ -1296,7 +1287,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       display: "block",
       width: "11px",
       height: "2px",
-      margin: "7px auto 0",
+      margin: "9px auto 0",
       borderRadius: "999px",
       background:
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
@@ -1306,7 +1297,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       opacity: "0.95",
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle:hover, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible": {
-      transform: "translate(-50%, -50%) scale(1.25)",
+      transform: "translate(-50%, -50%) scale(1.35)",
       opacity: "1",
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle:hover::before, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible::before": {
@@ -1318,8 +1309,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion .cm-table-row-handle": {
       position: "absolute",
       transform: "translate(-50%, -50%)",
-      width: "16px",
-      height: "24px",
+      width: "20px",
+      height: "30px",
       padding: "0",
       border: "none",
       background: "transparent",
@@ -1334,7 +1325,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       display: "block",
       width: "2px",
       height: "11px",
-      margin: "7px 0 0 7px",
+      margin: "9px 0 0 9px",
       borderRadius: "999px",
       background:
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
@@ -1344,7 +1335,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       opacity: "1",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle:hover, .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible": {
-      transform: "translate(-50%, -50%) scale(1.25)",
+      transform: "translate(-50%, -50%) scale(1.35)",
       opacity: "1",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle:hover::before, .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible::before": {
