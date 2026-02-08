@@ -104,7 +104,7 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.2",
     "@yuya296/cm6-live-preview": "workspace:*",
-    "@yuya296/cm6-table-editor-vanilla": "workspace:*"
+    "@yuya296/cm6-table": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.3.1",

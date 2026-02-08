@@ -1,7 +1,7 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
-import { tableEditor as vanillaTableEditor } from "@yuya296/cm6-table-editor-vanilla";
+import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
 import { createEditor, EditorHandle } from "./editor/createEditor";
 import { editorHighlightStyle } from "./editor/editorHighlightStyle";
 import { editorTheme } from "./editor/editorTheme";
@@ -124,7 +124,7 @@ const buildExtensions = ({
   }
 
   if (tableEnabled) {
-    extensions.push(vanillaTableEditor());
+    extensions.push(cm6TableEditor());
   }
 
   return extensions;

@@ -4,11 +4,6 @@ import initialText from "../assets/sample.md?raw";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
 import { createEditor } from "./createEditor";
-import { tableEditor as agGridTableEditor } from "@yuya296/cm6-table-editor-aggrid";
-import { tableEditor as handsontableTableEditor } from "@yuya296/cm6-table-editor-handsontable5";
-import { tableEditor as jspreadsheetTableEditor } from "@yuya296/cm6-table-editor-jspreadsheet";
-import { tableEditor as tabulatorTableEditor } from "@yuya296/cm6-table-editor-tabulator";
-import { tableEditor as vanillaTableEditor } from "@yuya296/cm6-table-editor-vanilla";
 import { editorTheme } from "./editorTheme";
 import { editorHighlightStyle } from "./editorHighlightStyle";
 
@@ -18,14 +13,6 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
-  tableEngine:
-    | "cm6table"
-    | "vanilla"
-    | "handsontable5"
-    | "tabulator"
-    | "aggrid"
-    | "jspreadsheet"
-    | "none";
 };
 
 function buildExtensions({
@@ -34,7 +21,6 @@ function buildExtensions({
   tabSize,
   livePreviewEnabled,
   blockRevealEnabled,
-  tableEngine,
 }: ExtensionOptions): Extension[] {
   const extensions: Extension[] = [];
 
@@ -65,9 +51,7 @@ function buildExtensions({
     );
   }
 
-  if (tableEngine !== "none") {
-    extensions.push(resolveTableEditor(tableEngine));
-  }
+  extensions.push(cm6TableEditor());
 
   return extensions;
 }
@@ -88,7 +72,6 @@ export function setupApp() {
     blockReveal: document.getElementById("toggle-block-reveal"),
     themeToggle: document.getElementById("toggle-theme"),
     tabSize: document.getElementById("tab-size"),
-    tableEngine: document.getElementById("table-engine"),
     apply: document.getElementById("apply"),
     settingsMenu: document.getElementById("settings-menu"),
   };
@@ -100,7 +83,6 @@ export function setupApp() {
     !(controls.blockReveal instanceof HTMLInputElement) ||
     !(controls.themeToggle instanceof HTMLButtonElement) ||
     !(controls.tabSize instanceof HTMLInputElement) ||
-    !(controls.tableEngine instanceof HTMLSelectElement) ||
     !(controls.apply instanceof HTMLButtonElement)
   ) {
     throw new Error("Missing control elements");
@@ -112,7 +94,6 @@ export function setupApp() {
   const blockRevealControl = controls.blockReveal;
   const themeToggleControl = controls.themeToggle;
   const tabSizeControl = controls.tabSize;
-  const tableEngineControl = controls.tableEngine;
   const applyControl = controls.apply;
   const settingsMenu = controls.settingsMenu;
 
@@ -143,7 +124,6 @@ export function setupApp() {
       livePreviewEnabled: livePreviewControl.checked,
       blockRevealEnabled: blockRevealControl.checked,
       tabSize: Number(tabSizeControl.value),
-      tableEngine: resolveTableEngine(tableEngineControl.value),
     }),
     onChange: (text) => {
       if (status) {
@@ -163,7 +143,6 @@ export function setupApp() {
         livePreviewEnabled: livePreviewControl.checked,
         blockRevealEnabled: blockRevealControl.checked,
         tabSize: Number(tabSizeControl.value),
-        tableEngine: resolveTableEngine(tableEngineControl.value),
       })
     );
     if (settingsMenu instanceof HTMLDetailsElement) {
@@ -174,40 +153,4 @@ export function setupApp() {
   applyControl.addEventListener("click", applyExtensions);
 
   return editor;
-}
-
-function resolveTableEngine(value: string): ExtensionOptions["tableEngine"] {
-  if (
-    value === "cm6table" ||
-    value === "vanilla" ||
-    value === "handsontable5" ||
-    value === "tabulator" ||
-    value === "aggrid" ||
-    value === "jspreadsheet" ||
-    value === "none"
-  ) {
-    return value;
-  }
-  return "cm6table";
-}
-
-function resolveTableEditor(engine: ExtensionOptions["tableEngine"]): Extension {
-  switch (engine) {
-    case "cm6table":
-      return cm6TableEditor();
-    case "vanilla":
-      return vanillaTableEditor();
-    case "handsontable5":
-      return handsontableTableEditor();
-    case "tabulator":
-      return tabulatorTableEditor();
-    case "aggrid":
-      return agGridTableEditor();
-    case "jspreadsheet":
-      return jspreadsheetTableEditor();
-    case "none":
-      return [];
-    default:
-      return vanillaTableEditor();
-  }
 }

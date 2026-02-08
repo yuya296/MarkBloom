@@ -13,14 +13,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Keep local workspace packages unbundled in dev so UI tweaks are reflected immediately.
-    exclude: [
-      "@yuya296/cm6-table",
-      "@yuya296/cm6-live-preview",
-      "@yuya296/cm6-table-editor-vanilla",
-      "@yuya296/cm6-table-editor-tabulator",
-      "@yuya296/cm6-table-editor-handsontable5",
-      "@yuya296/cm6-table-editor-jspreadsheet",
-      "@yuya296/cm6-table-editor-aggrid",
-    ],
+    exclude: ["@yuya296/cm6-table", "@yuya296/cm6-live-preview"],
   },
 });

@@ -252,11 +252,10 @@ body {
   display: none;
 }
 
-.webview-app[data-editable="false"] .cm-table-editor .cm-table-input {
-  pointer-events: none;
-}
-
-.webview-app[data-editable="false"] .cm-table-editor .cm-table-action {
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-overlay-input,
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-context-menu,
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-col-handle,
+.webview-app[data-editable="false"] .cm6-table-editor .cm-table-row-handle {
   display: none;
 }
 

@@ -11,10 +11,6 @@
     "paths": {
       "@yuya296/cm6-live-preview": ["../cm6-live-preview/src/index.ts"],
       "@yuya296/cm6-table": ["../cm6-table/src/index.ts"],
-      "@yuya296/cm6-table-editor-jspreadsheet": [
-        "../cm6-table-editor-jspreadsheet/src/index.ts"
-      ],
-      "@yuya296/cm6-table-editor-vanilla": ["../cm6-table-editor-vanilla/src/index.ts"],
       "@yuya296/cm6-live-preview-core": ["../cm6-live-preview-core/src/index.ts"],
       "@yuya296/cm6-markdown-semantics": ["../cm6-markdown-semantics/src/index.ts"],
       "@yuya296/cm6-typography-theme": ["../cm6-typography-theme/src/index.ts"]
