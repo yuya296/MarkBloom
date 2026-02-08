@@ -22,6 +22,7 @@ import {
   getColumnCount,
   insertColumnAt,
   insertRowAt,
+  reorderColumns,
   reorderRows,
   normalizeTableData,
 } from "./tableModel";
@@ -81,6 +82,13 @@ type RowDropMarker =
     }
   | null;
 
+type ColumnDropMarker =
+  | {
+      colIndex: number;
+      side: "before" | "after";
+    }
+  | null;
+
 const tableEditAnnotation = Annotation.define<boolean>();
 const defaultOptions: Required<TableEditorOptions> = {
   enabled: true,
@@ -102,6 +110,7 @@ class TableWidget extends WidgetType {
   private readonly abortController = new AbortController();
   private static readonly selectionByTableId = new Map<number, SelectionState>();
   private static readonly rowHandleOutsideOffset = 10;
+  private static readonly colHandleOutsideOffset = 9;
   private static readonly rowHandleVisualOffsetY = -1;
 
   private static createDragIndicatorIcon(): SVGElement {
@@ -109,7 +118,7 @@ class TableWidget extends WidgetType {
     const svg = document.createElementNS(ns, "svg");
     svg.setAttribute("viewBox", "0 0 24 24");
     svg.setAttribute("aria-hidden", "true");
-    svg.classList.add("cm-table-row-handle-icon");
+    svg.classList.add("cm-table-handle-icon");
 
     const path = document.createElementNS(ns, "path");
     path.setAttribute(
@@ -175,6 +184,10 @@ class TableWidget extends WidgetType {
     const signal = this.abortController.signal;
     const baseHandleTransform = "translate(-50%, -50%)";
     const activeHandleTransform = `${baseHandleTransform} scale(1.35)`;
+    const colHandleBaseColor =
+      "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))";
+    const colHandleHoverColor =
+      "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 88%, var(--editor-secondary-color, #5f6368))";
     const rowHandleBaseColor =
       "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))";
     const rowHandleHoverColor =
@@ -195,6 +208,10 @@ class TableWidget extends WidgetType {
     let rowDropMarker: RowDropMarker = null;
     let draggingRowPointerId: number | null = null;
     let draggingRowHandle: HTMLButtonElement | null = null;
+    let draggingColIndex: number | null = null;
+    let colDropMarker: ColumnDropMarker = null;
+    let draggingColPointerId: number | null = null;
+    let draggingColHandle: HTMLButtonElement | null = null;
 
     const getTotalRows = () => data.rows.length + 1;
 
@@ -314,6 +331,7 @@ class TableWidget extends WidgetType {
       columnHandleButtons.forEach((button) => {
         button.removeAttribute("data-hovered");
         button.style.transform = baseHandleTransform;
+        button.style.color = colHandleBaseColor;
       });
     };
 
@@ -418,7 +436,8 @@ class TableWidget extends WidgetType {
         }
         const rect = cell.getBoundingClientRect();
         const left = rect.left - wrapperRect.left + rect.width / 2;
-        const top = rect.top - wrapperRect.top;
+        const top =
+          rect.top - wrapperRect.top - TableWidget.colHandleOutsideOffset;
         button.style.left = `${left}px`;
         button.style.top = `${top}px`;
       });
@@ -449,6 +468,19 @@ class TableWidget extends WidgetType {
       });
     };
 
+    const clearColDropMarker = () => {
+      colDropMarker = null;
+      for (let row = 0; row < getTotalRows(); row += 1) {
+        for (let col = 0; col < columnCount; col += 1) {
+          const cell = cellElements[row]?.[col];
+          if (!cell) {
+            continue;
+          }
+          cell.classList.remove("cm-table-column-drop-before", "cm-table-column-drop-after");
+        }
+      }
+    };
+
     const setRowDropMarker = (rowIndex: number, side: "before" | "after") => {
       if (
         rowDropMarker &&
@@ -466,6 +498,23 @@ class TableWidget extends WidgetType {
         side === "before" ? "cm-table-row-drop-before" : "cm-table-row-drop-after"
       );
       rowDropMarker = { rowIndex, side };
+    };
+
+    const setColDropMarker = (colIndex: number, side: "before" | "after") => {
+      if (colDropMarker && colDropMarker.colIndex === colIndex && colDropMarker.side === side) {
+        return;
+      }
+      clearColDropMarker();
+      for (let row = 0; row < getTotalRows(); row += 1) {
+        const cell = cellElements[row]?.[colIndex];
+        if (!cell) {
+          continue;
+        }
+        cell.classList.add(
+          side === "before" ? "cm-table-column-drop-before" : "cm-table-column-drop-after"
+        );
+      }
+      colDropMarker = { colIndex, side };
     };
 
     const remapRowIndex = (
@@ -520,6 +569,54 @@ class TableWidget extends WidgetType {
       return current;
     };
 
+    const remapColIndex = (
+      sourceIndex: number,
+      targetInsertIndex: number,
+      index: number
+    ): number => {
+      const clampedSource = Math.max(0, Math.min(sourceIndex, columnCount - 1));
+      const clampedIndex = Math.max(0, Math.min(index, columnCount - 1));
+      let finalInsert = Math.max(0, Math.min(targetInsertIndex, columnCount));
+      if (clampedSource < finalInsert) {
+        finalInsert -= 1;
+      }
+      if (clampedIndex === clampedSource) {
+        return finalInsert;
+      }
+      if (clampedSource < finalInsert) {
+        return clampedIndex > clampedSource && clampedIndex <= finalInsert
+          ? clampedIndex - 1
+          : clampedIndex;
+      }
+      return clampedIndex >= finalInsert && clampedIndex < clampedSource
+        ? clampedIndex + 1
+        : clampedIndex;
+    };
+
+    const remapSelectionForColReorder = (
+      current: SelectionState | null,
+      sourceIndex: number,
+      targetInsertIndex: number
+    ): SelectionState | null => {
+      if (!current) {
+        return null;
+      }
+      if (current.kind === "column") {
+        return {
+          kind: "column",
+          col: remapColIndex(sourceIndex, targetInsertIndex, current.col),
+        };
+      }
+      if (current.kind === "cell") {
+        return {
+          kind: "cell",
+          row: current.row,
+          col: remapColIndex(sourceIndex, targetInsertIndex, current.col),
+        };
+      }
+      return current;
+    };
+
     const commitRowDrop = (sourceIndex: number, marker: RowDropMarker) => {
       if (!marker) {
         return;
@@ -531,6 +628,30 @@ class TableWidget extends WidgetType {
       }
       reorderRows(data, sourceIndex, targetInsertIndex);
       const remappedSelection = remapSelectionForRowReorder(
+        selection,
+        sourceIndex,
+        targetInsertIndex
+      );
+      selection = remappedSelection;
+      if (remappedSelection) {
+        TableWidget.selectionByTableId.set(this.tableInfo.id, remappedSelection);
+      } else {
+        TableWidget.selectionByTableId.delete(this.tableInfo.id);
+      }
+      dispatchCommit();
+    };
+
+    const commitColDrop = (sourceIndex: number, marker: ColumnDropMarker) => {
+      if (!marker) {
+        return;
+      }
+      const targetInsertIndex =
+        marker.side === "before" ? marker.colIndex : marker.colIndex + 1;
+      if (targetInsertIndex === sourceIndex || targetInsertIndex === sourceIndex + 1) {
+        return;
+      }
+      reorderColumns(data, sourceIndex, targetInsertIndex);
+      const remappedSelection = remapSelectionForColReorder(
         selection,
         sourceIndex,
         targetInsertIndex
@@ -571,6 +692,33 @@ class TableWidget extends WidgetType {
       clearRowDropMarker();
     };
 
+    const finishColDrag = () => {
+      const activePointerId = draggingColPointerId;
+      draggingColIndex = null;
+      if (
+        draggingColHandle &&
+        activePointerId !== null &&
+        typeof draggingColHandle.hasPointerCapture === "function" &&
+        draggingColHandle.hasPointerCapture(activePointerId)
+      ) {
+        try {
+          draggingColHandle.releasePointerCapture(activePointerId);
+        } catch {
+          // no-op
+        }
+      }
+      draggingColPointerId = null;
+      draggingColHandle = null;
+      wrapper.removeAttribute("data-col-dragging");
+      columnHandleButtons.forEach((button) => {
+        button.removeAttribute("data-dragging");
+        button.removeAttribute("data-hovered");
+        button.style.transform = baseHandleTransform;
+        button.style.color = colHandleBaseColor;
+      });
+      clearColDropMarker();
+    };
+
     const findBodyRowFromPoint = (clientX: number, clientY: number): number | null => {
       const target = document.elementFromPoint(clientX, clientY);
       if (!(target instanceof Element)) {
@@ -588,6 +736,26 @@ class TableWidget extends WidgetType {
       if (rowElement) {
         const rowIndex = Number(rowElement.dataset.bodyRowIndex);
         return Number.isFinite(rowIndex) ? rowIndex : null;
+      }
+      return null;
+    };
+
+    const findColFromPoint = (clientX: number, clientY: number): number | null => {
+      const target = document.elementFromPoint(clientX, clientY);
+      if (!(target instanceof Element)) {
+        return null;
+      }
+      const handle = target.closest<HTMLButtonElement>(".cm-table-col-handle");
+      if (handle) {
+        const handleCol = Number(handle.dataset.colIndex);
+        if (Number.isFinite(handleCol)) {
+          return handleCol;
+        }
+      }
+      const cell = target.closest<HTMLTableCellElement>(".cm-table-cell");
+      if (cell) {
+        const col = Number(cell.dataset.col);
+        return Number.isFinite(col) ? col : null;
       }
       return null;
     };
@@ -621,6 +789,37 @@ class TableWidget extends WidgetType {
         commitRowDrop(draggingRowIndex, rowDropMarker);
       }
       finishRowDrag();
+    };
+
+    const handleColDragMove = (event: PointerEvent) => {
+      if (draggingColIndex == null || draggingColPointerId !== event.pointerId) {
+        return;
+      }
+      event.preventDefault();
+      const colIndex = findColFromPoint(event.clientX, event.clientY);
+      if (colIndex == null) {
+        clearColDropMarker();
+        return;
+      }
+      const cell = cellElements[0]?.[colIndex];
+      if (!cell) {
+        clearColDropMarker();
+        return;
+      }
+      const rect = cell.getBoundingClientRect();
+      const side = event.clientX < rect.left + rect.width / 2 ? "before" : "after";
+      setColDropMarker(colIndex, side);
+    };
+
+    const handleColDragEnd = (event: PointerEvent) => {
+      if (draggingColIndex == null || draggingColPointerId !== event.pointerId) {
+        return;
+      }
+      event.preventDefault();
+      if (colDropMarker) {
+        commitColDrop(draggingColIndex, colDropMarker);
+      }
+      finishColDrag();
     };
 
     const applySelectionClasses = () => {
@@ -872,12 +1071,34 @@ class TableWidget extends WidgetType {
       handle.style.left = "-9999px";
       handle.style.top = "-9999px";
       handle.style.transform = baseHandleTransform;
+      handle.style.color = colHandleBaseColor;
+      handle.dataset.colIndex = String(col);
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select column ${col + 1}`);
+      handle.appendChild(TableWidget.createDragIndicatorIcon());
       handle.addEventListener(
-        "mousedown",
+        "pointerdown",
         (event) => {
+          if (event.button !== 0) {
+            return;
+          }
           event.preventDefault();
+          event.stopPropagation();
+          closeMenu();
+          stopEditing(true);
+          setSelection({ kind: "column", col }, false);
+          draggingColIndex = col;
+          draggingColPointerId = event.pointerId;
+          draggingColHandle = handle;
+          wrapper.dataset.colDragging = "true";
+          handle.dataset.dragging = "true";
+          if (typeof handle.setPointerCapture === "function") {
+            try {
+              handle.setPointerCapture(event.pointerId);
+            } catch {
+              // no-op
+            }
+          }
         },
         { signal }
       );
@@ -886,6 +1107,7 @@ class TableWidget extends WidgetType {
         () => {
           handle.dataset.hovered = "true";
           handle.style.transform = activeHandleTransform;
+          handle.style.color = colHandleHoverColor;
           setHoveredCol(col);
         },
         { signal }
@@ -895,6 +1117,7 @@ class TableWidget extends WidgetType {
         () => {
           handle.dataset.hovered = "true";
           handle.style.transform = activeHandleTransform;
+          handle.style.color = colHandleHoverColor;
           setHoveredCol(col);
         },
         { signal }
@@ -904,6 +1127,7 @@ class TableWidget extends WidgetType {
         () => {
           handle.removeAttribute("data-hovered");
           handle.style.transform = baseHandleTransform;
+          handle.style.color = colHandleBaseColor;
           setHoveredCol(null);
         },
         { signal }
@@ -913,6 +1137,7 @@ class TableWidget extends WidgetType {
         () => {
           handle.removeAttribute("data-hovered");
           handle.style.transform = baseHandleTransform;
+          handle.style.color = colHandleBaseColor;
           setHoveredCol(null);
         },
         { signal }
@@ -1113,6 +1338,9 @@ class TableWidget extends WidgetType {
     window.addEventListener("pointermove", handleRowDragMove, { signal, capture: true });
     window.addEventListener("pointerup", handleRowDragEnd, { signal, capture: true });
     window.addEventListener("pointercancel", handleRowDragEnd, { signal, capture: true });
+    window.addEventListener("pointermove", handleColDragMove, { signal, capture: true });
+    window.addEventListener("pointerup", handleColDragEnd, { signal, capture: true });
+    window.addEventListener("pointercancel", handleColDragEnd, { signal, capture: true });
 
     wrapper.addEventListener(
       "pointerdown",
@@ -1613,35 +1841,25 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       border: "none",
       background: "transparent",
       opacity: "0",
-      cursor: "pointer",
+      cursor: "grab",
       pointerEvents: "none",
       transition: "opacity 120ms ease, transform 120ms ease",
       outline: "none",
+      color:
+        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle::before": {
-      content: '""',
-      display: "block",
-      width: "11px",
-      height: "2px",
-      margin: "0",
-      borderRadius: "999px",
-      background:
-        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
-      transition: "width 120ms ease, height 120ms ease, background 120ms ease",
-    },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-visible='true']": {
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle[data-dragging='true']": {
       opacity: "0.95 !important",
       pointerEvents: "auto !important",
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-hovered='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible": {
       transform: "translate(-50%, -50%) scale(1.35) !important",
       opacity: "1 !important",
+      color:
+        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 88%, var(--editor-secondary-color, #5f6368)) !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-hovered='true']::before, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible::before": {
-      width: "16px !important",
-      height: "4px !important",
-      background:
-        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 45%, var(--editor-secondary-color, #5f6368)) !important",
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle:active": {
+      cursor: "grabbing",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle": {
       position: "absolute",
@@ -1661,12 +1879,12 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       color:
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle-icon": {
+    ".cm-content .cm-table-editor-notion .cm-table-handle-icon": {
       width: "14px",
       height: "14px",
       display: "block",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle-icon path": {
+    ".cm-content .cm-table-editor-notion .cm-table-handle-icon path": {
       fill: "currentColor",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle[data-dragging='true']": {
@@ -1687,6 +1905,12 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-notion .cm-table-body-row.cm-table-row-drop-after .cm-table-cell": {
       boxShadow: "inset 0 -2px 0 var(--editor-primary-color, #1a73e8)",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-cell.cm-table-column-drop-before": {
+      boxShadow: "inset 2px 0 0 var(--editor-primary-color, #1a73e8)",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-cell.cm-table-column-drop-after": {
+      boxShadow: "inset -2px 0 0 var(--editor-primary-color, #1a73e8)",
     },
     ".cm-content .cm-table-editor-notion .cm-table-context-menu": {
       position: "absolute",
