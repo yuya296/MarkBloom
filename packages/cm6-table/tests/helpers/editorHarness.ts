@@ -44,10 +44,10 @@ function installDom(): Teardown {
     pretendToBeVisual: true,
     url: "http://localhost/",
   });
-  const saved = new Map<string, unknown>();
+  const saved = new Map<string, PropertyDescriptor | undefined>();
 
   for (const key of GLOBAL_KEYS) {
-    saved.set(key, (globalThis as Record<string, unknown>)[key]);
+    saved.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
   }
 
   const win = dom.window as unknown as Window & {
@@ -93,16 +93,20 @@ function installDom(): Teardown {
   };
 
   Object.entries(patch).forEach(([key, value]) => {
-    (globalThis as Record<string, unknown>)[key] = value;
+    Object.defineProperty(globalThis, key, {
+      configurable: true,
+      writable: true,
+      value,
+    });
   });
 
   return () => {
     for (const key of GLOBAL_KEYS) {
-      const previous = saved.get(key);
-      if (typeof previous === "undefined") {
+      const previousDescriptor = saved.get(key);
+      if (typeof previousDescriptor === "undefined") {
         delete (globalThis as Record<string, unknown>)[key];
       } else {
-        (globalThis as Record<string, unknown>)[key] = previous;
+        Object.defineProperty(globalThis, key, previousDescriptor);
       }
     }
     dom.window.close();
