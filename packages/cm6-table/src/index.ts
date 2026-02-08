@@ -1809,12 +1809,10 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-selected": {
-      background:
-        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-surface, var(--editor-bg, #fff)))",
+      background: "transparent",
     },
     ".cm-content .cm-table-editor-notion .cm-table-column-selected": {
-      background:
-        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 9%, var(--editor-surface, var(--editor-bg, #fff)))",
+      background: "transparent",
     },
     ".cm-content .cm-table-editor-notion .cm-table-selection-outline": {
       position: "absolute",
