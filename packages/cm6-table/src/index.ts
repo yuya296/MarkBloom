@@ -22,6 +22,7 @@ import {
   getColumnCount,
   insertColumnAt,
   insertRowAt,
+  reorderRows,
   normalizeTableData,
 } from "./tableModel";
 import {
@@ -73,6 +74,13 @@ type MenuState =
     }
   | null;
 
+type RowDropMarker =
+  | {
+      rowIndex: number;
+      side: "before" | "after";
+    }
+  | null;
+
 const tableEditAnnotation = Annotation.define<boolean>();
 const defaultOptions: Required<TableEditorOptions> = {
   enabled: true,
@@ -94,6 +102,24 @@ class TableWidget extends WidgetType {
   private readonly abortController = new AbortController();
   private static readonly selectionByTableId = new Map<number, SelectionState>();
   private static readonly rowHandleOutsideOffset = 10;
+  private static readonly rowHandleVisualOffsetY = -1;
+
+  private static createDragIndicatorIcon(): SVGElement {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    svg.classList.add("cm-table-row-handle-icon");
+
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute(
+      "d",
+      "M11 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm8 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+    );
+
+    svg.appendChild(path);
+    return svg;
+  }
 
   constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
@@ -147,8 +173,15 @@ class TableWidget extends WidgetType {
     ensureHeader(data, columnCount);
 
     const signal = this.abortController.signal;
+    const baseHandleTransform = "translate(-50%, -50%)";
+    const activeHandleTransform = `${baseHandleTransform} scale(1.35)`;
+    const rowHandleBaseColor =
+      "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))";
+    const rowHandleHoverColor =
+      "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 88%, var(--editor-secondary-color, #5f6368))";
     const cellElements: HTMLTableCellElement[][] = [];
     const contentElements: HTMLDivElement[][] = [];
+    const bodyRowElements: HTMLTableRowElement[] = [];
     const rowHandleButtons: HTMLButtonElement[] = [];
     const columnHandleButtons: HTMLButtonElement[] = [];
 
@@ -158,6 +191,10 @@ class TableWidget extends WidgetType {
     let isComposing = false;
     let hoveredRow: number | null = null;
     let hoveredCol: number | null = null;
+    let draggingRowIndex: number | null = null;
+    let rowDropMarker: RowDropMarker = null;
+    let draggingRowPointerId: number | null = null;
+    let draggingRowHandle: HTMLButtonElement | null = null;
 
     const getTotalRows = () => data.rows.length + 1;
 
@@ -269,6 +306,15 @@ class TableWidget extends WidgetType {
     const clearHoveredHandles = () => {
       setHoveredRow(null);
       setHoveredCol(null);
+      rowHandleButtons.forEach((button) => {
+        button.removeAttribute("data-hovered");
+        button.style.transform = baseHandleTransform;
+        button.style.color = rowHandleBaseColor;
+      });
+      columnHandleButtons.forEach((button) => {
+        button.removeAttribute("data-hovered");
+        button.style.transform = baseHandleTransform;
+      });
     };
 
     const applyHoveredCell = (cell: HTMLTableCellElement | null) => {
@@ -284,6 +330,23 @@ class TableWidget extends WidgetType {
       }
       setHoveredCol(col);
       setHoveredRow(row > 0 ? row - 1 : null);
+    };
+
+    const bindCellHover = (cell: HTMLTableCellElement) => {
+      cell.addEventListener(
+        "pointerenter",
+        () => {
+          applyHoveredCell(cell);
+        },
+        { signal, passive: true }
+      );
+      cell.addEventListener(
+        "mouseenter",
+        () => {
+          applyHoveredCell(cell);
+        },
+        { signal, passive: true }
+      );
     };
 
     const isHandleElement = (node: unknown) =>
@@ -369,10 +432,195 @@ class TableWidget extends WidgetType {
         }
         const rect = cell.getBoundingClientRect();
         const left = rect.left - wrapperRect.left - TableWidget.rowHandleOutsideOffset;
-        const top = rect.top - wrapperRect.top + rect.height / 2;
+        const top =
+          rect.top -
+          wrapperRect.top +
+          rect.height / 2 +
+          TableWidget.rowHandleVisualOffsetY;
         button.style.left = `${left}px`;
         button.style.top = `${top}px`;
       });
+    };
+
+    const clearRowDropMarker = () => {
+      rowDropMarker = null;
+      bodyRowElements.forEach((rowElement) => {
+        rowElement.classList.remove("cm-table-row-drop-before", "cm-table-row-drop-after");
+      });
+    };
+
+    const setRowDropMarker = (rowIndex: number, side: "before" | "after") => {
+      if (
+        rowDropMarker &&
+        rowDropMarker.rowIndex === rowIndex &&
+        rowDropMarker.side === side
+      ) {
+        return;
+      }
+      clearRowDropMarker();
+      const rowElement = bodyRowElements[rowIndex];
+      if (!rowElement) {
+        return;
+      }
+      rowElement.classList.add(
+        side === "before" ? "cm-table-row-drop-before" : "cm-table-row-drop-after"
+      );
+      rowDropMarker = { rowIndex, side };
+    };
+
+    const remapRowIndex = (
+      sourceIndex: number,
+      targetInsertIndex: number,
+      index: number
+    ): number => {
+      const clampedSource = Math.max(0, Math.min(sourceIndex, data.rows.length - 1));
+      const clampedIndex = Math.max(0, Math.min(index, data.rows.length - 1));
+      let finalInsert = Math.max(0, Math.min(targetInsertIndex, data.rows.length));
+      if (clampedSource < finalInsert) {
+        finalInsert -= 1;
+      }
+      if (clampedIndex === clampedSource) {
+        return finalInsert;
+      }
+      if (clampedSource < finalInsert) {
+        return clampedIndex > clampedSource && clampedIndex <= finalInsert
+          ? clampedIndex - 1
+          : clampedIndex;
+      }
+      return clampedIndex >= finalInsert && clampedIndex < clampedSource
+        ? clampedIndex + 1
+        : clampedIndex;
+    };
+
+    const remapSelectionForRowReorder = (
+      current: SelectionState | null,
+      sourceIndex: number,
+      targetInsertIndex: number
+    ): SelectionState | null => {
+      if (!current) {
+        return null;
+      }
+      if (current.kind === "row") {
+        return {
+          kind: "row",
+          row: remapRowIndex(sourceIndex, targetInsertIndex, current.row),
+        };
+      }
+      if (current.kind === "cell") {
+        if (current.row === 0) {
+          return current;
+        }
+        const bodyRowIndex = current.row - 1;
+        return {
+          kind: "cell",
+          row: remapRowIndex(sourceIndex, targetInsertIndex, bodyRowIndex) + 1,
+          col: current.col,
+        };
+      }
+      return current;
+    };
+
+    const commitRowDrop = (sourceIndex: number, marker: RowDropMarker) => {
+      if (!marker) {
+        return;
+      }
+      const targetInsertIndex =
+        marker.side === "before" ? marker.rowIndex : marker.rowIndex + 1;
+      if (targetInsertIndex === sourceIndex || targetInsertIndex === sourceIndex + 1) {
+        return;
+      }
+      reorderRows(data, sourceIndex, targetInsertIndex);
+      const remappedSelection = remapSelectionForRowReorder(
+        selection,
+        sourceIndex,
+        targetInsertIndex
+      );
+      selection = remappedSelection;
+      if (remappedSelection) {
+        TableWidget.selectionByTableId.set(this.tableInfo.id, remappedSelection);
+      } else {
+        TableWidget.selectionByTableId.delete(this.tableInfo.id);
+      }
+      dispatchCommit();
+    };
+
+    const finishRowDrag = () => {
+      const activePointerId = draggingRowPointerId;
+      draggingRowIndex = null;
+      if (
+        draggingRowHandle &&
+        activePointerId !== null &&
+        typeof draggingRowHandle.hasPointerCapture === "function" &&
+        draggingRowHandle.hasPointerCapture(activePointerId)
+      ) {
+        try {
+          draggingRowHandle.releasePointerCapture(activePointerId);
+        } catch {
+          // no-op
+        }
+      }
+      draggingRowPointerId = null;
+      draggingRowHandle = null;
+      wrapper.removeAttribute("data-row-dragging");
+      rowHandleButtons.forEach((button) => {
+        button.removeAttribute("data-dragging");
+        button.removeAttribute("data-hovered");
+        button.style.transform = baseHandleTransform;
+        button.style.color = rowHandleBaseColor;
+      });
+      clearRowDropMarker();
+    };
+
+    const findBodyRowFromPoint = (clientX: number, clientY: number): number | null => {
+      const target = document.elementFromPoint(clientX, clientY);
+      if (!(target instanceof Element)) {
+        return null;
+      }
+      const cell = target.closest<HTMLTableCellElement>(".cm-table-cell");
+      if (cell) {
+        const row = Number(cell.dataset.row);
+        if (Number.isFinite(row) && row > 0) {
+          return row - 1;
+        }
+        return null;
+      }
+      const rowElement = target.closest<HTMLTableRowElement>(".cm-table-body-row");
+      if (rowElement) {
+        const rowIndex = Number(rowElement.dataset.bodyRowIndex);
+        return Number.isFinite(rowIndex) ? rowIndex : null;
+      }
+      return null;
+    };
+
+    const handleRowDragMove = (event: PointerEvent) => {
+      if (draggingRowIndex == null || draggingRowPointerId !== event.pointerId) {
+        return;
+      }
+      event.preventDefault();
+      const rowIndex = findBodyRowFromPoint(event.clientX, event.clientY);
+      if (rowIndex == null) {
+        clearRowDropMarker();
+        return;
+      }
+      const rowElement = bodyRowElements[rowIndex];
+      if (!rowElement) {
+        clearRowDropMarker();
+        return;
+      }
+      const rect = rowElement.getBoundingClientRect();
+      const side = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+      setRowDropMarker(rowIndex, side);
+    };
+
+    const handleRowDragEnd = (event: PointerEvent) => {
+      if (draggingRowIndex == null || draggingRowPointerId !== event.pointerId) {
+        return;
+      }
+      event.preventDefault();
+      if (rowDropMarker) {
+        commitRowDrop(draggingRowIndex, rowDropMarker);
+      }
+      finishRowDrag();
     };
 
     const applySelectionClasses = () => {
@@ -572,6 +820,7 @@ class TableWidget extends WidgetType {
 
       th.appendChild(content);
       headerTr.appendChild(th);
+      bindCellHover(th);
 
       headerRowCells.push(th);
       headerRowContents.push(content);
@@ -584,7 +833,8 @@ class TableWidget extends WidgetType {
     const tbody = document.createElement("tbody");
     data.rows.forEach((row, rowIndex) => {
       const tr = document.createElement("tr");
-      tr.className = "cm-table-row";
+      tr.className = "cm-table-row cm-table-body-row";
+      tr.dataset.bodyRowIndex = String(rowIndex);
       const rowCells: HTMLTableCellElement[] = [];
       const rowContents: HTMLDivElement[] = [];
 
@@ -599,6 +849,7 @@ class TableWidget extends WidgetType {
         content.className = "cm-table-cell-content";
         content.textContent = toDisplayText(row.cells[col]?.text ?? "");
         td.appendChild(content);
+        bindCellHover(td);
 
         tr.appendChild(td);
         rowCells.push(td);
@@ -606,6 +857,7 @@ class TableWidget extends WidgetType {
       }
 
       tbody.appendChild(tr);
+      bodyRowElements.push(tr);
       cellElements.push(rowCells);
       contentElements.push(rowContents);
     });
@@ -619,6 +871,7 @@ class TableWidget extends WidgetType {
       handle.className = "cm-table-col-handle";
       handle.style.left = "-9999px";
       handle.style.top = "-9999px";
+      handle.style.transform = baseHandleTransform;
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select column ${col + 1}`);
       handle.addEventListener(
@@ -631,6 +884,8 @@ class TableWidget extends WidgetType {
       handle.addEventListener(
         "pointerenter",
         () => {
+          handle.dataset.hovered = "true";
+          handle.style.transform = activeHandleTransform;
           setHoveredCol(col);
         },
         { signal }
@@ -638,6 +893,8 @@ class TableWidget extends WidgetType {
       handle.addEventListener(
         "mouseenter",
         () => {
+          handle.dataset.hovered = "true";
+          handle.style.transform = activeHandleTransform;
           setHoveredCol(col);
         },
         { signal }
@@ -645,6 +902,8 @@ class TableWidget extends WidgetType {
       handle.addEventListener(
         "pointerleave",
         () => {
+          handle.removeAttribute("data-hovered");
+          handle.style.transform = baseHandleTransform;
           setHoveredCol(null);
         },
         { signal }
@@ -652,6 +911,8 @@ class TableWidget extends WidgetType {
       handle.addEventListener(
         "mouseleave",
         () => {
+          handle.removeAttribute("data-hovered");
+          handle.style.transform = baseHandleTransform;
           setHoveredCol(null);
         },
         { signal }
@@ -687,18 +948,43 @@ class TableWidget extends WidgetType {
       handle.className = "cm-table-row-handle";
       handle.style.left = "-9999px";
       handle.style.top = "-9999px";
+      handle.style.transform = baseHandleTransform;
+      handle.style.color = rowHandleBaseColor;
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select row ${rowIndex + 1}`);
+      handle.appendChild(TableWidget.createDragIndicatorIcon());
       handle.addEventListener(
-        "mousedown",
+        "pointerdown",
         (event) => {
+          if (event.button !== 0) {
+            return;
+          }
           event.preventDefault();
+          event.stopPropagation();
+          closeMenu();
+          stopEditing(true);
+          setSelection({ kind: "row", row: rowIndex }, false);
+          draggingRowIndex = rowIndex;
+          draggingRowPointerId = event.pointerId;
+          draggingRowHandle = handle;
+          wrapper.dataset.rowDragging = "true";
+          handle.dataset.dragging = "true";
+          if (typeof handle.setPointerCapture === "function") {
+            try {
+              handle.setPointerCapture(event.pointerId);
+            } catch {
+              // no-op
+            }
+          }
         },
         { signal }
       );
       handle.addEventListener(
         "pointerenter",
         () => {
+          handle.dataset.hovered = "true";
+          handle.style.transform = activeHandleTransform;
+          handle.style.color = rowHandleHoverColor;
           setHoveredRow(rowIndex);
         },
         { signal }
@@ -706,6 +992,9 @@ class TableWidget extends WidgetType {
       handle.addEventListener(
         "mouseenter",
         () => {
+          handle.dataset.hovered = "true";
+          handle.style.transform = activeHandleTransform;
+          handle.style.color = rowHandleHoverColor;
           setHoveredRow(rowIndex);
         },
         { signal }
@@ -713,6 +1002,9 @@ class TableWidget extends WidgetType {
       handle.addEventListener(
         "pointerleave",
         () => {
+          handle.removeAttribute("data-hovered");
+          handle.style.transform = baseHandleTransform;
+          handle.style.color = rowHandleBaseColor;
           setHoveredRow(null);
         },
         { signal }
@@ -720,17 +1012,10 @@ class TableWidget extends WidgetType {
       handle.addEventListener(
         "mouseleave",
         () => {
+          handle.removeAttribute("data-hovered");
+          handle.style.transform = baseHandleTransform;
+          handle.style.color = rowHandleBaseColor;
           setHoveredRow(null);
-        },
-        { signal }
-      );
-      handle.addEventListener(
-        "click",
-        (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          stopEditing(true);
-          setSelection({ kind: "row", row: rowIndex });
         },
         { signal }
       );
@@ -825,6 +1110,10 @@ class TableWidget extends WidgetType {
       { signal }
     );
 
+    window.addEventListener("pointermove", handleRowDragMove, { signal, capture: true });
+    window.addEventListener("pointerup", handleRowDragEnd, { signal, capture: true });
+    window.addEventListener("pointercancel", handleRowDragEnd, { signal, capture: true });
+
     wrapper.addEventListener(
       "pointerdown",
       (event) => {
@@ -843,8 +1132,7 @@ class TableWidget extends WidgetType {
           closeMenu();
           return;
         }
-        // Keep hover strictly pointer-driven: selecting a cell must not pin handles.
-        clearHoveredHandles();
+        applyHoveredCell(cell);
         const row = Number(cell.dataset.row);
         const col = Number(cell.dataset.col);
         if (!Number.isFinite(row) || !Number.isFinite(col)) {
@@ -1119,12 +1407,6 @@ function dispatchOutsideUpdate(
       view.scrollDOM.scrollLeft = scrollLeft;
     });
   };
-
-  if (typeof view.requestMeasure === "function") {
-    view.requestMeasure({ read() {}, write: dispatch });
-    return;
-  }
-
   setTimeout(dispatch, 0);
 }
 
@@ -1323,6 +1605,8 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-table-editor-notion .cm-table-col-handle": {
       position: "absolute",
       transform: "translate(-50%, -50%)",
+      display: "grid",
+      placeItems: "center",
       width: "30px",
       height: "20px",
       padding: "0",
@@ -1339,64 +1623,70 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       display: "block",
       width: "11px",
       height: "2px",
-      margin: "9px auto 0",
+      margin: "0",
       borderRadius: "999px",
       background:
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
       transition: "width 120ms ease, height 120ms ease, background 120ms ease",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle[data-selected='true']": {
-      opacity: "0.95",
-      pointerEvents: "auto",
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-visible='true']": {
+      opacity: "0.95 !important",
+      pointerEvents: "auto !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle:hover, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible": {
-      transform: "translate(-50%, -50%) scale(1.35)",
-      opacity: "1",
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-hovered='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible": {
+      transform: "translate(-50%, -50%) scale(1.35) !important",
+      opacity: "1 !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle:hover::before, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible::before": {
-      width: "16px",
-      height: "4px",
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-hovered='true']::before, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible::before": {
+      width: "16px !important",
+      height: "4px !important",
       background:
-        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 45%, var(--editor-secondary-color, #5f6368))",
+        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 45%, var(--editor-secondary-color, #5f6368)) !important",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle": {
       position: "absolute",
       transform: "translate(-50%, -50%)",
+      display: "grid",
+      placeItems: "center",
       width: "20px",
       height: "30px",
       padding: "0",
       border: "none",
       background: "transparent",
       opacity: "0",
-      cursor: "pointer",
+      cursor: "grab",
       pointerEvents: "none",
       transition: "opacity 120ms ease, transform 120ms ease",
       outline: "none",
+      color:
+        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle::before": {
-      content: '""',
+    ".cm-content .cm-table-editor-notion .cm-table-row-handle-icon": {
+      width: "14px",
+      height: "14px",
       display: "block",
-      width: "2px",
-      height: "11px",
-      margin: "9px 0 0 9px",
-      borderRadius: "999px",
-      background:
-        "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 70%, var(--editor-surface, var(--editor-bg, #fff)))",
-      transition: "width 120ms ease, height 120ms ease, background 120ms ease",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle[data-selected='true']": {
-      opacity: "1",
-      pointerEvents: "auto",
+    ".cm-content .cm-table-editor-notion .cm-table-row-handle-icon path": {
+      fill: "currentColor",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle:hover, .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible": {
-      transform: "translate(-50%, -50%) scale(1.35)",
-      opacity: "1",
+    ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle[data-dragging='true']": {
+      opacity: "1 !important",
+      pointerEvents: "auto !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle:hover::before, .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible::before": {
-      width: "4px",
-      height: "16px",
-      background:
-        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 45%, var(--editor-secondary-color, #5f6368))",
+    ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-hovered='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible": {
+      transform: "translate(-50%, -50%) scale(1.35) !important",
+      opacity: "1 !important",
+      color:
+        "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 88%, var(--editor-secondary-color, #5f6368)) !important",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-row-handle:active": {
+      cursor: "grabbing",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-body-row.cm-table-row-drop-before .cm-table-cell": {
+      boxShadow: "inset 0 2px 0 var(--editor-primary-color, #1a73e8)",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-body-row.cm-table-row-drop-after .cm-table-cell": {
+      boxShadow: "inset 0 -2px 0 var(--editor-primary-color, #1a73e8)",
     },
     ".cm-content .cm-table-editor-notion .cm-table-context-menu": {
       position: "absolute",
