@@ -1075,7 +1075,9 @@ class TableWidget extends WidgetType {
       handle.dataset.colIndex = String(col);
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select column ${col + 1}`);
-      handle.appendChild(TableWidget.createDragIndicatorIcon());
+      const icon = TableWidget.createDragIndicatorIcon();
+      icon.classList.add("cm-table-col-handle-icon");
+      handle.appendChild(icon);
       handle.addEventListener(
         "pointerdown",
         (event) => {
@@ -1177,7 +1179,9 @@ class TableWidget extends WidgetType {
       handle.style.color = rowHandleBaseColor;
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select row ${rowIndex + 1}`);
-      handle.appendChild(TableWidget.createDragIndicatorIcon());
+      const icon = TableWidget.createDragIndicatorIcon();
+      icon.classList.add("cm-table-row-handle-icon");
+      handle.appendChild(icon);
       handle.addEventListener(
         "pointerdown",
         (event) => {
@@ -1883,6 +1887,10 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       width: "14px",
       height: "14px",
       display: "block",
+    },
+    ".cm-content .cm-table-editor-notion .cm-table-col-handle-icon": {
+      transform: "rotate(90deg)",
+      transformOrigin: "center",
     },
     ".cm-content .cm-table-editor-notion .cm-table-handle-icon path": {
       fill: "currentColor",
