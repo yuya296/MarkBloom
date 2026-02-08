@@ -1,7 +1,7 @@
-# Feature 014: cm6-table (Notion Lite)
+# Feature 014: cm6-table editor
 
 ## 1. 目的
-Notionのデータベースではない「ライトなテーブル編集体験」を、
+シンプルな table editor 体験を、
 CM6拡張として `packages/cm6-table` で提供する。
 
 ## 2. スコープ
@@ -15,7 +15,7 @@ CM6拡張として `packages/cm6-table` で提供する。
 - `webview-demo` への新engine追加
 
 ### Out of scope
-- Notion DB機能（列タイプ、ビュー、フィルタ、ソート、集計）
+- 高機能DBテーブル機能（列タイプ、ビュー、フィルタ、ソート、集計）
 - 複数レンジ編集
 - 行列ドラッグリオーダー
 

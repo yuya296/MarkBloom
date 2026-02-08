@@ -143,7 +143,7 @@ class TableWidget extends WidgetType {
 
   toDOM(view: EditorView): HTMLElement {
     const wrapper = document.createElement("div");
-    wrapper.className = "cm-table-editor cm-table-editor-notion";
+    wrapper.className = "cm-table-editor cm6-table-editor";
     wrapper.dataset.tableId = String(this.tableInfo.id);
     wrapper.dataset.mode = "nav";
     wrapper.tabIndex = 0;
@@ -1755,39 +1755,39 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm-line.cm-table-editor-hidden": {
       display: "none",
     },
-    ".cm-content .cm-table-editor-notion": {
+    ".cm-content .cm6-table-editor": {
       margin: "0.5rem 0",
       position: "relative",
       overflow: "visible",
     },
-    ".cm-content .cm-table-editor-notion:focus, .cm-content .cm-table-editor-notion:focus-visible":
+    ".cm-content .cm6-table-editor:focus, .cm-content .cm6-table-editor:focus-visible":
       {
         outline: "none",
       },
-    ".cm-content .cm-table-editor-notion .cm-table-scroll": {
+    ".cm-content .cm6-table-editor .cm-table-scroll": {
       overflowX: "auto",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
       borderRadius: "0",
       background: "var(--editor-surface, var(--editor-bg, #fff))",
     },
-    ".cm-content .cm-table-editor-notion table.cm-table": {
+    ".cm-content .cm6-table-editor table.cm-table": {
       width: "100%",
       minWidth: "360px",
       borderCollapse: "collapse",
       tableLayout: "fixed",
       background: "var(--editor-surface, var(--editor-bg, #fff))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row": {
+    ".cm-content .cm6-table-editor .cm-table-row": {
       background: "var(--editor-surface, var(--editor-bg, #fff))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-header-cell": {
+    ".cm-content .cm6-table-editor .cm-table-header-cell": {
       background:
         "color-mix(in srgb, var(--editor-surface, var(--editor-bg, #fff)) 92%, var(--editor-border, #dadce0))",
       color: "var(--editor-secondary-color, #5f6368)",
       fontWeight: "600",
       position: "relative",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-cell": {
+    ".cm-content .cm6-table-editor .cm-table-cell": {
       borderBottom: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 70%, transparent)",
       borderRight: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 70%, transparent)",
       padding: "9px 10px",
@@ -1797,24 +1797,24 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       color: "var(--editor-text-color, var(--editor-foreground, #202124))",
       overflow: "visible",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-cell-content": {
+    ".cm-content .cm6-table-editor .cm-table-cell-content": {
       whiteSpace: "pre-wrap",
       wordBreak: "break-word",
       lineHeight: "1.35",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-cell--first": {
+    ".cm-content .cm6-table-editor .cm-table-cell--first": {
       paddingLeft: "10px",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-cell-selected": {
+    ".cm-content .cm6-table-editor .cm-table-cell-selected": {
       boxShadow: "inset 0 0 0 2px var(--editor-primary-color, #1a73e8)",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-selected": {
+    ".cm-content .cm6-table-editor .cm-table-row-selected": {
       background: "transparent",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-column-selected": {
+    ".cm-content .cm6-table-editor .cm-table-column-selected": {
       background: "transparent",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-selection-outline": {
+    ".cm-content .cm6-table-editor .cm-table-selection-outline": {
       position: "absolute",
       border: "2px solid var(--editor-primary-color, #1a73e8)",
       boxSizing: "border-box",
@@ -1822,17 +1822,17 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       zIndex: "12",
       display: "none",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-selection-outline[data-open='true']": {
+    ".cm-content .cm6-table-editor .cm-table-selection-outline[data-open='true']": {
       display: "block",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-handle-layer": {
+    ".cm-content .cm6-table-editor .cm-table-handle-layer": {
       position: "absolute",
       inset: "0",
       overflow: "visible",
       pointerEvents: "none",
       zIndex: "18",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle": {
+    ".cm-content .cm6-table-editor .cm-table-col-handle": {
       position: "absolute",
       transform: "translate(-50%, -50%)",
       display: "grid",
@@ -1850,20 +1850,20 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       color:
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle[data-dragging='true']": {
+    ".cm-content .cm6-table-editor .cm-table-col-handle[data-visible='true'], .cm-content .cm6-table-editor .cm-table-col-handle[data-dragging='true']": {
       opacity: "0.95 !important",
       pointerEvents: "auto !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-hovered='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible": {
+    ".cm-content .cm6-table-editor .cm-table-col-handle[data-hovered='true'], .cm-content .cm6-table-editor .cm-table-col-handle:focus-visible": {
       transform: "translate(-50%, -50%) scale(1.35) !important",
       opacity: "1 !important",
       color:
         "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 88%, var(--editor-secondary-color, #5f6368)) !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle:active": {
+    ".cm-content .cm6-table-editor .cm-table-col-handle:active": {
       cursor: "grabbing",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle": {
+    ".cm-content .cm6-table-editor .cm-table-row-handle": {
       position: "absolute",
       transform: "translate(-50%, -50%)",
       display: "grid",
@@ -1881,44 +1881,44 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       color:
         "color-mix(in srgb, var(--editor-secondary-color, #5f6368) 76%, var(--editor-surface, var(--editor-bg, #fff)))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-handle-icon": {
+    ".cm-content .cm6-table-editor .cm-table-handle-icon": {
       width: "14px",
       height: "14px",
       display: "block",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-col-handle-icon": {
+    ".cm-content .cm6-table-editor .cm-table-col-handle-icon": {
       transform: "rotate(90deg)",
       transformOrigin: "center",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-handle-icon path": {
+    ".cm-content .cm6-table-editor .cm-table-handle-icon path": {
       fill: "currentColor",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle[data-dragging='true']": {
+    ".cm-content .cm6-table-editor .cm-table-row-handle[data-visible='true'], .cm-content .cm6-table-editor .cm-table-row-handle[data-dragging='true']": {
       opacity: "1 !important",
       pointerEvents: "auto !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-hovered='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible": {
+    ".cm-content .cm6-table-editor .cm-table-row-handle[data-hovered='true'], .cm-content .cm6-table-editor .cm-table-row-handle:focus-visible": {
       transform: "translate(-50%, -50%) scale(1.35) !important",
       opacity: "1 !important",
       color:
         "color-mix(in srgb, var(--editor-primary-color, #1a73e8) 88%, var(--editor-secondary-color, #5f6368)) !important",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-row-handle:active": {
+    ".cm-content .cm6-table-editor .cm-table-row-handle:active": {
       cursor: "grabbing",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-body-row.cm-table-row-drop-before .cm-table-cell": {
+    ".cm-content .cm6-table-editor .cm-table-body-row.cm-table-row-drop-before .cm-table-cell": {
       boxShadow: "inset 0 2px 0 var(--editor-primary-color, #1a73e8)",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-body-row.cm-table-row-drop-after .cm-table-cell": {
+    ".cm-content .cm6-table-editor .cm-table-body-row.cm-table-row-drop-after .cm-table-cell": {
       boxShadow: "inset 0 -2px 0 var(--editor-primary-color, #1a73e8)",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-cell.cm-table-column-drop-before": {
+    ".cm-content .cm6-table-editor .cm-table-cell.cm-table-column-drop-before": {
       boxShadow: "inset 2px 0 0 var(--editor-primary-color, #1a73e8)",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-cell.cm-table-column-drop-after": {
+    ".cm-content .cm6-table-editor .cm-table-cell.cm-table-column-drop-after": {
       boxShadow: "inset -2px 0 0 var(--editor-primary-color, #1a73e8)",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-context-menu": {
+    ".cm-content .cm6-table-editor .cm-table-context-menu": {
       position: "absolute",
       minWidth: "164px",
       background: "var(--editor-surface, var(--editor-bg, #fff))",
@@ -1929,11 +1929,11 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       zIndex: "30",
       display: "none",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-context-menu[data-open='true']": {
+    ".cm-content .cm6-table-editor .cm-table-context-menu[data-open='true']": {
       display: "grid",
       gap: "4px",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-context-menu-item": {
+    ".cm-content .cm6-table-editor .cm-table-context-menu-item": {
       border: "none",
       background: "transparent",
       color: "var(--editor-text-color, var(--editor-foreground, #202124))",
@@ -1944,11 +1944,11 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       font: "inherit",
       fontSize: "12px",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-context-menu-item:hover": {
+    ".cm-content .cm6-table-editor .cm-table-context-menu-item:hover": {
       background:
         "color-mix(in srgb, var(--editor-surface, var(--editor-bg, #fff)) 86%, var(--editor-border, #dadce0))",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-overlay-input": {
+    ".cm-content .cm6-table-editor .cm-table-overlay-input": {
       position: "absolute",
       zIndex: "20",
       resize: "none",
@@ -1964,7 +1964,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       boxSizing: "border-box",
       display: "none",
     },
-    ".cm-content .cm-table-editor-notion .cm-table-overlay-input[data-open='true']": {
+    ".cm-content .cm6-table-editor .cm-table-overlay-input[data-open='true']": {
       display: "block",
     },
   });

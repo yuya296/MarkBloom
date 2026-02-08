@@ -8,7 +8,7 @@
 - cm6-typography-theme: semantic class に対する見た目を提供するパッケージ。
 - cm6-live-preview: core/semantics/theme を束ねたプリセットパッケージ。
 - cm6-table-editor-vanilla: 依存ゼロの HTML table で Markdown テーブルを表示・編集する CM6 パッケージ。
-- cm6-table: Notionライクなライトテーブル体験を提供する CM6 パッケージ。Navigation/Editing の2モードで操作する。
+- cm6-table: table editor 体験を提供する CM6 パッケージ。Navigation/Editing の2モードで操作する。
 - Jspreadsheet CE: テーブル編集 UI を提供するコミュニティ版スプレッドシートライブラリ。
 - Virtual Header: Markdown実データに含めず、UI操作のためにのみ表示する行/列ヘッダ。
 - Row Header: Tabulator上で行操作・行選択の導線に使う仮想ヘッダ列。
