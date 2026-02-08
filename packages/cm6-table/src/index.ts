@@ -93,6 +93,7 @@ const toCssTextAlign = (alignment: TableAlignment | null) => {
 class TableWidget extends WidgetType {
   private readonly abortController = new AbortController();
   private static readonly selectionByTableId = new Map<number, SelectionState>();
+  private static readonly rowHandleOutsideOffset = 10;
 
   constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
@@ -289,7 +290,9 @@ class TableWidget extends WidgetType {
       node instanceof Element &&
       !!node.closest(".cm-table-col-handle, .cm-table-row-handle");
 
-    const findHoveredCellInEvent = (event: PointerEvent): HTMLTableCellElement | null => {
+    const findHoveredCellInEvent = (
+      event: PointerEvent | MouseEvent
+    ): HTMLTableCellElement | null => {
       const path = event.composedPath();
       for (const node of path) {
         if (isHandleElement(node)) {
@@ -365,7 +368,7 @@ class TableWidget extends WidgetType {
           return;
         }
         const rect = cell.getBoundingClientRect();
-        const left = rect.left - wrapperRect.left;
+        const left = rect.left - wrapperRect.left - TableWidget.rowHandleOutsideOffset;
         const top = rect.top - wrapperRect.top + rect.height / 2;
         button.style.left = `${left}px`;
         button.style.top = `${top}px`;
@@ -633,7 +636,21 @@ class TableWidget extends WidgetType {
         { signal }
       );
       handle.addEventListener(
+        "mouseenter",
+        () => {
+          setHoveredCol(col);
+        },
+        { signal }
+      );
+      handle.addEventListener(
         "pointerleave",
+        () => {
+          setHoveredCol(null);
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "mouseleave",
         () => {
           setHoveredCol(null);
         },
@@ -687,7 +704,21 @@ class TableWidget extends WidgetType {
         { signal }
       );
       handle.addEventListener(
+        "mouseenter",
+        () => {
+          setHoveredRow(rowIndex);
+        },
+        { signal }
+      );
+      handle.addEventListener(
         "pointerleave",
+        () => {
+          setHoveredRow(null);
+        },
+        { signal }
+      );
+      handle.addEventListener(
+        "mouseleave",
         () => {
           setHoveredRow(null);
         },
@@ -727,7 +758,7 @@ class TableWidget extends WidgetType {
       return { kind: "cell", row: nextRow, col: nextCol };
     };
 
-    const updateHoveredHandlesFromPointerEvent = (event: PointerEvent) => {
+    const updateHoveredHandlesFromPointerEvent = (event: PointerEvent | MouseEvent) => {
       if (isHandleElement(event.target)) {
         return;
       }
@@ -746,9 +777,30 @@ class TableWidget extends WidgetType {
       },
       { signal, passive: true }
     );
+    wrapper.addEventListener(
+      "mousemove",
+      (event) => {
+        updateHoveredHandlesFromPointerEvent(event);
+      },
+      { signal, passive: true }
+    );
 
     document.addEventListener(
       "pointermove",
+      (event) => {
+        const target = event.target;
+        if (!(target instanceof Node)) {
+          clearHoveredHandles();
+          return;
+        }
+        if (!wrapper.contains(target)) {
+          clearHoveredHandles();
+        }
+      },
+      { signal, capture: true, passive: true }
+    );
+    document.addEventListener(
+      "mousemove",
       (event) => {
         const target = event.target;
         if (!(target instanceof Node)) {
@@ -1278,7 +1330,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "transparent",
       opacity: "0",
       cursor: "pointer",
-      pointerEvents: "auto",
+      pointerEvents: "none",
       transition: "opacity 120ms ease, transform 120ms ease",
       outline: "none",
     },
@@ -1295,6 +1347,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-col-handle[data-selected='true']": {
       opacity: "0.95",
+      pointerEvents: "auto",
     },
     ".cm-content .cm-table-editor-notion .cm-table-col-handle:hover, .cm-content .cm-table-editor-notion .cm-table-col-handle:focus-visible": {
       transform: "translate(-50%, -50%) scale(1.35)",
@@ -1316,7 +1369,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       background: "transparent",
       opacity: "0",
       cursor: "pointer",
-      pointerEvents: "auto",
+      pointerEvents: "none",
       transition: "opacity 120ms ease, transform 120ms ease",
       outline: "none",
     },
@@ -1333,6 +1386,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle[data-visible='true'], .cm-content .cm-table-editor-notion .cm-table-row-handle[data-selected='true']": {
       opacity: "1",
+      pointerEvents: "auto",
     },
     ".cm-content .cm-table-editor-notion .cm-table-row-handle:hover, .cm-content .cm-table-editor-notion .cm-table-row-handle:focus-visible": {
       transform: "translate(-50%, -50%) scale(1.35)",
