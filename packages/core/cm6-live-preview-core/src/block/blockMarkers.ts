@@ -347,6 +347,9 @@ export function collectFenceMarkersByLine(
   blockRevealRange: Range | null
 ): Map<number, BlockMarker[]> {
   const markersByLine = new Map<number, BlockMarker[]>();
+  const cursorHeads = state.selection.ranges
+    .filter((range) => range.from === range.to)
+    .map((range) => range.head);
 
   syntaxTree(state).iterate({
     enter: (node) => {
@@ -361,7 +364,7 @@ export function collectFenceMarkersByLine(
         ? node.from < blockRevealRange.to && node.to > blockRevealRange.from
         : false;
       const style = isRawByTriggers(
-        { isSelectionOverlap, isBlockReveal },
+        { isSelectionOverlap, cursorHeads, isBlockReveal },
         ["nearby", "block"]
       )
         ? "none"
