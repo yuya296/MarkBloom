@@ -222,6 +222,8 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
       width: "var(--mb-list-marker-width-ch, 1.5ch)",
       minWidth: "var(--mb-list-marker-width-ch, 1.5ch)",
       textAlign: "center",
+      whiteSpace: "nowrap",
+      overflow: "visible",
       fontWeight: "600",
       marginRight: "0.25ch",
       verticalAlign: "baseline",

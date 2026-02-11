@@ -33,6 +33,7 @@ type PushDecoration = (from: number, to: number, decoration: Decoration) => void
 
 type BlockRawState = {
   isSelectionOverlap: boolean;
+  cursorHeads: readonly number[];
   isBlockReveal: boolean;
 };
 
@@ -46,6 +47,14 @@ type TaskCheckbox = {
 
 function normalizeTriggers(rawModeTrigger: RawModeTrigger | RawModeTrigger[]): RawModeTrigger[] {
   return Array.isArray(rawModeTrigger) ? rawModeTrigger : [rawModeTrigger];
+}
+
+function isCursorNearRange(
+  cursorHeads: readonly number[],
+  from: number,
+  to: number
+): boolean {
+  return cursorHeads.some((head) => head >= from && head <= to);
 }
 
 function isRawByTriggers(state: BlockRawState, rawModeTrigger: RawModeTrigger | RawModeTrigger[]): boolean {
@@ -164,7 +173,10 @@ function pushBlockMarkerDecoration(
     return;
   }
 
-  const isRaw = isRawByTriggers(state, config.rawModeTrigger);
+  const isRaw =
+    isRawByTriggers(state, config.rawModeTrigger) ||
+    (normalizeTriggers(config.rawModeTrigger).includes("nearby") &&
+      isCursorNearRange(state.cursorHeads, marker.from, marker.to));
   const style: DisplayStyle = isRaw ? "none" : config.richDisplayStyle;
 
   if (marker.id === "list") {

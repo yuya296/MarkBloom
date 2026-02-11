@@ -45,6 +45,9 @@ export function buildDecorations(state: EditorState, options: LivePreviewOptions
   const selectionRanges = state.selection.ranges
     .filter((range) => range.from !== range.to)
     .map((range) => ({ from: range.from, to: range.to }));
+  const cursorHeads = state.selection.ranges
+    .filter((range) => range.from === range.to)
+    .map((range) => range.head);
 
   const blockHiddenDecoration = Decoration.replace({
     inclusive: false,
@@ -79,7 +82,7 @@ export function buildDecorations(state: EditorState, options: LivePreviewOptions
         pushDecoration,
         line.from,
         line.text,
-        { isSelectionOverlap, isBlockReveal },
+        { isSelectionOverlap, cursorHeads, isBlockReveal },
         blockHiddenDecoration,
         fenceMarkersByLine
       );
