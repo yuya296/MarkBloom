@@ -127,7 +127,7 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 
 ### 10.1 Checklist widget behavior
 - 対象記法: 行頭インデント + （任意）blockquote prefix + list marker（`-`, `+`, `*`, `1.` など）に続く `"[ ]"` / `"[x]"` / `"[X]"`。
-- Rich表示時は `"[ ]"` / `"[x]"` の3文字のみを Widget に置換し、list marker とインデントはそのまま保持する。
+- Rich表示時は checklist token（`- [ ]` / `- [x]` など）のうち list marker（`- ` / `1. ` など）を hide し、`"[ ]"` / `"[x]"` を Widget に置換する。インデントは保持する。
 - Widgetは clickable checkbox とし、クリック時に source markdown を直接トグルする（`[ ]` ⇄ `[x]`）。
 - malformed 記法（例: `-[x]`, `[x]` 単独行）は対象外。
 

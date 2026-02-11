@@ -18,7 +18,7 @@ const blockMarkerPattern = {
   list: /^\s{0,3}([*+-]|\d+\.)(?=\s)/,
   quotePrefix: /^\s{0,3}(?:>\s?)*/,
   taskList:
-    /^\s{0,3}(?:>\s?)*\s*(?:[*+-]|\d+\.)\s+(\[(?: |x|X)\])(?=\s|$)/,
+    /^\s{0,3}(?:>\s?)*\s*((?:[*+-]|\d+\.)\s+)(\[(?: |x|X)\])(?=\s|$)/,
 };
 
 type BlockMarker = {
@@ -35,8 +35,10 @@ type BlockRawState = {
 };
 
 type TaskCheckbox = {
-  from: number;
-  to: number;
+  markerFrom: number;
+  markerTo: number;
+  tokenFrom: number;
+  tokenTo: number;
   checked: boolean;
 };
 
@@ -180,21 +182,28 @@ function collectTaskCheckbox(
   lineText: string
 ): TaskCheckbox | null {
   const match = lineText.match(blockMarkerPattern.taskList);
-  const token = match?.[1];
-  if (!token) {
+  const marker = match?.[1];
+  const token = match?.[2];
+  if (!marker || !token || typeof match.index !== "number") {
     return null;
   }
 
-  const tokenIndex = lineText.indexOf(token);
-  if (tokenIndex < 0) {
+  const fullMatch = match[0] ?? "";
+  const markerOffset = fullMatch.indexOf(marker);
+  const tokenOffset = fullMatch.indexOf(token, markerOffset + marker.length);
+  if (markerOffset < 0 || tokenOffset < 0) {
     return null;
   }
 
-  const from = lineFrom + tokenIndex;
-  const to = from + token.length;
+  const markerFrom = lineFrom + match.index + markerOffset;
+  const markerTo = markerFrom + marker.length;
+  const tokenFrom = lineFrom + match.index + tokenOffset;
+  const tokenTo = tokenFrom + token.length;
   return {
-    from,
-    to,
+    markerFrom,
+    markerTo,
+    tokenFrom,
+    tokenTo,
     checked: token[1].toLowerCase() === "x",
   };
 }
@@ -221,26 +230,29 @@ function isCursorNearTaskToken(
       continue;
     }
 
-    if (head >= checkbox.from && head <= checkbox.to) {
+    if (head >= checkbox.markerFrom && head <= checkbox.tokenTo) {
       return true;
     }
 
-    if (head < checkbox.from) {
-      if (checkbox.from - head > 1) {
+    if (head < checkbox.markerFrom) {
+      if (checkbox.markerFrom - head > 1) {
         continue;
       }
-      const between = line.text.slice(head - line.from, checkbox.from - line.from);
+      const between = line.text.slice(
+        head - line.from,
+        checkbox.markerFrom - line.from
+      );
       if (!/\s/u.test(between)) {
         return true;
       }
       continue;
     }
 
-    if (head > checkbox.to) {
-      if (head - checkbox.to > 1) {
+    if (head > checkbox.tokenTo) {
+      if (head - checkbox.tokenTo > 1) {
         continue;
       }
-      const between = line.text.slice(checkbox.to - line.from, head - line.from);
+      const between = line.text.slice(checkbox.tokenTo - line.from, head - line.from);
       if (!/\s/u.test(between)) {
         return true;
       }
@@ -256,7 +268,7 @@ function shouldShowTaskCheckboxRaw(
   lineFrom: number,
   selectionRanges: Range[]
 ): boolean {
-  if (overlapsRange(checkbox.from, checkbox.to, selectionRanges)) {
+  if (overlapsRange(checkbox.markerFrom, checkbox.tokenTo, selectionRanges)) {
     return true;
   }
   if (!hasCursorInLine(state, lineFrom)) {
@@ -279,10 +291,11 @@ export function addTaskCheckboxDecorations(
   if (shouldShowTaskCheckboxRaw(state, checkbox, lineFrom, selectionRanges)) {
     return;
   }
+  push(checkbox.markerFrom, checkbox.markerTo, Decoration.replace({ inclusive: false }));
   push(
-    checkbox.from,
-    checkbox.to,
-    taskCheckboxReplace(checkbox.checked, checkbox.from, checkbox.to)
+    checkbox.tokenFrom,
+    checkbox.tokenTo,
+    taskCheckboxReplace(checkbox.checked, checkbox.tokenFrom, checkbox.tokenTo)
   );
 }
 
