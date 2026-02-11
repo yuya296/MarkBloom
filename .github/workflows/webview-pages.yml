@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build core dependencies for webview
+        run: pnpm -r --filter "@yuya296/cm6-live-preview..." --filter "@yuya296/cm6-table..." build
+
       - name: Build webview demo (main snapshot)
         env:
           VITE_BASE_PATH: /MarkBloom/
@@ -94,6 +97,10 @@ jobs:
       - name: Install dependencies
         if: steps.source.outputs.same_repo == 'true'
         run: pnpm install --frozen-lockfile
+
+      - name: Build core dependencies for webview
+        if: steps.source.outputs.same_repo == 'true'
+        run: pnpm -r --filter "@yuya296/cm6-live-preview..." --filter "@yuya296/cm6-table..." build
 
       - name: Build webview demo (PR preview)
         if: steps.source.outputs.same_repo == 'true'
