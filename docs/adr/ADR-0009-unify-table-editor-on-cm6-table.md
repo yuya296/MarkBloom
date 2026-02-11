@@ -18,6 +18,6 @@ table editor は `cm6-table` に単一統一し、`cm6-table-editor-*` 実装と
 ## References
 - docs/architecture/overview.md
 - docs/domain/glossary.md
-- packages/cm6-table/src/index.ts
-- packages/webview-demo/src/app.ts
-- packages/vscode-extension/webview/src/main.ts
+- packages/core/cm6-table/src/index.ts
+- apps/webview-demo/src/app.ts
+- apps/vscode-extension/webview/src/main.ts

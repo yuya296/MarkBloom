@@ -12,6 +12,21 @@
 | `cm6-live-preview` | 上記3つを束ね、プリセットとして配布する |
 | `cm6-table` | table editor UI（2モード編集 + 行列ハンドル） |
 
+## Repository Layout
+
+```mermaid
+graph TD
+  apps["apps/"] --> webviewDemo["webview-demo"]
+  apps --> vscodeExtension["vscode-extension"]
+  apps --> macReserved["mac (reserved)"]
+
+  core["packages/core/"] --> livePreview["cm6-live-preview"]
+  core --> livePreviewCore["cm6-live-preview-core"]
+  core --> markdownSemantics["cm6-markdown-semantics"]
+  core --> typographyTheme["cm6-typography-theme"]
+  core --> cm6Table["cm6-table"]
+```
+
 ## Dependency DAG
 
 ```mermaid
@@ -31,12 +46,12 @@ graph TD
 
 ```mermaid
 graph TD
-  corePackages["packages/cm6-*"] --> coreWorkflow["core-release.yml"]
+  corePackages["packages/core/cm6-*"] --> coreWorkflow["core-release.yml"]
   coreWorkflow --> npm["npm registry"]
   coreWorkflow --> coreTag["core-vX.Y.Z tag"]
   coreWorkflow --> coreRelease["GitHub Release (core)"]
 
-  vscodeExtension["packages/vscode-extension"] --> vscodeWorkflow["vscode-release.yml"]
+  vscodeExtension["apps/vscode-extension"] --> vscodeWorkflow["vscode-release.yml"]
   vscodeWorkflow --> marketplace["VS Code Marketplace"]
   vscodeWorkflow --> vscodeTag["vscode-vX.Y.Z tag"]
   vscodeWorkflow --> vscodeRelease["GitHub Release (vscode)"]

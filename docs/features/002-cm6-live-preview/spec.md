@@ -116,7 +116,7 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 - 切替のために extensions は compartment により再構成可能な設計を推奨する
 
 ## 10. Live Preview Configuration (implementation)
-`packages/cm6-live-preview-core/src/config.ts` で要素ごとの `renderState` を定義する。
+`packages/core/cm6-live-preview-core/src/config.ts` で要素ごとの `renderState` を定義する。
 
 | 要素 | rawModeTrigger | richDisplayStyle |
 | --- | --- | --- |

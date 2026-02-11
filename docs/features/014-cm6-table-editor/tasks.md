@@ -1,6 +1,6 @@
 # Feature 014 Tasks
 
-- [x] `packages/cm6-table` を新規作成（package.json / tsconfig / src）
+- [x] `packages/core/cm6-table` を新規作成（package.json / tsconfig / src）
 - [x] `tableModel` / `tableMarkdown` / `types` を配置
 - [x] table editor UIの `tableEditor` 実装（2モード + 単一オーバーレイ入力）
 - [x] 行/列ハンドルと選択状態の実装

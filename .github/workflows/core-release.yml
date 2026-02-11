@@ -52,7 +52,7 @@ jobs:
           const { existsSync, readFileSync, readdirSync } = require("node:fs");
           const { join } = require("node:path");
 
-          const packagesDir = "packages";
+          const packagesDir = "packages/core";
           const packageDirs = readdirSync(packagesDir, { withFileTypes: true })
             .filter((dirent) => dirent.isDirectory() && dirent.name.startsWith("cm6-"))
             .map((dirent) => join(packagesDir, dirent.name))
@@ -108,7 +108,7 @@ jobs:
           const { existsSync, readFileSync, readdirSync } = require("node:fs");
           const { join } = require("node:path");
 
-          const packagesDir = "packages";
+          const packagesDir = "packages/core";
           const prefixes = ["cm6-"];
           const packageDirs = readdirSync(packagesDir, { withFileTypes: true })
             .filter((dirent) => dirent.isDirectory() && prefixes.some((prefix) => dirent.name.startsWith(prefix)))
@@ -168,9 +168,9 @@ jobs:
           const { existsSync, readFileSync, readdirSync } = require("node:fs");
           const { join } = require("node:path");
 
-          const packageDirs = readdirSync("packages", { withFileTypes: true })
+          const packageDirs = readdirSync("packages/core", { withFileTypes: true })
             .filter((dirent) => dirent.isDirectory() && dirent.name.startsWith("cm6-"))
-            .map((dirent) => join("packages", dirent.name))
+            .map((dirent) => join("packages/core", dirent.name))
             .filter((dir) => existsSync(join(dir, "package.json")));
 
           const lines = packageDirs

@@ -31,14 +31,14 @@ function loadJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
-const packagesDir = join(process.cwd(), "packages");
+const packagesDir = join(process.cwd(), "packages", "core");
 const corePackageDirs = readdirSync(packagesDir, { withFileTypes: true })
   .filter((dirent) => dirent.isDirectory() && dirent.name.startsWith("cm6-"))
   .map((dirent) => join(packagesDir, dirent.name))
   .filter((dir) => existsSync(join(dir, "package.json")));
 
 if (corePackageDirs.length === 0) {
-  throw new Error("No core package directories were found (expected packages/cm6-*).");
+  throw new Error("No core package directories were found (expected packages/core/cm6-*).");
 }
 
 const corePackages = corePackageDirs.map((dir) => loadJson(join(dir, "package.json")));

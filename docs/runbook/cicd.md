@@ -1,7 +1,7 @@
 # CI/CD Runbook
 
 ## Scope
-- 対象: `core`（`packages/cm6-*`）と `vscode`（`packages/vscode-extension`）
+- 対象: `core`（`packages/core/cm6-*`）と `vscode`（`apps/vscode-extension`）
 - 目的: 配布チャネルごとに release line を分離し、手動リリースの誤操作を減らす
 
 ## Release Lines
@@ -49,8 +49,8 @@
 - 実行内容:
   - extension version 検証
   - `node scripts/check-compatibility.mjs`
-  - `pnpm -C packages/vscode-extension build`
-  - `pnpm -C packages/vscode-extension package|publish`
+  - `pnpm -C apps/vscode-extension build`
+  - `pnpm -C apps/vscode-extension package|publish`
   - tag作成 (`vscode-vX.Y.Z`)
   - GitHub Release 作成（`release_notes/vscode.md` ベース）
 

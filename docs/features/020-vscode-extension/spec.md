@@ -18,7 +18,7 @@ VS Code 拡張として Webview を提供し、CM6 ベースのエディタ（fe
 - 複数ファイル同時編集や高度な競合解決
 
 ## 3. 成果物
-- `packages/vscode-extension`
+- `apps/vscode-extension`
   - Webview UI（feature/001 の webapp を組み込み）
   - `cm6-live-preview` / `cm6-table-editor-vanilla` を読み込み
   - bridge 実装（最小）

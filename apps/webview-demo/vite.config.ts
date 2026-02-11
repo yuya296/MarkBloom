@@ -8,7 +8,10 @@ export default defineConfig({
   resolve: {
     // Resolve cm6-table to source during local development to avoid stale workspace dist cache.
     alias: {
-      "@yuya296/cm6-table": path.resolve(configDir, "../cm6-table/src/index.ts"),
+      "@yuya296/cm6-table": path.resolve(
+        configDir,
+        "../../packages/core/cm6-table/src/index.ts",
+      ),
     },
   },
   optimizeDeps: {

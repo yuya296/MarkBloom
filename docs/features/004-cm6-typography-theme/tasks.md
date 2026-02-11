@@ -1,7 +1,7 @@
 # Tasks: Feature004 cm6-typography-theme
 
 ## Done
-- `packages/cm6-typography-theme` を追加
+- `packages/core/cm6-typography-theme` を追加
 - `.cm-content` 配下にテーマをスコープ
 - headings / blockquote / inline code / link / emphasis の基本スタイル
 - quote / code の CSS 変数化

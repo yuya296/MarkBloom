@@ -18,7 +18,7 @@ Markdown テーブルを、CM6 上で **リッチ表示（グリッド）**し�
 - 高度な整形（列幅計算や美観最適化）は後回し
 
 ## 3. 成果物
-- `packages/cm6-table-editor-vanilla`
+- `packages/core/cm6-table-editor-vanilla`
   - `tableEditor(options?): Extension`
   - テーブル表示 Widget
   - テーブル→AST（内部表現）→Markdown 生成（v2以降）

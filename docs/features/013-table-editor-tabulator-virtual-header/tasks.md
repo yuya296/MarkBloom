@@ -1,7 +1,7 @@
 # Tasks: Feature 013 Tabulator Virtual Header Selection UI
 
 ## 実装タスク
-- `packages/cm6-table-editor-tabulator` に `rowHeader` を追加
+- `packages/core/cm6-table-editor-tabulator` に `rowHeader` を追加
 - 列ヘッダハンドル描画（ホバー時のみ表示）
 - 行ヘッダハンドル描画（ホバー時のみ表示）
 - 列ハンドルクリック時の「列全選択」実装
@@ -27,8 +27,8 @@
 
 ## Done（定義）
 - Feature 013 の受け入れ条件を満たす
-- `pnpm -C packages/cm6-table-editor-tabulator build` が成功
-- `pnpm -C packages/webview-demo build` が成功
+- `pnpm -C packages/core/cm6-table-editor-tabulator build` が成功
+- `pnpm -C apps/webview-demo build` が成功
 - `pm2 start ecosystem.config.cjs --update-env` で表示確認できる
 
 ## Links

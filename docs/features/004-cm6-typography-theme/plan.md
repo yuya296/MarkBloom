@@ -6,7 +6,7 @@
 - ホストのカラースキームに追随する（CSS 変数で上書き可能）
 
 ## 対象
-- packages/cm6-typography-theme
+- packages/core/cm6-typography-theme
 
 ## 実装ポイント
 - headings / blockquote / code / list を段階的に整備

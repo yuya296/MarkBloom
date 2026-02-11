@@ -2,11 +2,11 @@
 
 ## 1. 目的
 シンプルな table editor 体験を、
-CM6拡張として `packages/cm6-table` で提供する。
+CM6拡張として `packages/core/cm6-table` で提供する。
 
 ## 2. スコープ
 ### In scope
-- `packages/cm6-table` の新規追加
+- `packages/core/cm6-table` の新規追加
 - 2モード操作（Navigation / Editing）
 - 単一オーバーレイ入力でセル編集
 - 行/列ハンドル表示（hover時）

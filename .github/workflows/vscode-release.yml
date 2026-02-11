@@ -50,7 +50,7 @@ jobs:
           node <<'NODE'
           const { readFileSync, appendFileSync } = require("node:fs");
 
-          const pkg = JSON.parse(readFileSync("packages/vscode-extension/package.json", "utf8"));
+          const pkg = JSON.parse(readFileSync("apps/vscode-extension/package.json", "utf8"));
           const resolved = pkg.version;
           const requested = process.env.INPUT_VERSION?.trim();
 
@@ -71,17 +71,17 @@ jobs:
         run: node scripts/check-compatibility.mjs
 
       - name: Build extension
-        run: pnpm -C packages/vscode-extension build
+        run: pnpm -C apps/vscode-extension build
 
       - name: Package extension (dry-run)
         if: inputs.dry_run == true
-        run: pnpm -C packages/vscode-extension package
+        run: pnpm -C apps/vscode-extension package
 
       - name: Publish extension
         if: inputs.dry_run == false
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: pnpm -C packages/vscode-extension publish
+        run: pnpm -C apps/vscode-extension publish
 
       - name: Prepare release notes
         if: inputs.create_release == true

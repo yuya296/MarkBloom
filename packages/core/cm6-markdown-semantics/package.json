@@ -1,5 +1,5 @@
 {
-  "name": "@yuya296/cm6-live-preview",
+  "name": "@yuya296/cm6-markdown-semantics",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,7 +19,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/yuya296/MarkBloom.git",
-    "directory": "packages/cm6-live-preview"
+    "directory": "packages/core/cm6-markdown-semantics"
   },
   "homepage": "https://github.com/yuya296/MarkBloom",
   "bugs": {
@@ -33,16 +33,19 @@
     "lint": "eslint src --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "@yuya296/cm6-live-preview-core": "workspace:*",
-    "@yuya296/cm6-markdown-semantics": "workspace:*",
-    "@yuya296/cm6-typography-theme": "workspace:*"
-  },
   "peerDependencies": {
-    "@codemirror/state": "^6.5.3"
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
+    "@lezer/common": "^1.5.0"
   },
   "devDependencies": {
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
     "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
+    "@lezer/common": "^1.5.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   }

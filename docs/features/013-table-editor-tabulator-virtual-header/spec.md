@@ -93,6 +93,6 @@ Markdown 上の実データと UI 用ヘッダは分離し、同期ロジック�
 
 ## 8. 依存
 - `tabulator-tables` 6.3 系
-- `packages/cm6-table-editor-tabulator`
-- `packages/webview-demo`（動作確認）
+- `packages/core/cm6-table-editor-tabulator`
+- `apps/webview-demo`（動作確認）
 
