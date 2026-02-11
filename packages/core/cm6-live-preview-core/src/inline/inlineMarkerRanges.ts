@@ -117,6 +117,107 @@ function collectChildRanges(
   return ranges;
 }
 
+type HtmlTagKind = "opening" | "closing" | "self-closing" | "other";
+
+type HtmlTagInfo = {
+  from: number;
+  to: number;
+  kind: HtmlTagKind;
+  tagName: string | null;
+};
+
+type HtmlTagGroup = {
+  from: number;
+  to: number;
+  tags: Range[];
+};
+
+function parseHtmlTagInfo(literal: string, from: number, to: number): HtmlTagInfo {
+  const closingMatch = literal.match(/^<\/([A-Za-z][\w:-]*)\s*>$/);
+  if (closingMatch) {
+    return {
+      from,
+      to,
+      kind: "closing",
+      tagName: closingMatch[1].toLowerCase(),
+    };
+  }
+
+  const selfClosingMatch = literal.match(/^<([A-Za-z][\w:-]*)(?:\s[\s\S]*?)?\/>$/);
+  if (selfClosingMatch) {
+    return {
+      from,
+      to,
+      kind: "self-closing",
+      tagName: selfClosingMatch[1].toLowerCase(),
+    };
+  }
+
+  const openingMatch = literal.match(/^<([A-Za-z][\w:-]*)(?:\s[\s\S]*?)?>$/);
+  if (openingMatch) {
+    return {
+      from,
+      to,
+      kind: "opening",
+      tagName: openingMatch[1].toLowerCase(),
+    };
+  }
+
+  return { from, to, kind: "other", tagName: null };
+}
+
+function groupInlineHtmlTags(tags: HtmlTagInfo[]): HtmlTagGroup[] {
+  const groups: HtmlTagGroup[] = [];
+  const openIndices = new Map<string, number[]>();
+  const matched = new Set<number>();
+
+  for (let i = 0; i < tags.length; i += 1) {
+    const tag = tags[i];
+    if (!tag.tagName) {
+      continue;
+    }
+
+    if (tag.kind === "opening") {
+      const stack = openIndices.get(tag.tagName) ?? [];
+      stack.push(i);
+      openIndices.set(tag.tagName, stack);
+      continue;
+    }
+
+    if (tag.kind === "closing") {
+      const stack = openIndices.get(tag.tagName);
+      const openIndex = stack?.pop();
+      if (typeof openIndex === "number") {
+        matched.add(openIndex);
+        matched.add(i);
+        const openTag = tags[openIndex];
+        groups.push({
+          from: openTag.from,
+          to: tag.to,
+          tags: [
+            { from: openTag.from, to: openTag.to },
+            { from: tag.from, to: tag.to },
+          ],
+        });
+      }
+    }
+  }
+
+  for (let i = 0; i < tags.length; i += 1) {
+    if (matched.has(i)) {
+      continue;
+    }
+    groups.push({
+      from: tags[i].from,
+      to: tags[i].to,
+      tags: [{ from: tags[i].from, to: tags[i].to }],
+    });
+  }
+
+  groups.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));
+  return groups;
+}
+
 export function collectInlineMarkerRanges(
   state: EditorState,
   options: LivePreviewOptions,
@@ -127,6 +228,7 @@ export function collectInlineMarkerRanges(
 } {
   const hidden: Range[] = [];
   const images: Array<{ from: number; to: number; src: string; alt: string; raw: boolean }> = [];
+  const htmlTags: HtmlTagInfo[] = [];
   const tree = syntaxTree(state);
   const basePath = options.imageBasePath?.replace(/\/+$/, "") ?? "";
   const resolvedBase = (() => {
@@ -166,6 +268,12 @@ export function collectInlineMarkerRanges(
         return;
       }
 
+      if (node.name === NodeName.HTMLTag) {
+        const literal = state.doc.sliceString(node.from, node.to);
+        htmlTags.push(parseHtmlTagInfo(literal, node.from, node.to));
+        return;
+      }
+
       const raw = isInlineRaw(state, node, config.rawModeTrigger);
       if (!raw && config.richDisplayStyle === "hide") {
         const targets = inlineHideTargets.get(config.node);
@@ -197,6 +305,18 @@ export function collectInlineMarkerRanges(
       }
     },
   });
+
+  const htmlTagConfig = inlineConfigByNode.get(NodeName.HTMLTag);
+  if (htmlTagConfig && htmlTagConfig.richDisplayStyle === "hide") {
+    const groups = groupInlineHtmlTags(htmlTags);
+    for (const group of groups) {
+      const raw = isInlineRaw(state, group, htmlTagConfig.rawModeTrigger);
+      if (raw) {
+        continue;
+      }
+      hidden.push(...group.tags);
+    }
+  }
 
   return { hidden, images };
 }

@@ -95,8 +95,14 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 - Links
 - List markers / checkboxes
 - Code blocks（将来）
+- Inline HTML tag（`HTMLTag`）
 
-### 7.1 Mermaid code block (recommended future behavior)
+### 7.1 Inline HTML tag (`HTMLTag`)
+- Rich表示時は `HTMLTag` のタグ記号（例: `<span>`, `</span>`）を hide できること。
+- Raw切替は既存inline要素と同様に `nearby` トリガーに従うこと。
+- `HTMLBlock`（例: `<div>...</div>` のブロック）は本スコープ外とし、現時点では表示変換対象にしない。
+
+### 7.2 Mermaid code block (recommended future behavior)
 - Preview:
   - code block 全体を Widget により mermaid 図として表示可能
 - Edit:

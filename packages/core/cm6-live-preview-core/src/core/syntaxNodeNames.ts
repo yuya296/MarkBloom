@@ -15,6 +15,7 @@ export const NodeName = {
   StrongEmphasis: "StrongEmphasis",
   Link: "Link",
   Image: "Image",
+  HTMLTag: "HTMLTag",
   InlineCode: "InlineCode",
   Strikethrough: "Strikethrough",
   HorizontalRule: "HorizontalRule",
@@ -49,6 +50,7 @@ export const INLINE_CONTAINER_NAMES: ReadonlySet<NodeName> = new Set<NodeName>([
   NodeName.StrongEmphasis,
   NodeName.Link,
   NodeName.Image,
+  NodeName.HTMLTag,
   NodeName.InlineCode,
   NodeName.Strikethrough,
 ]);

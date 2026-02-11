@@ -56,6 +56,12 @@ export const inlineElementConfigs: InlineElementConfig[] = [
     rawModeTrigger: inlineTrigger,
     richDisplayStyle: "hide",
   },
+  {
+    kind: "inline",
+    node: NodeName.HTMLTag,
+    rawModeTrigger: inlineTrigger,
+    richDisplayStyle: "hide",
+  },
 ];
 
 export const blockMarkerConfigs: BlockMarkerConfig[] = [
