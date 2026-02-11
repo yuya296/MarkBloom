@@ -36,8 +36,16 @@
   --editor-text-color: var(--vscode-editor-foreground, #1f1e1c);
   --editor-gutter-bg: var(--vscode-editorGutter-background, transparent);
   --editor-gutter-color: var(--vscode-editorLineNumber-foreground, #8f8a7f);
-  --editor-diff-added: var(--vscode-editorGutter-addedBackground, #2ea043);
-  --editor-diff-modified: var(--vscode-editorGutter-modifiedBackground, #d29922);
+  --editor-diff-added: color-mix(
+    in srgb,
+    var(--vscode-editorGutter-addedBackground, #2ea043) 58%,
+    transparent
+  );
+  --editor-diff-modified: color-mix(
+    in srgb,
+    var(--vscode-editorGutter-modifiedBackground, #d29922) 58%,
+    transparent
+  );
   --editor-diff-rail: var(--vscode-editorLineNumber-foreground, rgba(143, 138, 127, 0.4));
   --editor-selection-bg: var(
     --vscode-editor-selectionBackground,
