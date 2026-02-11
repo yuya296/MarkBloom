@@ -36,6 +36,17 @@
   --editor-text-color: var(--vscode-editor-foreground, #1f1e1c);
   --editor-gutter-bg: var(--vscode-editorGutter-background, transparent);
   --editor-gutter-color: var(--vscode-editorLineNumber-foreground, #8f8a7f);
+  --editor-diff-added: color-mix(
+    in srgb,
+    var(--vscode-editorGutter-addedBackground, #2ea043) 58%,
+    transparent
+  );
+  --editor-diff-modified: color-mix(
+    in srgb,
+    var(--vscode-editorGutter-modifiedBackground, #d29922) 58%,
+    transparent
+  );
+  --editor-diff-rail: var(--vscode-editorLineNumber-foreground, rgba(143, 138, 127, 0.4));
   --editor-selection-bg: var(
     --vscode-editor-selectionBackground,
     rgba(15, 91, 158, 0.2)
@@ -337,7 +348,6 @@ footer.footer {
 
 .cm-editor .cm-gutters {
   background: var(--editor-gutter-bg);
-  border-right: 1px solid var(--editor-border);
   color: var(--editor-gutter-color);
 }
 
@@ -358,4 +368,27 @@ footer.footer {
 .cm-editor .mb-preview-widget {
   color: var(--editor-secondary-color);
   font-style: italic;
+}
+
+.cm-editor .cm-diff-marker {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  border-radius: 0;
+}
+
+.cm-editor .cm-diff-marker-added {
+  background: var(--editor-diff-added);
+}
+
+.cm-editor .cm-diff-marker-modified {
+  background: var(--editor-diff-modified);
+}
+
+.cm-editor .cm-diff-marker-spacer {
+  opacity: 0;
+}
+
+.cm-editor .cm-diff-gutter {
+  position: relative;
 }

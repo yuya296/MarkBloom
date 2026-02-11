@@ -9,6 +9,7 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
+      "@yuya296/cm6-diff-gutter": ["../../packages/core/cm6-diff-gutter/src/index.ts"],
       "@yuya296/cm6-live-preview": ["../../packages/core/cm6-live-preview/src/index.ts"],
       "@yuya296/cm6-table": ["../../packages/core/cm6-table/src/index.ts"],
       "@yuya296/cm6-live-preview-core": ["../../packages/core/cm6-live-preview-core/src/index.ts"],

@@ -11,6 +11,7 @@
 | `cm6-typography-theme` | semantic class に対する見た目（CSSテーマ）を提供する |
 | `cm6-live-preview` | 上記3つを束ね、プリセットとして配布する |
 | `cm6-table` | table editor UI（2モード編集 + 行列ハンドル） |
+| `cm6-diff-gutter` | baseline との差分を行頭ガターで可視化する |
 
 ## Repository Layout
 
@@ -25,6 +26,7 @@ graph TD
   core --> markdownSemantics["cm6-markdown-semantics"]
   core --> typographyTheme["cm6-typography-theme"]
   core --> cm6Table["cm6-table"]
+  core --> cm6DiffGutter["cm6-diff-gutter"]
 ```
 
 ## Dependency DAG
@@ -33,9 +35,11 @@ graph TD
 graph TD
   webview-demo --> cm6-live-preview
   webview-demo --> cm6-table
+  webview-demo --> cm6-diff-gutter
 
   vscode-extension --> cm6-live-preview
   vscode-extension --> cm6-table
+  vscode-extension --> cm6-diff-gutter
 
   cm6-live-preview --> cm6-live-preview-core
   cm6-live-preview --> cm6-markdown-semantics

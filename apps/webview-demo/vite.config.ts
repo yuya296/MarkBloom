@@ -13,10 +13,18 @@ export default defineConfig({
         configDir,
         "../../packages/core/cm6-table/src/index.ts",
       ),
+      "@yuya296/cm6-diff-gutter": path.resolve(
+        configDir,
+        "../../packages/core/cm6-diff-gutter/src/index.ts",
+      ),
     },
   },
   optimizeDeps: {
     // Keep local workspace packages unbundled in dev so UI tweaks are reflected immediately.
-    exclude: ["@yuya296/cm6-table", "@yuya296/cm6-live-preview"],
+    exclude: [
+      "@yuya296/cm6-table",
+      "@yuya296/cm6-live-preview",
+      "@yuya296/cm6-diff-gutter",
+    ],
   },
 });

@@ -1729,17 +1729,12 @@ function buildDecorations(
 
       builder.add(
         firstLine.from,
-        firstLine.from,
-        Decoration.widget({
+        lastLine.to,
+        Decoration.replace({
           widget: new TableWidget(data, info),
           block: true,
         })
       );
-
-      const hiddenLineDecoration = Decoration.line({ class: "cm-table-editor-hidden" });
-      for (const line of lines) {
-        builder.add(line.from, line.from, hiddenLineDecoration);
-      }
 
       tableId += 1;
     },
@@ -1752,19 +1747,18 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
   const resolved = { ...defaultOptions, ...options };
 
   const theme = EditorView.baseTheme({
-    ".cm-content .cm-line.cm-table-editor-hidden": {
-      display: "none",
-    },
     ".cm-content .cm6-table-editor": {
-      margin: "0.5rem 0",
       position: "relative",
       overflow: "visible",
+      padding: "0.5rem 0",
+      boxSizing: "border-box",
     },
     ".cm-content .cm6-table-editor:focus, .cm-content .cm6-table-editor:focus-visible":
       {
         outline: "none",
       },
     ".cm-content .cm6-table-editor .cm-table-scroll": {
+      margin: "0",
       overflowX: "auto",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
       borderRadius: "0",

@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
 import { promises as fs } from "node:fs";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import path from "node:path";
+
+const execFileAsync = promisify(execFile);
 
 type MarkBloomConfig = {
   livePreview: {
@@ -17,6 +22,12 @@ type HostMessage =
       uri: string;
       text: string;
       version: number;
+    }
+  | {
+      type: "setDiffBaseline";
+      uri: string;
+      text: string;
+      source: "git-head" | "fallback";
     }
   | {
       type: "setConfig";
@@ -77,6 +88,17 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
       webviewPanel.webview.postMessage(configMessage);
     };
 
+    const postDiffBaseline = async () => {
+      const baseline = await this.readGitHeadBaseline(document);
+      const baselineMessage: HostMessage = {
+        type: "setDiffBaseline",
+        uri: uriKey,
+        text: baseline.text,
+        source: baseline.source,
+      };
+      webviewPanel.webview.postMessage(baselineMessage);
+    };
+
     const documentChangeSubscription = vscode.workspace.onDidChangeTextDocument(
       (event) => {
         if (event.document.uri.toString() !== uriKey) {
@@ -89,6 +111,7 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
           return;
         }
         postInit();
+        void postDiffBaseline();
       }
     );
 
@@ -99,6 +122,7 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
             isReady = true;
             postInit();
             postConfig();
+            await postDiffBaseline();
             return;
           case "didChangeText":
             if (message.uri !== uriKey) {
@@ -164,6 +188,70 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
       await vscode.workspace.applyEdit(edit);
     } finally {
       this.applyingEdits.delete(uriKey);
+    }
+  }
+
+  private async readGitHeadBaseline(document: vscode.TextDocument): Promise<{
+    text: string;
+    source: "git-head" | "fallback";
+  }> {
+    try {
+      const gitContext = await this.resolveGitContext(document.uri);
+      if (!gitContext) {
+        return {
+          text: document.getText(),
+          source: "fallback",
+        };
+      }
+      const { stdout } = await execFileAsync(
+        "git",
+        ["-C", gitContext.repoRoot, "show", `HEAD:${gitContext.relativePath}`],
+        {
+          maxBuffer: 10 * 1024 * 1024,
+          encoding: "utf8",
+        }
+      );
+      return {
+        text: stdout,
+        source: "git-head",
+      };
+    } catch {
+      return {
+        text: document.getText(),
+        source: "fallback",
+      };
+    }
+  }
+
+  private async resolveGitContext(uri: vscode.Uri): Promise<{
+    repoRoot: string;
+    relativePath: string;
+  } | null> {
+    const documentPath = uri.fsPath;
+    const cwd = path.dirname(documentPath);
+
+    try {
+      const { stdout } = await execFileAsync(
+        "git",
+        ["-C", cwd, "rev-parse", "--show-toplevel"],
+        {
+          encoding: "utf8",
+        }
+      );
+      const repoRoot = stdout.trim();
+      if (!repoRoot) {
+        return null;
+      }
+      const relativePath = path.relative(repoRoot, documentPath);
+      if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+        return null;
+      }
+      return {
+        repoRoot,
+        relativePath: relativePath.split(path.sep).join("/"),
+      };
+    } catch {
+      return null;
     }
   }
 

@@ -33,6 +33,9 @@
 - Channel Tag: release line ごとの tag 命名（`core-vX.Y.Z`, `vscode-vX.Y.Z`）。
 - App Package: `apps/` 配下の実行可能プロダクト単位（例: webview-demo / vscode-extension）。
 - Core Package: `packages/core/` 配下の共有ライブラリ単位（`@yuya296/cm6-*`）。
+- Diff Gutter: ベーステキストとの差分を行頭ガターのマーカーで表示する CM6 拡張。
+- Baseline Text: 差分判定に使う比較元のテキスト。Git 由来かセッション由来かは呼び出し側が決める。
+- Git HEAD Baseline: `HEAD` 時点のファイル内容を baseline として使う運用。
 - Webview Pages: `apps/webview-demo` を GitHub Pages に公開する自動配信 workflow（`.github/workflows/webview-pages.yml`）。
 - PR Preview Path: PR番号ごとに割り当てる Pages 配下の公開パス（`pr-<PR番号>/`）。
 - Main Snapshot URL: `main` の最新 webview-demo 断面を公開する固定 URL（`https://yuya296.github.io/MarkBloom/`）。

@@ -1,6 +1,7 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
+import { diffGutter } from "@yuya296/cm6-diff-gutter";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
 import { createEditor } from "./createEditor";
@@ -13,7 +14,19 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
+  diffBaselineText: string;
 };
+
+function isTableLine(lineText: string): boolean {
+  const line = lineText.trim();
+  if (line.length === 0 || !line.includes("|")) {
+    return false;
+  }
+  if (/^\|?[-:\s]+(\|[-:\s]+)+\|?$/u.test(line)) {
+    return true;
+  }
+  return /^\|.*\|$/u.test(line);
+}
 
 function buildExtensions({
   showLineNumbers,
@@ -21,8 +34,16 @@ function buildExtensions({
   tabSize,
   livePreviewEnabled,
   blockRevealEnabled,
+  diffBaselineText,
 }: ExtensionOptions): Extension[] {
   const extensions: Extension[] = [];
+
+  extensions.push(
+    diffGutter({
+      baselineText: diffBaselineText,
+      ignoreLine: isTableLine,
+    })
+  );
 
   if (showLineNumbers) {
     extensions.push(lineNumbers());
@@ -124,6 +145,7 @@ export function setupApp() {
       livePreviewEnabled: livePreviewControl.checked,
       blockRevealEnabled: blockRevealControl.checked,
       tabSize: Number(tabSizeControl.value),
+      diffBaselineText: initialText,
     }),
     onChange: (text) => {
       if (status) {
@@ -143,6 +165,7 @@ export function setupApp() {
         livePreviewEnabled: livePreviewControl.checked,
         blockRevealEnabled: blockRevealControl.checked,
         tabSize: Number(tabSizeControl.value),
+        diffBaselineText: initialText,
       })
     );
     if (settingsMenu instanceof HTMLDetailsElement) {
