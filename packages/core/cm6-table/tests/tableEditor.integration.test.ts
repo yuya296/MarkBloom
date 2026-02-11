@@ -65,7 +65,6 @@ test("does not render widget when table editor is disabled", async () => {
   );
   try {
     assert.equal(harness.parent.querySelector(".cm6-table-editor"), null);
-    assert.equal(harness.parent.querySelector(".cm-table-editor-hidden"), null);
   } finally {
     harness.teardown();
   }
@@ -83,13 +82,35 @@ test("does not render widget when renderMode is none", async () => {
   }
 });
 
-test("renders widget and hides source table lines", async () => {
+test("renders widget and replaces source table lines", async () => {
   const harness = await createTableEditorHarness(
     ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
   );
   try {
     assert.ok(harness.parent.querySelector(".cm6-table-editor"));
-    assert.equal(harness.parent.querySelectorAll(".cm-table-editor-hidden").length, 3);
+    const lineTexts = Array.from(harness.parent.querySelectorAll<HTMLElement>(".cm-line")).map(
+      (line) => line.textContent ?? ""
+    );
+    assert.equal(lineTexts.some((line) => line.includes("| A | B |")), false);
+    assert.equal(
+      harness.parent.querySelector(".cm-table-editor-hidden"),
+      null,
+      "replace mode must not rely on hidden line classes"
+    );
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("renderMode none keeps markdown table lines visible", async () => {
+  const source = ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n");
+  const harness = await createTableEditorHarness(source, { renderMode: "none" });
+  try {
+    const lineTexts = Array.from(harness.parent.querySelectorAll<HTMLElement>(".cm-line")).map(
+      (line) => line.textContent ?? ""
+    );
+    assert.equal(lineTexts.some((line) => line.includes("| A | B |")), true);
+    assert.equal(harness.parent.querySelector(".cm6-table-editor"), null);
   } finally {
     harness.teardown();
   }
