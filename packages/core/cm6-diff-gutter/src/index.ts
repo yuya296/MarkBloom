@@ -29,8 +29,18 @@ class DiffMarker extends GutterMarker {
   }
 }
 
+class DiffSpacerMarker extends GutterMarker {
+  toDOM(): HTMLElement {
+    const marker = document.createElement("span");
+    marker.className = "cm-diff-marker cm-diff-marker-spacer";
+    marker.setAttribute("aria-hidden", "true");
+    return marker;
+  }
+}
+
 const addedMarker = new DiffMarker("added");
 const modifiedMarker = new DiffMarker("modified");
+const spacerMarker = new DiffSpacerMarker();
 
 type DiffMarkerState = {
   baselineText: string;
@@ -111,7 +121,7 @@ export function diffGutter(options: DiffGutterOptions): Extension {
         return view.state.field(diffField).markers;
       },
       initialSpacer() {
-        return modifiedMarker;
+        return spacerMarker;
       },
     }),
   ];
