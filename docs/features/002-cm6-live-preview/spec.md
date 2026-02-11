@@ -122,7 +122,7 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 | --- | --- | --- |
 | 見出し | nearby / block | hide |
 | 太字 | nearby | hide |
-| 箇条書き/番号付き | never | widget replace |
+| 箇条書き/番号付き | nearby | widget replace |
 | チェックリスト (`[ ]`, `[x]`) | nearby / cursor-on-line | widget replace |
 
 ### 10.1 Checklist widget behavior

@@ -68,7 +68,7 @@ export const blockMarkerConfigs: BlockMarkerConfig[] = [
   {
     kind: "block-marker",
     id: "list",
-    rawModeTrigger: "never",
+    rawModeTrigger: "nearby",
     richDisplayStyle: "hide",
   },
   {
