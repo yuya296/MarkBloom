@@ -12,8 +12,8 @@ export type TypographyThemeOptions = {
 export function typographyTheme(options: TypographyThemeOptions = {}): Extension {
   const prefix = options.classPrefix ?? "mb-";
   const scope = ".cm-content";
-  const listMarkerWidthCh = String(options.listMarkerWidthCh ?? 1.5);
-  const listIndentStepCh = String(options.listIndentStepCh ?? 2);
+  const listMarkerWidthCh = `${options.listMarkerWidthCh ?? 1.5}ch`;
+  const listIndentStepCh = `${options.listIndentStepCh ?? 2}ch`;
   const listBulletColor = options.listBulletColor ?? "var(--editor-primary-color, currentColor)";
   const listOrderedColor = options.listOrderedColor ?? "var(--editor-secondary-color, currentColor)";
 
@@ -211,7 +211,7 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
     },
     [`${scope} .${prefix}blockquote.${prefix}list-item`]: {
       paddingLeft:
-        "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem) - var(--mb-quote-border-width, 3px) + (var(--mb-list-level, 1) - 1) * var(--mb-list-indent-step-ch, 2ch))",
+        "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem) - var(--mb-quote-border-width, 3px))",
     },
     [`${scope} .${prefix}list-item:not(.${prefix}blockquote)`]: {
       paddingLeft:
