@@ -335,13 +335,3 @@ footer.footer {
 .cm-editor .cm-diff-gutter {
   position: relative;
 }
-
-.cm-editor .cm-diff-gutter::before {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--editor-diff-rail);
-}

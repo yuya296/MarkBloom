@@ -1750,13 +1750,15 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     ".cm-content .cm6-table-editor": {
       position: "relative",
       overflow: "visible",
+      padding: "0.5rem 0",
+      boxSizing: "border-box",
     },
     ".cm-content .cm6-table-editor:focus, .cm-content .cm6-table-editor:focus-visible":
       {
         outline: "none",
       },
     ".cm-content .cm6-table-editor .cm-table-scroll": {
-      margin: "0.5rem 0",
+      margin: "0",
       overflowX: "auto",
       border: "1px solid color-mix(in srgb, var(--editor-border, #dadce0) 80%, transparent)",
       borderRadius: "0",
