@@ -4,6 +4,7 @@ import { Decoration, type DecorationSet } from "@codemirror/view";
 import type { LivePreviewOptions } from "./index";
 import {
   addBlockMarkerDecorations,
+  addTaskCheckboxDecorations,
   collectBlockRevealRange,
   collectFenceMarkersByLine,
 } from "./block/blockMarkers";
@@ -81,6 +82,16 @@ export function buildDecorations(state: EditorState, options: LivePreviewOptions
         { isSelectionOverlap, isBlockReveal },
         blockHiddenDecoration,
         fenceMarkersByLine
+      );
+    }
+
+    if (!isExcluded) {
+      addTaskCheckboxDecorations(
+        state,
+        pushDecoration,
+        line.from,
+        line.text,
+        selectionRanges
       );
     }
   }

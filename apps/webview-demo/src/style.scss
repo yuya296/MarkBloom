@@ -32,6 +32,8 @@
   --editor-diff-modified: rgba(210, 153, 34, 0.58);
   --editor-diff-rail: rgba(106, 98, 87, 0.32);
   --editor-caret-color: #0f5b9e;
+  --editor-checkbox-accent: var(--editor-primary-color);
+  --editor-checkbox-disabled-opacity: 0.55;
   --mb-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --mb-inline-code-bg: rgba(15, 91, 158, 0.08);
   --mb-code-block-bg: #f2f2f2;
@@ -82,6 +84,8 @@
   --editor-diff-modified: rgba(227, 179, 65, 0.58);
   --editor-diff-rail: rgba(194, 194, 194, 0.3);
   --editor-caret-color: #b7d0ff;
+  --editor-checkbox-accent: var(--editor-primary-color);
+  --editor-checkbox-disabled-opacity: 0.5;
   --mb-inline-code-bg: rgba(183, 208, 255, 0.18);
   --mb-code-block-bg: #404040;
   --mb-quote-border-color: #595959;
@@ -310,6 +314,26 @@ footer.footer {
 .cm-editor .mb-preview-widget {
   color: var(--editor-secondary-color);
   font-style: italic;
+}
+
+.cm-editor .cm-lp-task-checkbox {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: text-bottom;
+  margin-right: 0.35em;
+}
+
+.cm-editor .cm-lp-task-checkbox-input {
+  width: 0.95em;
+  height: 0.95em;
+  margin: 0;
+  accent-color: var(--editor-checkbox-accent);
+  cursor: pointer;
+}
+
+.cm-editor .cm-lp-task-checkbox-input:disabled {
+  cursor: not-allowed;
+  opacity: var(--editor-checkbox-disabled-opacity);
 }
 
 .cm-editor .cm-diff-marker {

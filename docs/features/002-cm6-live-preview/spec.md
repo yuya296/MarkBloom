@@ -93,7 +93,7 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 - Bold / Italic
 - Inline code
 - Links
-- List markers / checkboxes（将来）
+- List markers / checkboxes
 - Code blocks（将来）
 
 ### 7.1 Mermaid code block (recommended future behavior)
@@ -123,3 +123,19 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 | 見出し | nearby / block | hide |
 | 太字 | nearby | hide |
 | 箇条書き/番号付き | always | none |
+| チェックリスト (`[ ]`, `[x]`) | nearby / cursor-on-line | widget replace |
+
+### 10.1 Checklist widget behavior
+- 対象記法: 行頭インデント + （任意）blockquote prefix + list marker（`-`, `+`, `*`, `1.` など）に続く `"[ ]"` / `"[x]"` / `"[X]"`。
+- Rich表示時は `"[ ]"` / `"[x]"` の3文字のみを Widget に置換し、list marker とインデントはそのまま保持する。
+- Widgetは clickable checkbox とし、クリック時に source markdown を直接トグルする（`[ ]` ⇄ `[x]`）。
+- malformed 記法（例: `-[x]`, `[x]` 単独行）は対象外。
+
+### 10.2 Raw fallback for checklist
+- 次の条件では checklist widget を表示せず、生Markdownを表示する。
+  - 選択範囲が checklist token（`[ ]` / `[x]`）に重なる
+  - カーソルが同一行にある（タスク編集文脈）
+
+### 10.3 Read-only mode
+- `EditorState.readOnly=true` の場合、checklist widget は表示しても doc を変更してはならない。
+- checkbox は disabled 表示とし、クリックしてもトグルしない。
