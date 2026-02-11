@@ -21,6 +21,26 @@ MarkBloom は、**Markdown を “真実のソース” のまま**、人間が 
 - Markdown を置き換える独自ドキュメント形式の提供
 - Notion のようなワークスペース／DB型プロダクトの実装
 
+## リポジトリ構成
+
+- `apps/webview-demo`: CM6 + MarkBloom 拡張の統合デモアプリ
+- `apps/vscode-extension`: VS Code 拡張アプリ（`markbloom`）
+- `packages/core/cm6-*`: npm 公開する core CM6 ライブラリ群
+- `docs/`: アーキテクチャ、runbook、ADR、機能仕様
+
+## 依存関係モデル
+
+- app 層（`apps/*`）は core 層（`@yuya296/cm6-*`）に依存します。
+- `@yuya296/cm6-live-preview` は次を束ねます:
+  - `@yuya296/cm6-live-preview-core`
+  - `@yuya296/cm6-markdown-semantics`
+  - `@yuya296/cm6-typography-theme`
+- `apps/vscode-extension` と `apps/webview-demo` は共通で次を利用します:
+  - `@yuya296/cm6-live-preview`
+  - `@yuya296/cm6-table`
+
+図とリリース経路は `docs/architecture/overview.md` を参照してください。
+
 ---
 
 設計・運用ドキュメントは `docs/` に置きます。
