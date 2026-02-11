@@ -50,10 +50,12 @@ class TaskCheckboxWidget extends WidgetType {
     input.className = "cm-lp-task-checkbox-input";
     input.type = "checkbox";
     input.checked = this.checked;
+    input.tabIndex = -1;
     input.disabled = view.state.facet(EditorState.readOnly);
     input.setAttribute("aria-label", this.checked ? "Uncheck task" : "Check task");
 
     input.addEventListener("mousedown", (event) => {
+      event.preventDefault();
       event.stopPropagation();
     });
 
@@ -66,16 +68,20 @@ class TaskCheckboxWidget extends WidgetType {
 
       if (view.state.facet(EditorState.readOnly)) {
         input.checked = this.checked;
+        view.focus();
         return;
       }
 
+      const anchor = view.state.selection.main.head;
       view.dispatch({
         changes: {
           from: this.from,
           to: this.to,
           insert: this.checked ? "[ ]" : "[x]",
         },
+        selection: { anchor },
       });
+      view.focus();
     });
 
     wrapper.appendChild(input);

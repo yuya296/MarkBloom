@@ -375,8 +375,9 @@ footer.footer {
 .cm-editor .cm-lp-task-checkbox {
   display: inline-flex;
   align-items: center;
-  vertical-align: text-bottom;
+  vertical-align: middle;
   margin-right: 0.35em;
+  transform: translateY(-0.08em);
 }
 
 .cm-editor .cm-lp-task-checkbox-input {
