@@ -33,7 +33,6 @@ MarkBloom is a VS Code extension for **reviewing and editing Markdown** in a way
 ## Live demo
 
 - Latest snapshot (`main`): https://yuya296.github.io/MarkBloom/
-- PR preview (`pr-<number>`): https://yuya296.github.io/MarkBloom/pr-<number>/
 - Pages content is publicly accessible. Do not include sensitive or private data in demo content.
 
 ## Dependency model

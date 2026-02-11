@@ -31,7 +31,6 @@ MarkBloom は、**Markdown を “真実のソース” のまま**、人間が 
 ## Live demo
 
 - 最新断面（`main`）: https://yuya296.github.io/MarkBloom/
-- PR断面（`pr-<number>`）: https://yuya296.github.io/MarkBloom/pr-<number>/
 - Pages 上の内容は公開されます。デモには機密情報・私有データを含めないでください。
 
 ## 依存関係モデル
