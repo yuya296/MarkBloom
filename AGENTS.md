@@ -10,6 +10,8 @@
 
 ### Purpose
 - CodeMirror 6ベースのエディタ関連パッケージ群。実装・検証の中心は`apps/webview-demo`。
+- 最新断面（`main`）: `https://yuya296.github.io/MarkBloom/`
+- PR断面（`pr-<number>`）: `https://yuya296.github.io/MarkBloom/pr-<number>/`
 
 ### Module Map (Where to Change)
 - `apps/webview-demo`: デモ/統合アプリ。UI・テーマ・配線の入口。
@@ -30,6 +32,12 @@
 - 起動: `pnpm -C apps/webview-demo dev`
 - PM2起動: `pm2 start ecosystem.config.cjs`
 - 主要Lint/型チェック: 各パッケージの`package.json`参照。
+
+### Branch Naming
+- `feature/*`: 機能追加
+- `fix/*`: 機能修正
+- `docs/*`: ドキュメント修正
+- `ci/*`: CI修正
 
 ### Change Checklist (Keep It Short)
 - 機能変更: 影響パッケージの責務を確認し、該当モジュールに最小変更。
