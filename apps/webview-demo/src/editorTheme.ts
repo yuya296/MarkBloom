@@ -31,7 +31,7 @@ export function editorTheme(): Extension {
     ".cm-gutters": {
       backgroundColor: "var(--editor-gutter-bg)",
       color: "var(--editor-gutter-color)",
-      borderRight: "1px solid var(--editor-border)",
+      borderRight: "none",
     },
     ".cm-diff-gutter": {
       width: "10px",
@@ -40,7 +40,7 @@ export function editorTheme(): Extension {
     ".cm-diff-gutter .cm-gutterElement": {
       padding: "0",
       display: "flex",
-      alignItems: "center",
+      alignItems: "stretch",
       justifyContent: "center",
     },
     ".cm-line": {

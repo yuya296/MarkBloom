@@ -287,7 +287,6 @@ footer.footer {
 
 .cm-editor .cm-gutters {
   background: var(--editor-gutter-bg);
-  border-right: 1px solid var(--editor-border);
   color: var(--editor-gutter-color);
 }
 
@@ -316,8 +315,8 @@ footer.footer {
 .cm-editor .cm-diff-marker {
   display: inline-block;
   width: 3px;
-  height: 1.35em;
-  border-radius: 999px;
+  height: 100%;
+  border-radius: 0;
 }
 
 .cm-editor .cm-diff-marker-added {
