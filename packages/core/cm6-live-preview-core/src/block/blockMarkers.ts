@@ -11,26 +11,29 @@ import {
   type RawModeTrigger,
 } from "../config";
 import type { LivePreviewOptions } from "../index";
-import { taskCheckboxReplace } from "../theme/markerWidgets";
+import { listMarkerReplace, taskCheckboxReplace } from "../theme/markerWidgets";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
-  list: /^\s{0,3}([*+-]|\d+\.)(?=\s)/,
+  list: /^(?:\s{0,3}(?:>\s?)*)?\s*([*+-]|\d+\.)(?=\s)/,
   quotePrefix: /^\s{0,3}(?:>\s?)*/,
   taskList:
-    /^\s{0,3}(?:>\s?)*\s*((?:[*+-]|\d+\.)\s+)(\[(?: |x|X)\])(?=\s|$)/,
+    /^(?:\s{0,3}(?:>\s?)*)?\s*((?:[*+-]|\d+\.)\s+)(\[(?: |x|X)\])(?=\s|$)/,
 };
 
 type BlockMarker = {
   id: "heading" | "list" | "quote" | "fence";
   from: number;
   to: number;
+  listKind?: "bullet" | "ordered";
+  rawText?: string;
 };
 
 type PushDecoration = (from: number, to: number, decoration: Decoration) => void;
 
 type BlockRawState = {
   isSelectionOverlap: boolean;
+  cursorHeads: readonly number[];
   isBlockReveal: boolean;
 };
 
@@ -44,6 +47,14 @@ type TaskCheckbox = {
 
 function normalizeTriggers(rawModeTrigger: RawModeTrigger | RawModeTrigger[]): RawModeTrigger[] {
   return Array.isArray(rawModeTrigger) ? rawModeTrigger : [rawModeTrigger];
+}
+
+function isCursorNearRange(
+  cursorHeads: readonly number[],
+  from: number,
+  to: number
+): boolean {
+  return cursorHeads.some((head) => head >= from && head <= to);
 }
 
 function isRawByTriggers(state: BlockRawState, rawModeTrigger: RawModeTrigger | RawModeTrigger[]): boolean {
@@ -118,9 +129,17 @@ function collectBlockMarkers(
   const listMatch = lineText.match(blockMarkerPattern.list);
   if (listMatch) {
     const markerIndex = lineText.indexOf(listMatch[1]);
+    const markerText = listMatch[1];
     const from = lineFrom + markerIndex;
-    const to = from + listMatch[1].length;
-    markers.push({ id: "list", from, to });
+    const to = from + markerText.length;
+    const listKind = /^\d+\.$/u.test(markerText) ? "ordered" : "bullet";
+    markers.push({
+      id: "list",
+      from,
+      to,
+      listKind,
+      rawText: markerText,
+    });
   }
 
   const quotePrefix = lineText.match(blockMarkerPattern.quotePrefix)?.[0] ?? "";
@@ -154,8 +173,27 @@ function pushBlockMarkerDecoration(
     return;
   }
 
-  const isRaw = isRawByTriggers(state, config.rawModeTrigger);
+  const isRaw =
+    isRawByTriggers(state, config.rawModeTrigger) ||
+    (normalizeTriggers(config.rawModeTrigger).includes("nearby") &&
+      isCursorNearRange(state.cursorHeads, marker.from, marker.to));
   const style: DisplayStyle = isRaw ? "none" : config.richDisplayStyle;
+
+  if (marker.id === "list") {
+    if (style === "none") {
+      return;
+    }
+    if (!marker.listKind || !marker.rawText) {
+      push(marker.from, marker.to, hiddenDecoration);
+      return;
+    }
+    push(
+      marker.from,
+      marker.to,
+      listMarkerReplace(marker.listKind, marker.rawText)
+    );
+    return;
+  }
 
   if (style === "hide") {
     push(marker.from, marker.to, hiddenDecoration);
@@ -171,8 +209,12 @@ export function addBlockMarkerDecorations(
   hiddenDecoration: Decoration,
   fenceMarkersByLine: Map<number, BlockMarker[]>
 ) {
+  const isTaskListLine = blockMarkerPattern.taskList.test(lineText);
   const markers = collectBlockMarkers(lineFrom, lineText, fenceMarkersByLine);
   for (const marker of markers) {
+    if (isTaskListLine && marker.id === "list") {
+      continue;
+    }
     pushBlockMarkerDecoration(push, marker, state, hiddenDecoration);
   }
 }
@@ -305,6 +347,9 @@ export function collectFenceMarkersByLine(
   blockRevealRange: Range | null
 ): Map<number, BlockMarker[]> {
   const markersByLine = new Map<number, BlockMarker[]>();
+  const cursorHeads = state.selection.ranges
+    .filter((range) => range.from === range.to)
+    .map((range) => range.head);
 
   syntaxTree(state).iterate({
     enter: (node) => {
@@ -319,7 +364,7 @@ export function collectFenceMarkersByLine(
         ? node.from < blockRevealRange.to && node.to > blockRevealRange.from
         : false;
       const style = isRawByTriggers(
-        { isSelectionOverlap, isBlockReveal },
+        { isSelectionOverlap, cursorHeads, isBlockReveal },
         ["nearby", "block"]
       )
         ? "none"

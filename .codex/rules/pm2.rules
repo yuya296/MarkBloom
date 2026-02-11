@@ -1,66 +1,91 @@
 # ~/.codex/rules/pm2.rules
-# PM2: start/restart/stop 系は都度承認、参照系は自動承認
+#
+# Policy:
+# - Routine process operations: allow
+# - Risky/system-level/config-changing commands: prompt
 
-# 1) 破壊/稼働変更系 → prompt
+# =========================================================
+# Routine process operations (ALLOW)
+# =========================================================
 prefix_rule(
-    pattern = ["pm2"],
+    pattern = ["pm2", [
+        "ls",
+        "list",
+        "status",
+        "show",
+        "describe",
+        "logs",
+        "monit",
+        "prettylist",
+        "report",
+        "ping",
+
+        # process lifecycle (allowed by request)
+        "start",
+        "restart",
+        "reload",
+        "stop",
+        "delete",
+        "scale",
+        "reset",
+        "flush",
+    ]],
     decision = "allow",
-    justification = "PM2 process lifecycle change: require approval.",
+    justification = "Routine PM2 process operations are allowed.",
     match = [
-        # start
-        "pm2 start",
-        "pm2 start ecosystem.config.cjs",
-
-        # restart / reload
-        "pm2 restart",
-        "pm2 reload",
-
-        # stop
-        "pm2 stop",
-
-        # delete (止める+削除なので、必要ならここも prompt のままでOK)
-        "pm2 delete",
-        "pm2 status",
         "pm2 list",
-        "pm2 ls",
-        "pm2 jlist",
-        "pm2 describe",
-        "pm2 show",
-        "pm2 info",
-
-        "pm2 logs",
-        "pm2 monit",
-
-        "pm2 ping",
-        "pm2 report",
-        "pm2 version",
-        "pm2 -v",
-        "pm2 help",
-        "pm2 --help",
+        "pm2 status",
+        "pm2 logs api --lines 200",
+        "pm2 start ecosystem.config.js --only api",
+        "pm2 restart api",
+        "pm2 reload all",
+        "pm2 stop api",
+        "pm2 delete api",
+        "pm2 scale api 4",
     ],
 )
 
-# 3) その他の pm2 は安全側に倒す（必要なら）
-#    例: startup / save / unstartup / update などは意図せず永続化するので prompt にする
+# =========================================================
+# Risky / config / system-affecting (PROMPT)
+# =========================================================
 prefix_rule(
-    pattern = ["pm2"],
+    pattern = ["pm2", [
+        # broad impact
+        "kill",
+
+        # persistence / boot integration
+        "save",
+        "resurrect",
+        "startup",
+        "unstartup",
+
+        # env / config mutation
+        "env",
+        "set",
+        "unset",
+
+        # deployment / hooks / modules
+        "deploy",
+        "trigger",
+        "install",
+        "uninstall",
+        "module",
+
+        # update-level operations
+        "update",
+        "deepUpdate",
+    ]],
     decision = "prompt",
-    justification = "PM2 persistent/system-level commands: require approval.",
+    justification = "PM2 commands that change persistent config, system startup, environment, or deployment require approval.",
     match = [
-        "pm2 startup",
+        "pm2 kill",
         "pm2 save",
-        "pm2 resurrect",
+        "pm2 startup",
         "pm2 unstartup",
-        "pm2 update",
-        "pm2 install",
-        "pm2 uninstall",
+        "pm2 set pm2:sysmonit true",
+        "pm2 unset pm2:sysmonit",
+        "pm2 deploy production",
+        "pm2 install pm2-logrotate",
     ],
-)
-
-prefix_rule(
-    pattern = ["sudo"],
-    decision = "forbidden",
-    justification = "Do not run sudo via Codex. Run manually in your terminal.",
-    match = ["sudo chown -R 501:20 /Users/yuya/.pm2"],
 )
 

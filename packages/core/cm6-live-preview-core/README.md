@@ -42,7 +42,7 @@ Example (simplified):
 | --- | --- | --- |
 | Headings | nearby / block | hide |
 | Bold | nearby | hide |
-| List markers | always | none |
+| List markers | nearby | hide (widget replace) |
 
 ## Options
 

@@ -86,6 +86,10 @@ CodeMirror 6 (CM6) エディタの見た目を、MarkBloom のデザインガイ
 ```ts
 export type TypographyThemeOptions = {
   classPrefix?: string;
+  listMarkerWidthCh?: number;
+  listIndentStepCh?: number;
+  listBulletColor?: string;
+  listOrderedColor?: string;
 };
 
 export function typographyTheme(options?: TypographyThemeOptions): Extension;
