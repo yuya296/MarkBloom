@@ -33,3 +33,21 @@ export function addImageDecorations(
     }
   }
 }
+
+export function addInlineHtmlStyleDecorations(
+  push: PushDecoration,
+  styles: Array<{ from: number; to: number; style: string }>
+) {
+  for (const styleRange of styles) {
+    if (styleRange.from >= styleRange.to || !styleRange.style) {
+      continue;
+    }
+    push(
+      styleRange.from,
+      styleRange.to,
+      Decoration.mark({
+        attributes: { style: styleRange.style },
+      })
+    );
+  }
+}
