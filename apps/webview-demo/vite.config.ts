@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH ?? "/",
   resolve: {
     // Resolve cm6-table to source during local development to avoid stale workspace dist cache.
     alias: {

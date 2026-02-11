@@ -1,0 +1,220 @@
+name: Webview Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  webview-main:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: webview-pages-main
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare pnpm
+        run: corepack prepare pnpm@10.27.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build webview demo (main snapshot)
+        env:
+          VITE_BASE_PATH: /MarkBloom/
+        run: pnpm -C apps/webview-demo build
+
+      - name: Publish main snapshot to Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: apps/webview-demo/dist
+          keep_files: true
+
+  webview-pr-preview:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: webview-pages-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Check PR source repository
+        id: source
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
+            echo "same_repo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "same_repo=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip fork PR preview
+        if: steps.source.outputs.same_repo != 'true'
+        run: echo "Skipping preview deployment for fork PR."
+
+      - name: Checkout
+        if: steps.source.outputs.same_repo == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: steps.source.outputs.same_repo == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable Corepack
+        if: steps.source.outputs.same_repo == 'true'
+        run: corepack enable
+
+      - name: Prepare pnpm
+        if: steps.source.outputs.same_repo == 'true'
+        run: corepack prepare pnpm@10.27.0 --activate
+
+      - name: Install dependencies
+        if: steps.source.outputs.same_repo == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build webview demo (PR preview)
+        if: steps.source.outputs.same_repo == 'true'
+        env:
+          VITE_BASE_PATH: /MarkBloom/pr-${{ github.event.pull_request.number }}/
+        run: pnpm -C apps/webview-demo build
+
+      - name: Publish PR preview to Pages
+        if: steps.source.outputs.same_repo == 'true'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: apps/webview-demo/dist
+          destination_dir: pr-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Create or update PR preview comment
+        if: steps.source.outputs.same_repo == 'true'
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: https://yuya296.github.io/MarkBloom/pr-${{ github.event.pull_request.number }}/
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = "<!-- webview-preview -->";
+            const body = `${marker}
+            🔎 Webview preview is ready: ${process.env.PREVIEW_URL}
+
+            - Commit: \`${context.payload.pull_request.head.sha.slice(0, 7)}\`
+            - Updated by: \`${context.workflow}\``;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) =>
+              comment.user?.type === "Bot" && comment.body?.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
+  webview-pr-cleanup:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: webview-pages-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Check PR source repository
+        id: source
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
+            echo "same_repo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "same_repo=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip fork PR cleanup
+        if: steps.source.outputs.same_repo != 'true'
+        run: echo "Skipping preview cleanup for fork PR."
+
+      - name: Check gh-pages branch existence
+        if: steps.source.outputs.same_repo == 'true'
+        id: gh_pages
+        run: |
+          REPO_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$REPO_URL" gh-pages > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip cleanup when gh-pages does not exist
+        if: steps.source.outputs.same_repo == 'true' && steps.gh_pages.outputs.exists != 'true'
+        run: echo "Skipping cleanup because gh-pages branch does not exist yet."
+
+      - name: Checkout gh-pages
+        if: steps.source.outputs.same_repo == 'true' && steps.gh_pages.outputs.exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Remove PR preview directory
+        if: steps.source.outputs.same_repo == 'true' && steps.gh_pages.outputs.exists == 'true'
+        run: |
+          PREVIEW_DIR="pr-${{ github.event.pull_request.number }}"
+          if [ ! -d "$PREVIEW_DIR" ]; then
+            echo "Preview directory not found: $PREVIEW_DIR"
+            exit 0
+          fi
+
+          rm -rf "$PREVIEW_DIR"
+
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(webview-pages): remove preview for PR #${{ github.event.pull_request.number }}"
+          git push origin gh-pages

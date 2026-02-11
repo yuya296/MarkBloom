@@ -28,6 +28,12 @@ MarkBloom は、**Markdown を “真実のソース” のまま**、人間が 
 - `packages/core/cm6-*`: npm 公開する core CM6 ライブラリ群
 - `docs/`: アーキテクチャ、runbook、ADR、機能仕様
 
+## Live demo
+
+- 最新断面（`main`）: https://yuya296.github.io/MarkBloom/
+- PR断面（`pr-<number>`）: https://yuya296.github.io/MarkBloom/pr-<number>/
+- Pages 上の内容は公開されます。デモには機密情報・私有データを含めないでください。
+
 ## 依存関係モデル
 
 - app 層（`apps/*`）は core 層（`@yuya296/cm6-*`）に依存します。
