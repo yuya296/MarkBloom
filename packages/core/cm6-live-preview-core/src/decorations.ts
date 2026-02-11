@@ -8,7 +8,11 @@ import {
   collectBlockRevealRange,
   collectFenceMarkersByLine,
 } from "./block/blockMarkers";
-import { addImageDecorations, addInlineMarkerDecorations } from "./inline/inlineDecorations";
+import {
+  addImageDecorations,
+  addInlineHtmlStyleDecorations,
+  addInlineMarkerDecorations,
+} from "./inline/inlineDecorations";
 import { collectInlineMarkerRanges } from "./inline/inlineMarkerRanges";
 import { collectExcludedRanges } from "./core/excludedRanges";
 import { overlapsRange } from "./core/utils";
@@ -108,6 +112,7 @@ export function buildDecorations(state: EditorState, options: LivePreviewOptions
   );
 
   addInlineMarkerDecorations(pushDecoration, inlineMarkerRanges.hidden, inlineHiddenDecoration);
+  addInlineHtmlStyleDecorations(pushDecoration, inlineMarkerRanges.htmlStyles);
   addImageDecorations(
     pushDecoration,
     inlineMarkerRanges.images,

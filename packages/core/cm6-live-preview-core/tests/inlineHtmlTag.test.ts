@@ -22,6 +22,18 @@ function hiddenLiterals(state: EditorState): string[] {
   return hidden.map((range) => state.doc.sliceString(range.from, range.to));
 }
 
+function htmlStyleRanges(state: EditorState): Array<{ text: string; style: string }> {
+  const { htmlStyles } = collectInlineMarkerRanges(
+    state,
+    {},
+    { block: [], inline: [] }
+  );
+  return htmlStyles.map((range) => ({
+    text: state.doc.sliceString(range.from, range.to),
+    style: range.style,
+  }));
+}
+
 test("hides inline HTML tags in rich mode", () => {
   const state = createState("text <span>hi</span> end");
   const literals = hiddenLiterals(state);
@@ -44,4 +56,22 @@ test("does not hide HTML blocks", () => {
   const state = createState(["<div>", "text", "</div>"].join("\n"));
   const literals = hiddenLiterals(state);
   assert.deepEqual(literals, []);
+});
+
+test("applies inline style attribute to HTML tag content in rich mode", () => {
+  const state = createState('text <span style="color:red">red</span> end');
+  const styles = htmlStyleRanges(state);
+  assert.deepEqual(styles, [{ text: "red", style: "color: red" }]);
+});
+
+test("supports underline attribute on span in rich mode", () => {
+  const state = createState('text <span underline="true">u</span> end');
+  const styles = htmlStyleRanges(state);
+  assert.deepEqual(styles, [{ text: "u", style: "text-decoration: underline" }]);
+});
+
+test("does not apply inline style when HTML tag group is in raw mode", () => {
+  const state = createState('text <span style="color:red">red</span> end', 15);
+  const styles = htmlStyleRanges(state);
+  assert.deepEqual(styles, []);
 });

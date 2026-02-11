@@ -124,13 +124,111 @@ type HtmlTagInfo = {
   to: number;
   kind: HtmlTagKind;
   tagName: string | null;
+  attrs: ReadonlyMap<string, string | true>;
 };
 
 type HtmlTagGroup = {
   from: number;
   to: number;
   tags: Range[];
+  contentFrom?: number;
+  contentTo?: number;
+  openTag?: HtmlTagInfo;
 };
+
+const allowedInlineStyleProps = new Set([
+  "color",
+  "background-color",
+  "text-decoration",
+  "font-weight",
+  "font-style",
+]);
+
+function parseHtmlAttrs(source: string): ReadonlyMap<string, string | true> {
+  const attrs = new Map<string, string | true>();
+  const attrPattern =
+    /([A-Za-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  let match = attrPattern.exec(source);
+  while (match) {
+    const name = (match[1] ?? "").toLowerCase();
+    if (name) {
+      const value = match[2] ?? match[3] ?? match[4];
+      attrs.set(name, typeof value === "string" ? value : true);
+    }
+    match = attrPattern.exec(source);
+  }
+  return attrs;
+}
+
+function isDangerousStyleValue(value: string): boolean {
+  const normalized = value.toLowerCase();
+  return (
+    normalized.includes("url(") ||
+    normalized.includes("expression(") ||
+    normalized.includes("@import") ||
+    normalized.includes("javascript:")
+  );
+}
+
+function sanitizeInlineStyle(styleSource: string): ReadonlyMap<string, string> {
+  const declarations = new Map<string, string>();
+  for (const segment of styleSource.split(";")) {
+    const index = segment.indexOf(":");
+    if (index <= 0) {
+      continue;
+    }
+    const property = segment.slice(0, index).trim().toLowerCase();
+    const value = segment.slice(index + 1).trim();
+    if (!allowedInlineStyleProps.has(property) || value.length === 0) {
+      continue;
+    }
+    if (isDangerousStyleValue(value)) {
+      continue;
+    }
+    declarations.set(property, value);
+  }
+  return declarations;
+}
+
+function isTruthyAttr(value: string | true | undefined): boolean {
+  if (value === true) {
+    return true;
+  }
+  if (typeof value !== "string") {
+    return false;
+  }
+  return /^(?:1|true|yes|on)$/iu.test(value.trim());
+}
+
+function buildInlineHtmlStyle(tag: HtmlTagInfo): string {
+  if (!tag.tagName) {
+    return "";
+  }
+
+  const declarations = new Map<string, string>();
+  const setDeclaration = (property: string, value: string) => {
+    declarations.set(property, value);
+  };
+
+  if (tag.tagName === "u") {
+    setDeclaration("text-decoration", "underline");
+  }
+
+  if (isTruthyAttr(tag.attrs.get("underline"))) {
+    setDeclaration("text-decoration", "underline");
+  }
+
+  const styleAttr = tag.attrs.get("style");
+  if (typeof styleAttr === "string") {
+    for (const [property, value] of sanitizeInlineStyle(styleAttr)) {
+      setDeclaration(property, value);
+    }
+  }
+
+  return Array.from(declarations.entries())
+    .map(([property, value]) => `${property}: ${value}`)
+    .join("; ");
+}
 
 function parseHtmlTagInfo(literal: string, from: number, to: number): HtmlTagInfo {
   const closingMatch = literal.match(/^<\/([A-Za-z][\w:-]*)\s*>$/);
@@ -140,30 +238,33 @@ function parseHtmlTagInfo(literal: string, from: number, to: number): HtmlTagInf
       to,
       kind: "closing",
       tagName: closingMatch[1].toLowerCase(),
+      attrs: new Map(),
     };
   }
 
-  const selfClosingMatch = literal.match(/^<([A-Za-z][\w:-]*)(?:\s[\s\S]*?)?\/>$/);
+  const selfClosingMatch = literal.match(/^<([A-Za-z][\w:-]*)([\s\S]*?)\/>$/);
   if (selfClosingMatch) {
     return {
       from,
       to,
       kind: "self-closing",
       tagName: selfClosingMatch[1].toLowerCase(),
+      attrs: parseHtmlAttrs(selfClosingMatch[2] ?? ""),
     };
   }
 
-  const openingMatch = literal.match(/^<([A-Za-z][\w:-]*)(?:\s[\s\S]*?)?>$/);
+  const openingMatch = literal.match(/^<([A-Za-z][\w:-]*)([\s\S]*?)>$/);
   if (openingMatch) {
     return {
       from,
       to,
       kind: "opening",
       tagName: openingMatch[1].toLowerCase(),
+      attrs: parseHtmlAttrs(openingMatch[2] ?? ""),
     };
   }
 
-  return { from, to, kind: "other", tagName: null };
+  return { from, to, kind: "other", tagName: null, attrs: new Map() };
 }
 
 function groupInlineHtmlTags(tags: HtmlTagInfo[]): HtmlTagGroup[] {
@@ -198,6 +299,9 @@ function groupInlineHtmlTags(tags: HtmlTagInfo[]): HtmlTagGroup[] {
             { from: openTag.from, to: openTag.to },
             { from: tag.from, to: tag.to },
           ],
+          contentFrom: openTag.to,
+          contentTo: tag.from,
+          openTag,
         });
       }
     }
@@ -225,9 +329,11 @@ export function collectInlineMarkerRanges(
 ): {
   hidden: Range[];
   images: Array<{ from: number; to: number; src: string; alt: string; raw: boolean }>;
+  htmlStyles: Array<{ from: number; to: number; style: string }>;
 } {
   const hidden: Range[] = [];
   const images: Array<{ from: number; to: number; src: string; alt: string; raw: boolean }> = [];
+  const htmlStyles: Array<{ from: number; to: number; style: string }> = [];
   const htmlTags: HtmlTagInfo[] = [];
   const tree = syntaxTree(state);
   const basePath = options.imageBasePath?.replace(/\/+$/, "") ?? "";
@@ -315,8 +421,22 @@ export function collectInlineMarkerRanges(
         continue;
       }
       hidden.push(...group.tags);
+
+      const style = group.openTag ? buildInlineHtmlStyle(group.openTag) : "";
+      if (
+        style &&
+        typeof group.contentFrom === "number" &&
+        typeof group.contentTo === "number" &&
+        group.contentFrom < group.contentTo
+      ) {
+        htmlStyles.push({
+          from: group.contentFrom,
+          to: group.contentTo,
+          style,
+        });
+      }
     }
   }
 
-  return { hidden, images };
+  return { hidden, images, htmlStyles };
 }

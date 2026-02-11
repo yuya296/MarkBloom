@@ -23,7 +23,7 @@
 - renderState: 要素単位の表示状態。`rich` と `raw` を持つ。
 - Trigger: `renderState` を切り替える判定条件。
 - Reveal Zones: 記号を露出させる範囲（Block/Inline）。
-- HTMLTag: Markdown構文木で段落内インラインHTMLを表すノード（例: `<span>...</span>`）。Live Previewではnearby以外でタグ記号を隠す対象。
+- HTMLTag: Markdown構文木で段落内インラインHTMLを表すノード（例: `<span>...</span>`）。Live Previewではnearby以外でタグ記号を隠し、許可された見た目属性は本文へ適用する。
 - Task Checkbox Widget: Live Previewで`[ ]`/`[x]`を置換表示するクリック可能なcheckbox Widget。必要に応じてsource markdownをトグルする。
 - Task List Token: タスクリスト行内の`[ ]`/`[x]`/`[X]`部分。list markerやインデントは含まない。
 - List Marker Widget: Live Previewで`-`/`*`/`+`/`1.`などのlist markerを置換表示するWidget。unorderedは`•`で表示し、orderedは元の番号を表示する。
