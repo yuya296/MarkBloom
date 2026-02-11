@@ -5,6 +5,14 @@ import tseslint from "typescript-eslint";
 import globals from "globals";
 
 const configDir = dirname(fileURLToPath(import.meta.url));
+const workspaceTypeScriptSources = [
+  "apps/*/src/**/*.ts",
+  "packages/core/*/src/**/*.ts",
+];
+const workspaceTsconfigProjects = [
+  "apps/*/tsconfig.json",
+  "packages/core/*/tsconfig.json",
+];
 
 export default [
   {
@@ -33,12 +41,12 @@ export default [
   },
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({
     ...config,
-    files: ["packages/*/src/**/*.ts"],
+    files: workspaceTypeScriptSources,
     languageOptions: {
       ...config.languageOptions,
       parserOptions: {
         ...config.languageOptions?.parserOptions,
-        project: ["packages/*/tsconfig.json"],
+        project: workspaceTsconfigProjects,
         tsconfigRootDir: configDir,
       },
     },
