@@ -1,6 +1,6 @@
 {
   "name": "markbloom",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "yuya296",
   "displayName": "MarkBloom",
   "description": "A Markdown-first viewer/editor for efficiently reviewing and editing large volumes of AI-generated documents.",

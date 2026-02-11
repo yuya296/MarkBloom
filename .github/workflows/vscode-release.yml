@@ -1,0 +1,113 @@
+name: VS Code Extension Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run publish as dry-run"
+        type: boolean
+        default: false
+      version:
+        description: "Expected VS Code extension version (optional)"
+        required: false
+        type: string
+      create_release:
+        description: "Create GitHub Release after publish"
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      extension_version: ${{ steps.extension_version.outputs.value }}
+      tag_name: ${{ steps.tag_name.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare pnpm
+        run: corepack prepare pnpm@10.27.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve extension version
+        id: extension_version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          node <<'NODE'
+          const { readFileSync, appendFileSync } = require("node:fs");
+
+          const pkg = JSON.parse(readFileSync("packages/vscode-extension/package.json", "utf8"));
+          const resolved = pkg.version;
+          const requested = process.env.INPUT_VERSION?.trim();
+
+          if (requested && requested !== resolved) {
+            console.error(`Input version (${requested}) does not match extension version (${resolved}).`);
+            process.exit(1);
+          }
+
+          appendFileSync(process.env.GITHUB_OUTPUT, `value=${resolved}\n`);
+          console.log(`Resolved extension version: ${resolved}`);
+          NODE
+
+      - name: Set extension tag name
+        id: tag_name
+        run: echo "value=vscode-v${{ steps.extension_version.outputs.value }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check compatibility matrix
+        run: node scripts/check-compatibility.mjs
+
+      - name: Build extension
+        run: pnpm -C packages/vscode-extension build
+
+      - name: Package extension (dry-run)
+        if: inputs.dry_run == true
+        run: pnpm -C packages/vscode-extension package
+
+      - name: Publish extension
+        if: inputs.dry_run == false
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: pnpm -C packages/vscode-extension publish
+
+      - name: Prepare release notes
+        if: inputs.create_release == true
+        run: |
+          cp release_notes/vscode.md .vscode-release-notes.md
+          {
+            echo ""
+            echo "## Published artifact"
+            echo "- markbloom@${{ steps.extension_version.outputs.value }}"
+          } >> .vscode-release-notes.md
+
+      - name: Create git tag
+        if: inputs.dry_run == false
+        run: |
+          TAG_NAME="${{ steps.tag_name.outputs.value }}"
+          if git tag -l "${TAG_NAME}" | grep -q "${TAG_NAME}"; then
+            echo "Tag already exists: ${TAG_NAME}"
+            exit 1
+          fi
+          git tag "${TAG_NAME}"
+          git push origin "${TAG_NAME}"
+
+      - name: Create GitHub Release
+        if: inputs.dry_run == false && inputs.create_release == true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_name.outputs.value }}
+          name: VS Code Release v${{ steps.extension_version.outputs.value }}
+          body_path: .vscode-release-notes.md

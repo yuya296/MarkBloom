@@ -27,7 +27,26 @@ graph TD
   cm6-live-preview --> cm6-typography-theme
 ```
 
+## Release Topology
+
+```mermaid
+graph TD
+  corePackages["packages/cm6-*"] --> coreWorkflow["core-release.yml"]
+  coreWorkflow --> npm["npm registry"]
+  coreWorkflow --> coreTag["core-vX.Y.Z tag"]
+  coreWorkflow --> coreRelease["GitHub Release (core)"]
+
+  vscodeExtension["packages/vscode-extension"] --> vscodeWorkflow["vscode-release.yml"]
+  vscodeWorkflow --> marketplace["VS Code Marketplace"]
+  vscodeWorkflow --> vscodeTag["vscode-vX.Y.Z tag"]
+  vscodeWorkflow --> vscodeRelease["GitHub Release (vscode)"]
+
+  compatibility["releases/compatibility-matrix.json"] --> coreWorkflow
+  compatibility --> vscodeWorkflow
+```
+
 ## Naming contract
 
 - semantic class prefix は `mb-` に統一する
 - `cm6-markdown-semantics` が class を付与し、`cm6-typography-theme` が見た目を定義する
+- release tag は配布チャネルごとに分離する（`core-v*`, `vscode-v*`）

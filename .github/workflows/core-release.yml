@@ -1,0 +1,207 @@
+name: Core Release (npm)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run publish as dry-run"
+        type: boolean
+        default: false
+      version:
+        description: "Expected lockstep core version (optional)"
+        required: false
+        type: string
+      create_release:
+        description: "Create GitHub Release after publish"
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      core_version: ${{ steps.core_version.outputs.value }}
+      tag_name: ${{ steps.tag_name.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare pnpm
+        run: corepack prepare pnpm@10.27.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve core version and enforce lockstep
+        id: core_version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          node <<'NODE'
+          const { existsSync, readFileSync, readdirSync } = require("node:fs");
+          const { join } = require("node:path");
+
+          const packagesDir = "packages";
+          const packageDirs = readdirSync(packagesDir, { withFileTypes: true })
+            .filter((dirent) => dirent.isDirectory() && dirent.name.startsWith("cm6-"))
+            .map((dirent) => join(packagesDir, dirent.name))
+            .filter((dir) => existsSync(join(dir, "package.json")));
+
+          if (packageDirs.length === 0) {
+            console.error("No core packages found.");
+            process.exit(1);
+          }
+
+          const versions = packageDirs.map((dir) => {
+            const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+            return { name: pkg.name, version: pkg.version };
+          });
+
+          const uniqueVersions = [...new Set(versions.map((pkg) => pkg.version))];
+          if (uniqueVersions.length !== 1) {
+            console.error("Core packages are not in lockstep:");
+            for (const pkg of versions) {
+              console.error(`- ${pkg.name}@${pkg.version}`);
+            }
+            process.exit(1);
+          }
+
+          const resolved = uniqueVersions[0];
+          const requested = process.env.INPUT_VERSION?.trim();
+          if (requested && requested !== resolved) {
+            console.error(`Input version (${requested}) does not match lockstep version (${resolved}).`);
+            process.exit(1);
+          }
+
+          require("node:fs").appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            `value=${resolved}\n`,
+          );
+          console.log(`Resolved core version: ${resolved}`);
+          NODE
+
+      - name: Set core tag name
+        id: tag_name
+        run: echo "value=core-v${{ steps.core_version.outputs.value }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check compatibility matrix
+        run: node scripts/check-compatibility.mjs
+
+      - name: Verify versions are unpublished
+        if: inputs.dry_run == false
+        env:
+          CORE_VERSION: ${{ steps.core_version.outputs.value }}
+        run: |
+          node -e '
+          const { execSync } = require("node:child_process");
+          const { existsSync, readFileSync, readdirSync } = require("node:fs");
+          const { join } = require("node:path");
+
+          const packagesDir = "packages";
+          const prefixes = ["cm6-"];
+          const packageDirs = readdirSync(packagesDir, { withFileTypes: true })
+            .filter((dirent) => dirent.isDirectory() && prefixes.some((prefix) => dirent.name.startsWith(prefix)))
+            .map((dirent) => join(packagesDir, dirent.name))
+            .filter((dir) => existsSync(join(dir, "package.json")));
+
+          const conflicts = [];
+          for (const dir of packageDirs) {
+            const pkgPath = join(dir, "package.json");
+            const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+            if (!pkg.name || !pkg.version) continue;
+            if (pkg.version !== process.env.CORE_VERSION) {
+              console.error(`Lockstep mismatch: ${pkg.name}@${pkg.version} (expected ${process.env.CORE_VERSION})`);
+              process.exit(1);
+            }
+            try {
+              const published = execSync(`npm view ${pkg.name}@${pkg.version} version`, {
+                stdio: ["ignore", "pipe", "pipe"],
+              })
+                .toString()
+                .trim();
+              if (published === pkg.version) {
+                conflicts.push(`${pkg.name}@${pkg.version}`);
+              }
+            } catch (err) {
+              // Not published yet.
+            }
+          }
+
+          if (conflicts.length > 0) {
+            console.error("Already published versions detected:");
+            for (const conflict of conflicts) {
+              console.error(`- ${conflict}`);
+            }
+            process.exit(1);
+          }
+          console.log("Version check passed.");
+          '
+
+      - name: Build core packages
+        run: pnpm -r --filter "@yuya296/cm6-*" build
+
+      - name: Publish core packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            pnpm -r --filter "@yuya296/cm6-*" publish --dry-run --no-git-checks
+          else
+            pnpm -r --filter "@yuya296/cm6-*" publish --no-git-checks
+          fi
+
+      - name: Prepare release notes
+        if: inputs.create_release == true
+        run: |
+          node <<'NODE' > .core-published-packages.txt
+          const { existsSync, readFileSync, readdirSync } = require("node:fs");
+          const { join } = require("node:path");
+
+          const packageDirs = readdirSync("packages", { withFileTypes: true })
+            .filter((dirent) => dirent.isDirectory() && dirent.name.startsWith("cm6-"))
+            .map((dirent) => join("packages", dirent.name))
+            .filter((dir) => existsSync(join(dir, "package.json")));
+
+          const lines = packageDirs
+            .map((dir) => JSON.parse(readFileSync(join(dir, "package.json"), "utf8")))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((pkg) => `${pkg.name}@${pkg.version}`);
+
+          process.stdout.write(lines.join("\n"));
+          NODE
+          cp release_notes/core.md .core-release-notes.md
+          {
+            echo ""
+            echo "## Published packages"
+            sed 's/^/- /' .core-published-packages.txt
+          } >> .core-release-notes.md
+
+      - name: Create git tag
+        if: inputs.dry_run == false
+        run: |
+          TAG_NAME="${{ steps.tag_name.outputs.value }}"
+          if git tag -l "${TAG_NAME}" | grep -q "${TAG_NAME}"; then
+            echo "Tag already exists: ${TAG_NAME}"
+            exit 1
+          fi
+          git tag "${TAG_NAME}"
+          git push origin "${TAG_NAME}"
+
+      - name: Create GitHub Release
+        if: inputs.dry_run == false && inputs.create_release == true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_name.outputs.value }}
+          name: Core Release v${{ steps.core_version.outputs.value }}
+          body_path: .core-release-notes.md
