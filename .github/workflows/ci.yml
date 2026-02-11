@@ -15,31 +15,60 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Detect CI-relevant changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            ci:
+              - "apps/**"
+              - "packages/**"
+              - "scripts/**"
+              - "tests/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "eslint.config.js"
+              - ".github/workflows/ci.yml"
+
+      - name: Skip CI for docs-only changes
+        if: steps.changes.outputs.ci != 'true'
+        run: echo "No CI-relevant changes detected. Skipping lint/typecheck/build/test."
+
       - name: Setup Node
+        if: steps.changes.outputs.ci == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
       - name: Enable Corepack
+        if: steps.changes.outputs.ci == 'true'
         run: corepack enable
 
       - name: Prepare pnpm
+        if: steps.changes.outputs.ci == 'true'
         run: corepack prepare pnpm@10.27.0 --activate
 
       - name: Install dependencies
+        if: steps.changes.outputs.ci == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Check compatibility matrix
+        if: steps.changes.outputs.ci == 'true'
         run: node scripts/check-compatibility.mjs
 
       - name: Lint
+        if: steps.changes.outputs.ci == 'true'
         run: pnpm -r lint
 
       - name: Typecheck
+        if: steps.changes.outputs.ci == 'true'
         run: pnpm -r typecheck
 
       - name: Build
+        if: steps.changes.outputs.ci == 'true'
         run: pnpm -r build
 
       - name: Test
+        if: steps.changes.outputs.ci == 'true'
         run: pnpm -r --if-present test
