@@ -28,3 +28,6 @@
 - Extension: CM6 の機能単位。配列で合成する。
 - Compartment: runtime で extension 構成を差し替えるための CM6 機構。
 - onChange(fullText): 編集時に全文を通知するコールバック。
+- Release Line: 配布チャネル単位で分けたリリース境界（core / vscode / mac）。
+- Compatibility Matrix: app が依存する core バージョン範囲を定義する機械可読ファイル。
+- Channel Tag: release line ごとの tag 命名（`core-vX.Y.Z`, `vscode-vX.Y.Z`）。

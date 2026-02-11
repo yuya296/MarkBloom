@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "apps": {
+    "vscode": {
+      "supports": {
+        "core": {
+          "min": "0.1.0",
+          "max": "0.1.0"
+        }
+      }
+    },
+    "mac": {
+      "status": "reserved",
+      "supports": {
+        "core": {
+          "min": null,
+          "max": null
+        }
+      }
+    }
+  }
+}

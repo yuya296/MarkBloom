@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check compatibility matrix
+        run: node scripts/check-compatibility.mjs
+
       - name: Lint
         run: pnpm -r lint
 

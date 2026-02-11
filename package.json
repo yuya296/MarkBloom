@@ -7,6 +7,7 @@
     "lint": "eslint .",
     "lint:core": "pnpm -C packages/webview-demo lint",
     "typecheck": "pnpm -r typecheck",
+    "check:compatibility": "node scripts/check-compatibility.mjs",
     "build:core": "pnpm -F webview-demo build",
     "build": "pnpm -r build",
     "test:e2e": "playwright test"
