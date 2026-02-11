@@ -60,6 +60,8 @@
     rgba(15, 91, 158, 0.08)
   );
   --editor-caret-color: var(--vscode-editorCursor-foreground, #0f5b9e);
+  --editor-checkbox-accent: var(--vscode-textLink-foreground, #0f5b9e);
+  --editor-checkbox-disabled-opacity: 0.55;
   --mb-font-mono: var(
     --vscode-editor-font-family,
     "JetBrains Mono",
@@ -368,6 +370,27 @@ footer.footer {
 .cm-editor .mb-preview-widget {
   color: var(--editor-secondary-color);
   font-style: italic;
+}
+
+.cm-editor .cm-lp-task-checkbox {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 0.35em;
+  transform: translateY(-0.08em);
+}
+
+.cm-editor .cm-lp-task-checkbox-input {
+  width: 0.95em;
+  height: 0.95em;
+  margin: 0;
+  accent-color: var(--editor-checkbox-accent);
+  cursor: pointer;
+}
+
+.cm-editor .cm-lp-task-checkbox-input:disabled {
+  cursor: not-allowed;
+  opacity: var(--editor-checkbox-disabled-opacity);
 }
 
 .cm-editor .cm-diff-marker {

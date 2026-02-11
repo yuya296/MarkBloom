@@ -3,6 +3,7 @@ import { type EditorState } from "@codemirror/state";
 import { Decoration } from "@codemirror/view";
 import type { Range } from "../core/types";
 import { hasNodeName } from "../core/syntaxNodeNames";
+import { overlapsRange } from "../core/utils";
 import {
   blockMarkerConfigs,
   blockTriggerNodeNames,
@@ -10,11 +11,14 @@ import {
   type RawModeTrigger,
 } from "../config";
 import type { LivePreviewOptions } from "../index";
+import { taskCheckboxReplace } from "../theme/markerWidgets";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
   list: /^\s{0,3}([*+-]|\d+\.)(?=\s)/,
   quotePrefix: /^\s{0,3}(?:>\s?)*/,
+  taskList:
+    /^\s{0,3}(?:>\s?)*\s*((?:[*+-]|\d+\.)\s+)(\[(?: |x|X)\])(?=\s|$)/,
 };
 
 type BlockMarker = {
@@ -28,6 +32,14 @@ type PushDecoration = (from: number, to: number, decoration: Decoration) => void
 type BlockRawState = {
   isSelectionOverlap: boolean;
   isBlockReveal: boolean;
+};
+
+type TaskCheckbox = {
+  markerFrom: number;
+  markerTo: number;
+  tokenFrom: number;
+  tokenTo: number;
+  checked: boolean;
 };
 
 function normalizeTriggers(rawModeTrigger: RawModeTrigger | RawModeTrigger[]): RawModeTrigger[] {
@@ -163,6 +175,128 @@ export function addBlockMarkerDecorations(
   for (const marker of markers) {
     pushBlockMarkerDecoration(push, marker, state, hiddenDecoration);
   }
+}
+
+function collectTaskCheckbox(
+  lineFrom: number,
+  lineText: string
+): TaskCheckbox | null {
+  const match = lineText.match(blockMarkerPattern.taskList);
+  const marker = match?.[1];
+  const token = match?.[2];
+  if (!marker || !token || typeof match.index !== "number") {
+    return null;
+  }
+
+  const fullMatch = match[0] ?? "";
+  const markerOffset = fullMatch.indexOf(marker);
+  const tokenOffset = fullMatch.indexOf(token, markerOffset + marker.length);
+  if (markerOffset < 0 || tokenOffset < 0) {
+    return null;
+  }
+
+  const markerFrom = lineFrom + match.index + markerOffset;
+  const markerTo = markerFrom + marker.length;
+  const tokenFrom = lineFrom + match.index + tokenOffset;
+  const tokenTo = tokenFrom + token.length;
+  return {
+    markerFrom,
+    markerTo,
+    tokenFrom,
+    tokenTo,
+    checked: token[1].toLowerCase() === "x",
+  };
+}
+
+function hasCursorInLine(state: EditorState, lineFrom: number): boolean {
+  return state.selection.ranges.some(
+    (range) => state.doc.lineAt(range.head).from === lineFrom
+  );
+}
+
+function isCursorNearTaskToken(
+  state: EditorState,
+  checkbox: TaskCheckbox,
+  lineFrom: number
+): boolean {
+  for (const range of state.selection.ranges) {
+    if (range.from !== range.to) {
+      continue;
+    }
+
+    const head = range.head;
+    const line = state.doc.lineAt(head);
+    if (line.from !== lineFrom) {
+      continue;
+    }
+
+    if (head >= checkbox.markerFrom && head <= checkbox.tokenTo) {
+      return true;
+    }
+
+    if (head < checkbox.markerFrom) {
+      if (checkbox.markerFrom - head > 1) {
+        continue;
+      }
+      const between = line.text.slice(
+        head - line.from,
+        checkbox.markerFrom - line.from
+      );
+      if (!/\s/u.test(between)) {
+        return true;
+      }
+      continue;
+    }
+
+    if (head > checkbox.tokenTo) {
+      if (head - checkbox.tokenTo > 1) {
+        continue;
+      }
+      const between = line.text.slice(checkbox.tokenTo - line.from, head - line.from);
+      if (!/\s/u.test(between)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function shouldShowTaskCheckboxRaw(
+  state: EditorState,
+  checkbox: TaskCheckbox,
+  lineFrom: number,
+  selectionRanges: Range[]
+): boolean {
+  if (overlapsRange(checkbox.markerFrom, checkbox.tokenTo, selectionRanges)) {
+    return true;
+  }
+  if (!hasCursorInLine(state, lineFrom)) {
+    return false;
+  }
+  return isCursorNearTaskToken(state, checkbox, lineFrom);
+}
+
+export function addTaskCheckboxDecorations(
+  state: EditorState,
+  push: PushDecoration,
+  lineFrom: number,
+  lineText: string,
+  selectionRanges: Range[]
+) {
+  const checkbox = collectTaskCheckbox(lineFrom, lineText);
+  if (!checkbox) {
+    return;
+  }
+  if (shouldShowTaskCheckboxRaw(state, checkbox, lineFrom, selectionRanges)) {
+    return;
+  }
+  push(checkbox.markerFrom, checkbox.markerTo, Decoration.replace({ inclusive: false }));
+  push(
+    checkbox.tokenFrom,
+    checkbox.tokenTo,
+    taskCheckboxReplace(checkbox.checked, checkbox.tokenFrom, checkbox.tokenTo)
+  );
 }
 
 export function collectFenceMarkersByLine(

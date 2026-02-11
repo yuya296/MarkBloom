@@ -22,6 +22,19 @@ const inlineHideTargets = new Map<NodeName, NodeName[]>([
   [NodeName.Image, [NodeName.LinkMark, NodeName.URL]],
 ]);
 
+const taskTokenPattern = /^\[(?: |x|X)\]$/;
+const taskPrefixPattern = /^\s{0,3}(?:>\s?)*\s*(?:[*+-]|\d+\.)\s+$/;
+
+function isTaskTokenLink(state: EditorState, from: number, to: number): boolean {
+  const token = state.doc.sliceString(from, to);
+  if (!taskTokenPattern.test(token)) {
+    return false;
+  }
+  const line = state.doc.lineAt(from);
+  const prefix = line.text.slice(0, from - line.from);
+  return taskPrefixPattern.test(prefix);
+}
+
 function isCursorAdjacent(
   line: Line,
   head: number,
@@ -139,6 +152,10 @@ export function collectInlineMarkerRanges(
 
       const config = inlineConfigByNode.get(node.name);
       if (!config) {
+        return;
+      }
+
+      if (node.name === NodeName.Link && isTaskTokenLink(state, node.from, node.to)) {
         return;
       }
 

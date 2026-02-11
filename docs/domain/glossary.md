@@ -23,6 +23,8 @@
 - renderState: 要素単位の表示状態。`rich` と `raw` を持つ。
 - Trigger: `renderState` を切り替える判定条件。
 - Reveal Zones: 記号を露出させる範囲（Block/Inline）。
+- Task Checkbox Widget: Live Previewで`[ ]`/`[x]`を置換表示するクリック可能なcheckbox Widget。必要に応じてsource markdownをトグルする。
+- Task List Token: タスクリスト行内の`[ ]`/`[x]`/`[X]`部分。list markerやインデントは含まない。
 - Typography Theme: Markdown の見た目（見出し/強調/引用/リンクなど）を整えるテーマ。
 - CodeMirror 6 (CM6): 拡張可能なエディタライブラリ。
 - Extension: CM6 の機能単位。配列で合成する。
