@@ -15,10 +15,10 @@ import { listMarkerReplace, taskCheckboxReplace } from "../theme/markerWidgets";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
-  list: /^\s{0,3}([*+-]|\d+\.)(?=\s)/,
+  list: /^(?:\s{0,3}(?:>\s?)*)?\s*([*+-]|\d+\.)(?=\s)/,
   quotePrefix: /^\s{0,3}(?:>\s?)*/,
   taskList:
-    /^\s{0,3}(?:>\s?)*\s*((?:[*+-]|\d+\.)\s+)(\[(?: |x|X)\])(?=\s|$)/,
+    /^(?:\s{0,3}(?:>\s?)*)?\s*((?:[*+-]|\d+\.)\s+)(\[(?: |x|X)\])(?=\s|$)/,
 };
 
 type BlockMarker = {
@@ -197,8 +197,12 @@ export function addBlockMarkerDecorations(
   hiddenDecoration: Decoration,
   fenceMarkersByLine: Map<number, BlockMarker[]>
 ) {
+  const isTaskListLine = blockMarkerPattern.taskList.test(lineText);
   const markers = collectBlockMarkers(lineFrom, lineText, fenceMarkersByLine);
   for (const marker of markers) {
+    if (isTaskListLine && marker.id === "list") {
+      continue;
+    }
     pushBlockMarkerDecoration(push, marker, state, hiddenDecoration);
   }
 }
@@ -317,6 +321,7 @@ export function addTaskCheckboxDecorations(
   if (shouldShowTaskCheckboxRaw(state, checkbox, lineFrom, selectionRanges)) {
     return;
   }
+  push(checkbox.markerFrom, checkbox.markerTo, Decoration.replace({ inclusive: false }));
   push(
     checkbox.tokenFrom,
     checkbox.tokenTo,
