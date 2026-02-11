@@ -75,3 +75,27 @@ test("does not apply inline style when HTML tag group is in raw mode", () => {
   const styles = htmlStyleRanges(state);
   assert.deepEqual(styles, []);
 });
+
+test("does not hide unmatched opening HTML tag", () => {
+  const state = createState('<span style="color:red">hi', 26);
+  const literals = hiddenLiterals(state);
+  assert.deepEqual(literals, []);
+});
+
+test("does not hide unmatched closing HTML tag", () => {
+  const state = createState("hi</span>");
+  const literals = hiddenLiterals(state);
+  assert.deepEqual(literals, []);
+});
+
+test("does not apply inline style for unmatched opening HTML tag", () => {
+  const state = createState('<span style="color:red">hi', 26);
+  const styles = htmlStyleRanges(state);
+  assert.deepEqual(styles, []);
+});
+
+test("keeps self-closing HTML tag as hide target", () => {
+  const state = createState('x <span style="color:red"/> y', 0);
+  const literals = hiddenLiterals(state);
+  assert.deepEqual(literals, ['<span style="color:red"/>']);
+});

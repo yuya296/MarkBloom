@@ -270,11 +270,19 @@ function parseHtmlTagInfo(literal: string, from: number, to: number): HtmlTagInf
 function groupInlineHtmlTags(tags: HtmlTagInfo[]): HtmlTagGroup[] {
   const groups: HtmlTagGroup[] = [];
   const openIndices = new Map<string, number[]>();
-  const matched = new Set<number>();
 
   for (let i = 0; i < tags.length; i += 1) {
     const tag = tags[i];
     if (!tag.tagName) {
+      continue;
+    }
+
+    if (tag.kind === "self-closing") {
+      groups.push({
+        from: tag.from,
+        to: tag.to,
+        tags: [{ from: tag.from, to: tag.to }],
+      });
       continue;
     }
 
@@ -289,8 +297,6 @@ function groupInlineHtmlTags(tags: HtmlTagInfo[]): HtmlTagGroup[] {
       const stack = openIndices.get(tag.tagName);
       const openIndex = stack?.pop();
       if (typeof openIndex === "number") {
-        matched.add(openIndex);
-        matched.add(i);
         const openTag = tags[openIndex];
         groups.push({
           from: openTag.from,
@@ -305,17 +311,6 @@ function groupInlineHtmlTags(tags: HtmlTagInfo[]): HtmlTagGroup[] {
         });
       }
     }
-  }
-
-  for (let i = 0; i < tags.length; i += 1) {
-    if (matched.has(i)) {
-      continue;
-    }
-    groups.push({
-      from: tags[i].from,
-      to: tags[i].to,
-      tags: [{ from: tags[i].from, to: tags[i].to }],
-    });
   }
 
   groups.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));

@@ -98,9 +98,9 @@ PH1 の対象要素は少なく定義し、順次追加可能とする（この�
 - Inline HTML tag（`HTMLTag`）
 
 ### 7.1 Inline HTML tag (`HTMLTag`)
-- Rich表示時は `HTMLTag` のタグ記号（例: `<span>`, `</span>`）を hide できること。
+- Rich表示時は、開始/終了が対応した `HTMLTag` ペアのタグ記号（例: `<span>`, `</span>`）を hide できること。
 - Raw切替は既存inline要素と同様に `nearby` トリガーに従うこと。
-- `HTMLTag` の開始/終了タグで囲まれた本文に対して、許可された見た目属性を適用できること。
+- `HTMLTag` の開始/終了タグで囲まれた本文に対して、許可された見た目属性を適用できること（未ペアタグには適用しない）。
   - 対象: `style` の一部プロパティ（`color`, `background-color`, `text-decoration`, `font-weight`, `font-style`）
   - `underline="true"` 属性は `text-decoration: underline` として扱う
 - `HTMLBlock`（例: `<div>...</div>` のブロック）は本スコープ外とし、現時点では表示変換対象にしない。
