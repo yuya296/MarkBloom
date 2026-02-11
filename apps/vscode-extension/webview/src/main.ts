@@ -1,5 +1,6 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import { diffGutter, setDiffBaseline } from "@yuya296/cm6-diff-gutter";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
 import { createEditor, EditorHandle } from "./editor/createEditor";
@@ -25,6 +26,12 @@ type HostMessage =
       version: number;
     }
   | {
+      type: "setDiffBaseline";
+      uri: string;
+      text: string;
+      source: "git-head" | "fallback";
+    }
+  | {
       type: "setConfig";
       config: MarkBloomConfig;
     };
@@ -45,6 +52,7 @@ type ExtensionOptions = {
   livePreviewEnabled: boolean;
   tableEnabled: boolean;
   editable: boolean;
+  diffBaselineText: string;
 };
 
 declare function acquireVsCodeApi(): {
@@ -74,6 +82,7 @@ let currentConfig: MarkBloomConfig = {
   livePreview: { enabled: true, inlineRadius: 6 },
   table: { enabled: true },
 };
+let currentDiffBaselineText = "";
 let applyingRemoteUpdate = false;
 let isEditable = true;
 let widthMode: "default" | "wide" = "default";
@@ -88,14 +97,33 @@ const postMessage = (message: WebviewMessage) => {
   vscode.postMessage(message);
 };
 
+function isTableLine(lineText: string): boolean {
+  const line = lineText.trim();
+  if (line.length === 0 || !line.includes("|")) {
+    return false;
+  }
+  if (/^\|?[-:\s]+(\|[-:\s]+)+\|?$/u.test(line)) {
+    return true;
+  }
+  return /^\|.*\|$/u.test(line);
+}
+
 const buildExtensions = ({
   wrapLines,
   tabSize,
   livePreviewEnabled,
   tableEnabled,
   editable,
+  diffBaselineText,
 }: ExtensionOptions): Extension[] => {
   const extensions: Extension[] = [];
+
+  extensions.push(
+    diffGutter({
+      baselineText: diffBaselineText,
+      ignoreLine: isTableLine,
+    })
+  );
 
   if (wrapLines) {
     extensions.push(EditorView.lineWrapping);
@@ -141,6 +169,7 @@ const applyConfig = () => {
       livePreviewEnabled: currentConfig.livePreview.enabled,
       tableEnabled: currentConfig.table.enabled,
       editable: isEditable,
+      diffBaselineText: currentDiffBaselineText,
     })
   );
 };
@@ -171,6 +200,10 @@ const ensureEditor = (text: string) => {
     return;
   }
 
+  if (!currentDiffBaselineText) {
+    currentDiffBaselineText = text;
+  }
+
   editor = createEditor({
     parent: editorHost,
     initialText: text,
@@ -180,6 +213,7 @@ const ensureEditor = (text: string) => {
       livePreviewEnabled: currentConfig.livePreview.enabled,
       tableEnabled: currentConfig.table.enabled,
       editable: isEditable,
+      diffBaselineText: currentDiffBaselineText,
     }),
     onChange: (nextText) => {
       if (applyingRemoteUpdate) {
@@ -211,6 +245,15 @@ window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
       currentUri = message.uri;
       currentVersion = message.version;
       ensureEditor(message.text);
+      return;
+    case "setDiffBaseline":
+      if (message.uri !== currentUri) {
+        return;
+      }
+      currentDiffBaselineText = message.text;
+      editor?.view.dispatch({
+        effects: setDiffBaseline.of(message.text),
+      });
       return;
     case "setConfig":
       currentConfig = message.config;

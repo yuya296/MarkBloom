@@ -33,6 +33,16 @@ export function editorTheme(): Extension {
       color: "var(--editor-gutter-color)",
       borderRight: "1px solid var(--editor-border)",
     },
+    ".cm-diff-gutter": {
+      width: "10px",
+      minWidth: "10px",
+    },
+    ".cm-diff-gutter .cm-gutterElement": {
+      padding: "0",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
     ".cm-line": {
       color: "var(--editor-text-color)",
     },

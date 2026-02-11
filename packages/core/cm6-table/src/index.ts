@@ -1,6 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import {
   Annotation,
+  type RangeSet,
   RangeSetBuilder,
   StateField,
   type EditorState,
@@ -10,7 +11,10 @@ import {
   Decoration,
   type DecorationSet,
   EditorView,
+  GutterMarker,
   WidgetType,
+  gutterLineClass,
+  gutterWidgetClass,
 } from "@codemirror/view";
 import type { SyntaxNode } from "@lezer/common";
 import type { TableAlignment, TableData } from "./types";
@@ -1748,11 +1752,52 @@ function buildDecorations(
   return builder.finish();
 }
 
+const hiddenTableLineGutterMarker = new (class extends GutterMarker {
+  elementClass = "cm-table-editor-hidden";
+})();
+
+const tableWidgetGutterMarker = new (class extends GutterMarker {
+  elementClass = "cm-table-editor-widget-spacer";
+})();
+
+function buildHiddenTableGutterLineClasses(
+  state: EditorState,
+  options: Required<TableEditorOptions>
+): RangeSet<GutterMarker> {
+  const builder = new RangeSetBuilder<GutterMarker>();
+
+  if (!options.enabled || options.renderMode !== "widget") {
+    return builder.finish();
+  }
+
+  syntaxTree(state).iterate({
+    enter: (node) => {
+      if (node.name !== "Table") {
+        return;
+      }
+
+      const lines = collectTableLines(state, node.from, node.to);
+      if (lines.length === 0) {
+        return;
+      }
+
+      for (const line of lines) {
+        builder.add(line.from, line.from, hiddenTableLineGutterMarker);
+      }
+    },
+  });
+
+  return builder.finish();
+}
+
 export function tableEditor(options: TableEditorOptions = {}): Extension {
   const resolved = { ...defaultOptions, ...options };
 
   const theme = EditorView.baseTheme({
     ".cm-content .cm-line.cm-table-editor-hidden": {
+      display: "none",
+    },
+    ".cm-gutters .cm-gutterElement.cm-table-editor-hidden": {
       display: "none",
     },
     ".cm-content .cm6-table-editor": {
@@ -1979,7 +2024,21 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     provide: (field) => EditorView.decorations.from(field),
   });
 
-  return [theme, decorations];
+  const hiddenGutterLineClasses = StateField.define<RangeSet<GutterMarker>>({
+    create(state) {
+      return buildHiddenTableGutterLineClasses(state, resolved);
+    },
+    update(_classes, tr) {
+      return buildHiddenTableGutterLineClasses(tr.state, resolved);
+    },
+    provide: (field) => gutterLineClass.from(field),
+  });
+
+  const tableWidgetGutterSync = gutterWidgetClass.of((_view, widget) =>
+    widget instanceof TableWidget ? tableWidgetGutterMarker : null
+  );
+
+  return [theme, decorations, hiddenGutterLineClasses, tableWidgetGutterSync];
 }
 
 export * from "./types";

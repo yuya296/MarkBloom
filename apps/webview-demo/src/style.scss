@@ -28,6 +28,9 @@
   --editor-selection-bg: rgba(15, 91, 158, 0.2);
   --editor-active-line-bg: rgba(15, 91, 158, 0.06);
   --editor-active-line-gutter-bg: rgba(15, 91, 158, 0.08);
+  --editor-diff-added: #2ea043;
+  --editor-diff-modified: #d29922;
+  --editor-diff-rail: rgba(106, 98, 87, 0.32);
   --editor-caret-color: #0f5b9e;
   --mb-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --mb-inline-code-bg: rgba(15, 91, 158, 0.08);
@@ -75,6 +78,9 @@
   --editor-selection-bg: rgba(183, 208, 255, 0.28);
   --editor-active-line-bg: rgba(255, 255, 255, 0.06);
   --editor-active-line-gutter-bg: rgba(255, 255, 255, 0.08);
+  --editor-diff-added: #3fb950;
+  --editor-diff-modified: #e3b341;
+  --editor-diff-rail: rgba(194, 194, 194, 0.3);
   --editor-caret-color: #b7d0ff;
   --mb-inline-code-bg: rgba(183, 208, 255, 0.18);
   --mb-code-block-bg: #404040;
@@ -305,4 +311,33 @@ footer.footer {
 .cm-editor .mb-preview-widget {
   color: var(--editor-secondary-color);
   font-style: italic;
+}
+
+.cm-editor .cm-diff-marker {
+  display: inline-block;
+  width: 3px;
+  height: 1.35em;
+  border-radius: 999px;
+}
+
+.cm-editor .cm-diff-marker-added {
+  background: var(--editor-diff-added);
+}
+
+.cm-editor .cm-diff-marker-modified {
+  background: var(--editor-diff-modified);
+}
+
+.cm-editor .cm-diff-gutter {
+  position: relative;
+}
+
+.cm-editor .cm-diff-gutter::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--editor-diff-rail);
 }

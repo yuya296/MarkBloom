@@ -36,6 +36,9 @@
   --editor-text-color: var(--vscode-editor-foreground, #1f1e1c);
   --editor-gutter-bg: var(--vscode-editorGutter-background, transparent);
   --editor-gutter-color: var(--vscode-editorLineNumber-foreground, #8f8a7f);
+  --editor-diff-added: var(--vscode-editorGutter-addedBackground, #2ea043);
+  --editor-diff-modified: var(--vscode-editorGutter-modifiedBackground, #d29922);
+  --editor-diff-rail: var(--vscode-editorLineNumber-foreground, rgba(143, 138, 127, 0.4));
   --editor-selection-bg: var(
     --vscode-editor-selectionBackground,
     rgba(15, 91, 158, 0.2)
@@ -358,4 +361,34 @@ footer.footer {
 .cm-editor .mb-preview-widget {
   color: var(--editor-secondary-color);
   font-style: italic;
+}
+
+.cm-editor .cm-diff-marker {
+  display: inline-block;
+  width: 3px;
+  height: 1.35em;
+  border-radius: 999px;
+}
+
+.cm-editor .cm-diff-marker-added {
+  background: var(--editor-diff-added);
+}
+
+.cm-editor .cm-diff-marker-modified {
+  background: var(--editor-diff-modified);
+}
+
+.cm-editor .cm-diff-gutter {
+  position: relative;
+}
+
+.cm-editor .cm-diff-gutter::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--editor-diff-rail);
+  opacity: 0.6;
 }
