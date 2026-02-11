@@ -7,7 +7,7 @@
 - semantics と typography は同じ prefix を共有する
 
 ## 対象
-- packages/cm6-markdown-semantics
+- packages/core/cm6-markdown-semantics
 
 ## 実装ポイント
 - syntaxTree から対象ノードを抽出

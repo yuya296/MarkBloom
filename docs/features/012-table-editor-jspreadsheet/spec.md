@@ -19,7 +19,7 @@ Markdown テーブル編集の基盤を Jspreadsheet CE へ置き換え、
 - Markdown 方言や特殊記法への拡張
 
 ## 3. 成果物
-- `packages/webview-demo` で動く最小スパイク
+- `apps/webview-demo` で動く最小スパイク
 - 操作仕様ドキュメント（本資料）
 
 ## 4. 採用方針（暫定）
@@ -70,7 +70,7 @@ Markdown テーブル編集の基盤を Jspreadsheet CE へ置き換え、
 
 ## 8. 依存
 - Jspreadsheet CE
-- `packages/webview-demo` の UI/テーマ
+- `apps/webview-demo` の UI/テーマ
 
 ## 9. 留意事項
 - Jspreadsheet のライセンス条件は CE の範囲に限定する

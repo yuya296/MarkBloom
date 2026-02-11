@@ -13,7 +13,7 @@
 - 新規 `cm6-table` を追加し、データ同期ロジックは再利用しつつUI層を独自実装: バランスが良い
 
 ## Decision
-`packages/cm6-table` を新規追加する。
+`packages/core/cm6-table` を新規追加する。
 
 方針:
 - 公開APIは `tableEditor()` を維持

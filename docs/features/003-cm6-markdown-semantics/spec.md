@@ -12,7 +12,7 @@ Markdown の構文要素を解析し、**semantic class** を付与すること�
 
 ### 対象パッケージ
 
-- packages/cm6-markdown-semantics
+- packages/core/cm6-markdown-semantics
   - Markdown 構文に対応した semantic class 付与
   - block/inline の区別に応じて line / mark を使い分ける
 

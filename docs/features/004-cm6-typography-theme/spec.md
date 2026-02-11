@@ -9,7 +9,7 @@ CodeMirror 6 (CM6) エディタの見た目を、MarkBloom のデザインガイ
 
 ### 対象パッケージ
 
-- packages/cm6-typography-theme
+- packages/core/cm6-typography-theme
   - CM6 用タイポグラフィテーマ定義（EditorView.theme）
   - cm6-markdown-semantics の class 契約に従ってスタイルを適用
 

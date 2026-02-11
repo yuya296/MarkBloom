@@ -84,8 +84,8 @@ export function greet(user: User) {
 
 Indented code block:
 
-    mkdir -p packages/webview-demo
-    pnpm -C packages/webview-demo run dev
+    mkdir -p apps/webview-demo
+    pnpm -C apps/webview-demo run dev
 
 ## Tables
 | Col A | Col B | Col C  |

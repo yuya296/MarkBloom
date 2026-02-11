@@ -31,3 +31,5 @@
 - Release Line: 配布チャネル単位で分けたリリース境界（core / vscode / mac）。
 - Compatibility Matrix: app が依存する core バージョン範囲を定義する機械可読ファイル。
 - Channel Tag: release line ごとの tag 命名（`core-vX.Y.Z`, `vscode-vX.Y.Z`）。
+- App Package: `apps/` 配下の実行可能プロダクト単位（例: webview-demo / vscode-extension）。
+- Core Package: `packages/core/` 配下の共有ライブラリ単位（`@yuya296/cm6-*`）。
