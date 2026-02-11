@@ -25,6 +25,9 @@
 - Reveal Zones: 記号を露出させる範囲（Block/Inline）。
 - Task Checkbox Widget: Live Previewで`[ ]`/`[x]`を置換表示するクリック可能なcheckbox Widget。必要に応じてsource markdownをトグルする。
 - Task List Token: タスクリスト行内の`[ ]`/`[x]`/`[X]`部分。list markerやインデントは含まない。
+- List Marker Widget: Live Previewで`-`/`*`/`+`/`1.`などのlist markerを置換表示するWidget。unorderedは`•`で表示し、orderedは元の番号を表示する。
+- List Marker Width (ch): list marker widgetに割り当てる固定幅。`ch`単位で指定し、本文開始位置の揃えに使う。
+- List Indent Step (ch): ネストレベルごとに追加するインデント幅。`ch`単位で指定する。
 - Typography Theme: Markdown の見た目（見出し/強調/引用/リンクなど）を整えるテーマ。
 - CodeMirror 6 (CM6): 拡張可能なエディタライブラリ。
 - Extension: CM6 の機能単位。配列で合成する。

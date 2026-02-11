@@ -11,7 +11,7 @@ import {
   type RawModeTrigger,
 } from "../config";
 import type { LivePreviewOptions } from "../index";
-import { taskCheckboxReplace } from "../theme/markerWidgets";
+import { listMarkerReplace, taskCheckboxReplace } from "../theme/markerWidgets";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
@@ -25,6 +25,8 @@ type BlockMarker = {
   id: "heading" | "list" | "quote" | "fence";
   from: number;
   to: number;
+  listKind?: "bullet" | "ordered";
+  rawText?: string;
 };
 
 type PushDecoration = (from: number, to: number, decoration: Decoration) => void;
@@ -118,9 +120,17 @@ function collectBlockMarkers(
   const listMatch = lineText.match(blockMarkerPattern.list);
   if (listMatch) {
     const markerIndex = lineText.indexOf(listMatch[1]);
+    const markerText = listMatch[1];
     const from = lineFrom + markerIndex;
-    const to = from + listMatch[1].length;
-    markers.push({ id: "list", from, to });
+    const to = from + markerText.length;
+    const listKind = /^\d+\.$/u.test(markerText) ? "ordered" : "bullet";
+    markers.push({
+      id: "list",
+      from,
+      to,
+      listKind,
+      rawText: markerText,
+    });
   }
 
   const quotePrefix = lineText.match(blockMarkerPattern.quotePrefix)?.[0] ?? "";
@@ -156,6 +166,22 @@ function pushBlockMarkerDecoration(
 
   const isRaw = isRawByTriggers(state, config.rawModeTrigger);
   const style: DisplayStyle = isRaw ? "none" : config.richDisplayStyle;
+
+  if (marker.id === "list") {
+    if (style === "none") {
+      return;
+    }
+    if (!marker.listKind || !marker.rawText) {
+      push(marker.from, marker.to, hiddenDecoration);
+      return;
+    }
+    push(
+      marker.from,
+      marker.to,
+      listMarkerReplace(marker.listKind, marker.rawText)
+    );
+    return;
+  }
 
   if (style === "hide") {
     push(marker.from, marker.to, hiddenDecoration);
@@ -291,7 +317,6 @@ export function addTaskCheckboxDecorations(
   if (shouldShowTaskCheckboxRaw(state, checkbox, lineFrom, selectionRanges)) {
     return;
   }
-  push(checkbox.markerFrom, checkbox.markerTo, Decoration.replace({ inclusive: false }));
   push(
     checkbox.tokenFrom,
     checkbox.tokenTo,

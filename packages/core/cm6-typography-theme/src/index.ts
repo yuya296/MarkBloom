@@ -3,13 +3,27 @@ import { EditorView } from "@codemirror/view";
 
 export type TypographyThemeOptions = {
   classPrefix?: string;
+  listMarkerWidthCh?: number;
+  listIndentStepCh?: number;
+  listBulletColor?: string;
+  listOrderedColor?: string;
 };
 
 export function typographyTheme(options: TypographyThemeOptions = {}): Extension {
   const prefix = options.classPrefix ?? "mb-";
   const scope = ".cm-content";
+  const listMarkerWidthCh = String(options.listMarkerWidthCh ?? 1.5);
+  const listIndentStepCh = String(options.listIndentStepCh ?? 2);
+  const listBulletColor = options.listBulletColor ?? "var(--editor-primary-color, currentColor)";
+  const listOrderedColor = options.listOrderedColor ?? "var(--editor-secondary-color, currentColor)";
 
   return EditorView.theme({
+    [`${scope}`]: {
+      "--mb-list-marker-width-ch": listMarkerWidthCh,
+      "--mb-list-indent-step-ch": listIndentStepCh,
+      "--mb-list-marker-bullet-color": listBulletColor,
+      "--mb-list-marker-ordered-color": listOrderedColor,
+    },
     [`${scope} .${prefix}heading-1`]: {
       fontSize: "1.6em",
       fontWeight: "700",
@@ -197,7 +211,26 @@ export function typographyTheme(options: TypographyThemeOptions = {}): Extension
     },
     [`${scope} .${prefix}blockquote.${prefix}list-item`]: {
       paddingLeft:
-        "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem) - var(--mb-quote-border-width, 3px))",
+        "calc(var(--mb-blockquote-level, 1) * var(--mb-quote-indent, 0.75rem) - var(--mb-quote-border-width, 3px) + (var(--mb-list-level, 1) - 1) * var(--mb-list-indent-step-ch, 2ch))",
+    },
+    [`${scope} .${prefix}list-item:not(.${prefix}blockquote)`]: {
+      paddingLeft:
+        "calc((var(--mb-list-level, 1) - 1) * var(--mb-list-indent-step-ch, 2ch))",
+    },
+    [`${scope} .cm-lp-list-marker`]: {
+      display: "inline-block",
+      width: "var(--mb-list-marker-width-ch, 1.5ch)",
+      minWidth: "var(--mb-list-marker-width-ch, 1.5ch)",
+      textAlign: "center",
+      fontWeight: "600",
+      marginRight: "0.25ch",
+      verticalAlign: "baseline",
+    },
+    [`${scope} .cm-lp-list-marker-bullet`]: {
+      color: "var(--mb-list-marker-bullet-color, var(--editor-primary-color, currentColor))",
+    },
+    [`${scope} .cm-lp-list-marker-ordered`]: {
+      color: "var(--mb-list-marker-ordered-color, var(--editor-secondary-color, currentColor))",
     },
     [`${scope} .${prefix}blockquote-level-1`]: { "--mb-blockquote-level": "1" },
     [`${scope} .${prefix}blockquote-level-2`]: { "--mb-blockquote-level": "2" },
