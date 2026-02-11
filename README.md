@@ -30,6 +30,12 @@ MarkBloom is a VS Code extension for **reviewing and editing Markdown** in a way
 - `packages/core/cm6-*`: core CM6 libraries published to npm
 - `docs/`: architecture, runbook, ADR, and feature specs
 
+## Live demo
+
+- Latest snapshot (`main`): https://yuya296.github.io/MarkBloom/
+- PR preview (`pr-<number>`): https://yuya296.github.io/MarkBloom/pr-<number>/
+- Pages content is publicly accessible. Do not include sensitive or private data in demo content.
+
 ## Dependency model
 
 - App layer (`apps/*`) depends on core layer (`@yuya296/cm6-*`).

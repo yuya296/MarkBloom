@@ -27,6 +27,25 @@
   - `pnpm -r build`
   - `pnpm -r --if-present test`
 
+## Webview Pages (自動公開)
+- 対象: `apps/webview-demo`
+- workflow: `.github/workflows/webview-pages.yml`
+- Trigger:
+  - `push` (`main`) -> 最新断面を更新
+  - `pull_request` (`opened`, `synchronize`, `reopened`) -> PR断面を更新
+  - `pull_request` (`closed`) -> PR断面を削除
+- URL 規約:
+  - main: `https://yuya296.github.io/MarkBloom/`
+  - PR: `https://yuya296.github.io/MarkBloom/pr-<PR番号>/`
+- PRコメント運用:
+  - botコメントを 1 件だけ保持し、最新 preview URL に更新する（marker: `<!-- webview-preview -->`）
+- セキュリティ方針:
+  - fork PR (`head.repo.full_name != repository`) は preview/cleanup をスキップする
+- cleanup 方針:
+  - PR close 時に `gh-pages` から `pr-<PR番号>/` を削除する
+- 注意:
+  - Pages は公開 URL のため、デモには機密情報を含めない
+
 ## CD (手動)
 - Trigger: 各 workflow の `workflow_dispatch`
 - 共通入力:
