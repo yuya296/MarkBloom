@@ -1,6 +1,10 @@
 import { EditorState, Compartment, Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import { defaultKeymap } from "@codemirror/commands";
+import {
+  cursorLineBoundaryBackward,
+  defaultKeymap,
+  selectLineBoundaryBackward,
+} from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
@@ -62,6 +66,14 @@ export function createEditor({
   }
 
   const dynamicExtensions = new Compartment();
+  const richLineStartKeymap = [
+    {
+      mac: "Ctrl-a",
+      run: cursorLineBoundaryBackward,
+      shift: selectLineBoundaryBackward,
+      preventDefault: true,
+    },
+  ];
 
   const baseExtensions = [
     EditorView.domEventHandlers({
@@ -102,7 +114,7 @@ export function createEditor({
         return true;
       },
     }),
-    keymap.of(defaultKeymap),
+    keymap.of([...richLineStartKeymap, ...defaultKeymap]),
     markdown({
       extensions: [Strikethrough, GFM],
       codeLanguages: languages,
