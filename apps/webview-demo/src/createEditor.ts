@@ -102,7 +102,12 @@ export function createEditor({
         return true;
       },
     }),
-    history(),
+    history({
+      newGroupDelay: 1500,
+      joinToEvent: (tr, isAdjacent) => {
+        return isAdjacent || tr.docChanged;
+      },
+    }),
     keymap.of([...historyKeymap, ...defaultKeymap]),
     markdown({
       extensions: [Strikethrough, GFM],
