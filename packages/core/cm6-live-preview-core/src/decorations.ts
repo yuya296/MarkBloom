@@ -1,7 +1,7 @@
 import { RangeSetBuilder, type EditorState } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
 import { Decoration, type DecorationSet } from "@codemirror/view";
-import type { LivePreviewOptions } from "./index";
+import type { ResolvedLivePreviewOptions } from "./options";
 import {
   addBlockMarkerDecorations,
   addTaskCheckboxDecorations,
@@ -13,6 +13,7 @@ import {
   addInlineHtmlStyleDecorations,
   addInlineMarkerDecorations,
 } from "./inline/inlineDecorations";
+import { applyLivePreviewPlugins } from "./plugins/applyPlugins";
 import { collectInlineMarkerRanges } from "./inline/inlineMarkerRanges";
 import { collectExcludedRanges } from "./core/excludedRanges";
 import { overlapsRange } from "./core/utils";
@@ -41,7 +42,10 @@ function addThematicBreakDecorations(
   });
 }
 
-export function buildDecorations(state: EditorState, options: LivePreviewOptions): DecorationSet {
+export function buildDecorations(
+  state: EditorState,
+  options: ResolvedLivePreviewOptions
+): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
   const excluded = collectExcludedRanges(state, options);
   const inlineMarkerRanges = collectInlineMarkerRanges(state, options, excluded);
@@ -117,6 +121,22 @@ export function buildDecorations(state: EditorState, options: LivePreviewOptions
     pushDecoration,
     inlineMarkerRanges.images,
     options.imageRawShowsPreview ?? false
+  );
+
+  applyLivePreviewPlugins(
+    pushDecoration,
+    {
+      state,
+      selectionRanges,
+      blockRevealRange,
+      isSelectionOverlap: (range) =>
+        overlapsRange(range.from, range.to, selectionRanges),
+      isBlockRevealOverlap: (range) =>
+        blockRevealRange
+          ? overlapsRange(range.from, range.to, [blockRevealRange])
+          : false,
+    },
+    options
   );
 
   pending.sort((a, b) => (a.from === b.from ? a.to - b.to : a.from - b.from));

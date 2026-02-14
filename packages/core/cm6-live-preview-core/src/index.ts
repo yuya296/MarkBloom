@@ -1,14 +1,19 @@
 import { Extension, StateField } from "@codemirror/state";
 import { type DecorationSet, EditorView } from "@codemirror/view";
 import { buildDecorations } from "./decorations";
+import { type LivePreviewOptions, resolveLivePreviewOptions } from "./options";
 
-export type LivePreviewOptions = {
-  blockRevealEnabled?: boolean;
-  rawModeKeepsTheme?: boolean;
-  exclude?: { code?: boolean };
-  imageBasePath?: string;
-  imageRawShowsPreview?: boolean;
-};
+export type {
+  LivePreviewOptions,
+  ResolvedLivePreviewOptions,
+} from "./options";
+export type {
+  LivePreviewPlugin,
+  LivePreviewPluginContext,
+  LivePreviewPluginDecoration,
+  LivePreviewPluginErrorEvent,
+} from "./plugins/types";
+export type { Range } from "./core/types";
 
 export function livePreviewBaseTheme(): Extension {
   return EditorView.baseTheme({
@@ -24,23 +29,8 @@ export function livePreviewBaseTheme(): Extension {
   });
 }
 
-const defaultOptions: Required<LivePreviewOptions> = {
-  blockRevealEnabled: false,
-  rawModeKeepsTheme: true,
-  exclude: { code: true },
-  imageBasePath: "",
-  imageRawShowsPreview: false,
-};
-
 export function livePreview(options: LivePreviewOptions = {}): Extension {
-  const resolved: LivePreviewOptions = {
-    ...defaultOptions,
-    ...options,
-    exclude: {
-      ...defaultOptions.exclude,
-      ...options.exclude,
-    },
-  };
+  const resolved = resolveLivePreviewOptions(options);
 
   const decorations = StateField.define<DecorationSet>({
     create(state) {

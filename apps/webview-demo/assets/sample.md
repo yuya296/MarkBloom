@@ -17,6 +17,7 @@ A rich Markdown sample covering common patterns.
   - [Links and images](#links-and-images)
   - [Blockquotes](#blockquotes)
   - [Code](#code)
+  - [Mermaid](#mermaid)
   - [Tables](#tables)
   - [HTML](#html)
   - [Footnotes](#footnotes)
@@ -86,6 +87,15 @@ Indented code block:
 
     mkdir -p apps/webview-demo
     pnpm -C apps/webview-demo run dev
+
+## Mermaid
+```mermaid
+graph TD
+  Start([Start]) --> Draft[Write Draft]
+  Draft --> Review{Reviewed?}
+  Review -->|Yes| Publish([Publish])
+  Review -->|No| Draft
+```
 
 ## Tables
 | Col A | Col B | Col C  |

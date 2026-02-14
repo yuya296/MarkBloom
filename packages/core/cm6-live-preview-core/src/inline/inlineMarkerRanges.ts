@@ -1,7 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import type { EditorState, Line } from "@codemirror/state";
 import type { ExcludeRanges, Range } from "../core/types";
-import type { LivePreviewOptions } from "../index";
+import type { LivePreviewOptions } from "../options";
 import { inRangeSegment, selectionOverlapsRange } from "../core/utils";
 import {
   INLINE_CONTAINER_NAMES,

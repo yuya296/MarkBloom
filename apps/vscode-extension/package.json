@@ -105,6 +105,7 @@
     "@lezer/markdown": "^1.6.2",
     "@yuya296/cm6-diff-gutter": "workspace:*",
     "@yuya296/cm6-live-preview": "workspace:*",
+    "@yuya296/cm6-live-preview-mermaid": "workspace:*",
     "@yuya296/cm6-table": "workspace:*"
   },
   "devDependencies": {

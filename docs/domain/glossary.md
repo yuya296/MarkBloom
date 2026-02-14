@@ -29,6 +29,10 @@
 - List Marker Widget: Live Previewで`-`/`*`/`+`/`1.`などのlist markerを置換表示するWidget。unorderedは`•`で表示し、orderedは元の番号を表示する。
 - List Marker Width (ch): list marker widgetに割り当てる固定幅。`ch`単位で指定し、本文開始位置の揃えに使う。
 - List Indent Step (ch): ネストレベルごとに追加するインデント幅。`ch`単位で指定する。
+- LivePreviewPlugin: `cm6-live-preview-core` の decoration 拡張点。`decorate(ctx)` で view-only decoration を返す。
+- LivePreviewPluginContext: plugin に渡される実行コンテキスト。`state` と raw 判定 helper（selection overlap / block reveal overlap）を含む。
+- Mermaid Live Preview Plugin: `@yuya296/cm6-live-preview-mermaid` が提供する plugin。` ```mermaid ` フェンスを図 widget に変換する。
+- Mermaid Dual Render (raw): Mermaid code block が raw 判定時に source markdown を表示したまま図 widget も併置する表示方式。
 - Typography Theme: Markdown の見た目（見出し/強調/引用/リンクなど）を整えるテーマ。
 - CodeMirror 6 (CM6): 拡張可能なエディタライブラリ。
 - Extension: CM6 の機能単位。配列で合成する。

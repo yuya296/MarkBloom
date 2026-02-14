@@ -52,6 +52,10 @@ Example (simplified):
 export type LivePreviewOptions = {
   blockRevealEnabled?: boolean;
   exclude?: { code?: boolean };
+  imageBasePath?: string;
+  imageRawShowsPreview?: boolean;
+  plugins?: readonly LivePreviewPlugin[];
+  onPluginError?: (event: LivePreviewPluginErrorEvent) => void;
 };
 ```
 

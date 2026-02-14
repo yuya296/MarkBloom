@@ -1,7 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import type { EditorState } from "@codemirror/state";
 import type { ExcludeRanges } from "./types";
-import type { LivePreviewOptions } from "../index";
+import type { LivePreviewOptions } from "../options";
 
 export function collectExcludedRanges(
   state: EditorState,
