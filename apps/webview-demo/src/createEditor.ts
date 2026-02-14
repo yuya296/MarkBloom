@@ -3,6 +3,8 @@ import { EditorView, keymap } from "@codemirror/view";
 import {
   cursorLineBoundaryBackward,
   defaultKeymap,
+  history,
+  historyKeymap,
   selectLineBoundaryBackward,
 } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
@@ -114,6 +116,13 @@ export function createEditor({
       },
     }),
     keymap.of([...richLineStartKeymap, ...defaultKeymap]),
+    history({
+      newGroupDelay: 1500,
+      joinToEvent: (tr, isAdjacent) => {
+        return isAdjacent || tr.docChanged;
+      },
+    }),
+    keymap.of([...richLineStartKeymap, ...historyKeymap, ...defaultKeymap]),
     markdown({
       extensions: [Strikethrough, GFM],
       codeLanguages: languages,
