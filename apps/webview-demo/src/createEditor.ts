@@ -1,6 +1,6 @@
 import { EditorState, Compartment, Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import { defaultKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
@@ -102,7 +102,8 @@ export function createEditor({
         return true;
       },
     }),
-    keymap.of(defaultKeymap),
+    history(),
+    keymap.of([...historyKeymap, ...defaultKeymap]),
     markdown({
       extensions: [Strikethrough, GFM],
       codeLanguages: languages,
