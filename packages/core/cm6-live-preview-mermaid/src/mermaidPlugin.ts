@@ -19,6 +19,17 @@ type MermaidBlockInfo = {
   source: string;
 };
 
+function isCursorAtBottomBoundary(
+  ctx: LivePreviewPluginContext,
+  block: MermaidBlockInfo
+): boolean {
+  return ctx.state.selection.ranges.some(
+    (range) =>
+      range.from === range.to &&
+      (range.head === block.replaceRange.to || range.head === block.replaceRange.to + 1)
+  );
+}
+
 function parseFenceStart(lineText: string): { marker: "`" | "~"; length: number; info: string } | null {
   const match = lineText.match(/^\s{0,3}([`~]{3,})\s*([^\s{`~]+)?/u);
   if (!match) {
@@ -131,7 +142,8 @@ export function mermaidLivePreviewPlugin(
       for (const block of blocks) {
         const isRaw =
           ctx.isSelectionOverlap(block.rawJudgeRange) ||
-          ctx.isBlockRevealOverlap(block.rawJudgeRange);
+          ctx.isBlockRevealOverlap(block.rawJudgeRange) ||
+          isCursorAtBottomBoundary(ctx, block);
         if (isRaw) {
           decorations.push({
             from: block.replaceRange.to,

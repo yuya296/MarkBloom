@@ -72,6 +72,7 @@ class MermaidWidget extends WidgetType {
       }
       container.innerHTML = svg;
       bindFunctions?.(container);
+      this.attachOpenInNewTabButton(wrapper, container);
     } catch (error) {
       if (!container.isConnected) {
         return;
@@ -83,6 +84,71 @@ class MermaidWidget extends WidgetType {
           ? `Mermaid render error: ${error.message}`
           : "Mermaid render error";
     }
+  }
+
+  private attachOpenInNewTabButton(wrapper: HTMLElement, container: HTMLElement) {
+    const svg = container.querySelector("svg");
+    if (!(svg instanceof SVGElement)) {
+      return;
+    }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "cm-lp-mermaid-open-button";
+    button.setAttribute("aria-label", "Open Mermaid preview in new tab");
+    button.title = "Open Mermaid preview in new tab";
+    button.textContent = "Open";
+
+    const openPreview = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      MermaidWidget.openExternalPreview(svg.outerHTML);
+    };
+
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    button.addEventListener("click", openPreview);
+    button.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        openPreview(event);
+      }
+    });
+    wrapper.appendChild(button);
+  }
+
+  private static openExternalPreview(svgMarkup: string) {
+    const previewWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!previewWindow) {
+      console.warn("Mermaid preview popup was blocked by the browser");
+      return;
+    }
+
+    previewWindow.document.title = "Mermaid Preview";
+    previewWindow.document.body.innerHTML = `<main class="mermaid-preview">${svgMarkup}</main>`;
+
+    const style = previewWindow.document.createElement("style");
+    style.textContent = `
+      :root { color-scheme: light dark; }
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: #f6f8fa;
+      }
+      .mermaid-preview {
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .mermaid-preview svg {
+        width: min(96vw, 1400px);
+        height: auto;
+      }
+    `;
+    previewWindow.document.head.appendChild(style);
   }
 
   private static async loadMermaidApi(): Promise<MermaidApi | null> {

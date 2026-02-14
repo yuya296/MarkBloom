@@ -5,10 +5,11 @@ import { EditorState } from "@codemirror/state";
 import type { LivePreviewPluginContext, Range } from "@yuya296/cm6-live-preview-core";
 import { mermaidLivePreviewPlugin } from "../src/mermaidPlugin";
 
-function createState(doc: string): EditorState {
+function createState(doc: string, cursorPos = 0): EditorState {
   return EditorState.create({
     doc,
     extensions: [markdown()],
+    selection: { anchor: cursorPos },
   });
 }
 
@@ -17,10 +18,11 @@ function createContext(
   options: {
     isSelectionOverlap?: (range: Range) => boolean;
     isBlockRevealOverlap?: (range: Range) => boolean;
+    cursorPos?: number;
   } = {}
 ): LivePreviewPluginContext {
   return {
-    state: createState(doc),
+    state: createState(doc, options.cursorPos),
     selectionRanges: [],
     blockRevealRange: null,
     isSelectionOverlap: options.isSelectionOverlap ?? (() => false),
@@ -32,8 +34,9 @@ test("creates replace decoration for mermaid fenced code in rich mode", () => {
   const plugin = mermaidLivePreviewPlugin();
   const ctx = createContext(["```mermaid", "graph TD", "A-->B", "```"].join("\n"));
   const decorations = plugin.decorate(ctx);
-  assert.equal(decorations.length, 1);
-  assert.ok(decorations[0].from < decorations[0].to);
+  assert.equal(decorations.length, 2);
+  assert.ok(decorations.some((decoration) => decoration.from < decoration.to));
+  assert.ok(decorations.some((decoration) => decoration.from === decoration.to));
 });
 
 test("creates appended widget for raw mode when selection overlaps block", () => {
@@ -51,4 +54,14 @@ test("ignores non-mermaid fenced code blocks", () => {
   const ctx = createContext(["```ts", "const a = 1", "```"].join("\n"));
   const decorations = plugin.decorate(ctx);
   assert.equal(decorations.length, 0);
+});
+
+test("creates appended widget when cursor enters block from below", () => {
+  const plugin = mermaidLivePreviewPlugin();
+  const doc = ["```mermaid", "graph TD", "A-->B", "```", "after"].join("\n");
+  const closingFenceEnd = doc.lastIndexOf("```") + 3;
+  const ctx = createContext(doc, { cursorPos: closingFenceEnd + 1 });
+  const decorations = plugin.decorate(ctx);
+  assert.equal(decorations.length, 1);
+  assert.equal(decorations[0].from, decorations[0].to);
 });
