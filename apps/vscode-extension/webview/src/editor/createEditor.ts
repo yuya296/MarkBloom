@@ -8,6 +8,7 @@ import {
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
+import { richLineStartBinding } from "../../../../shared/src/richLineStartKeymap";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -68,13 +69,11 @@ export function createEditor({
   const dynamicExtensions = new Compartment();
   const richLineStartKeymap = [
     {
-      mac: "Ctrl-a",
+      ...richLineStartBinding,
       run: cursorLineBoundaryBackward,
       shift: selectLineBoundaryBackward,
-      preventDefault: true,
     },
   ];
-
   const baseExtensions = [
     EditorView.domEventHandlers({
       click: (event) => {
