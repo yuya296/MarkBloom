@@ -363,7 +363,7 @@ footer.footer {
   cursor: pointer;
 }
 
-.cm-editor .cm-line.cm-lp-mermaid-fence-line-hidden:not(:has(.cm-lp-mermaid)) {
+.cm-editor .cm-line.cm-lp-mermaid-fence-line-hidden {
   display: none;
 }
 
