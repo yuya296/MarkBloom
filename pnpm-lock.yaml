@@ -208,6 +208,9 @@ importers:
         specifier: ^11.4.1
         version: 11.12.2
     devDependencies:
+      '@types/node':
+        specifier: ^24.10.7
+        version: 24.10.7
       '@codemirror/lang-markdown':
         specifier: 6.5.0
         version: 6.5.0
