@@ -207,10 +207,10 @@ importers:
       mermaid:
         specifier: ^11.4.1
         version: 11.12.2
+      type-fest:
+        specifier: ^4.41.0
+        version: 4.41.0
     devDependencies:
-      '@types/node':
-        specifier: ^24.10.7
-        version: 24.10.7
       '@codemirror/lang-markdown':
         specifier: 6.5.0
         version: 6.5.0
@@ -223,6 +223,9 @@ importers:
       '@codemirror/view':
         specifier: 6.39.8
         version: 6.39.8
+      '@types/node':
+        specifier: ^24.10.7
+        version: 24.10.7
       '@yuya296/cm6-live-preview-core':
         specifier: workspace:*
         version: link:../cm6-live-preview-core
@@ -1989,6 +1992,10 @@ packages:
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
+
+  type-fest@4.41.0:
+    resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
+    engines: {node: '>=16'}
 
   typescript-eslint@8.51.0:
     resolution: {integrity: sha512-jh8ZuM5oEh2PSdyQG9YAEM1TCGuWenLSuSUhf/irbVUNW9O5FhbFVONviN2TgMTBnUmyHv7E56rYnfLZK6TkiA==}
@@ -3983,6 +3990,8 @@ snapshots:
   type-check@0.4.0:
     dependencies:
       prelude-ls: 1.2.1
+
+  type-fest@4.41.0: {}
 
   typescript-eslint@8.51.0(eslint@9.39.2)(typescript@5.9.3):
     dependencies:
