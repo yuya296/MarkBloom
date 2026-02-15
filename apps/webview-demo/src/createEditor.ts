@@ -1,16 +1,17 @@
-import { EditorState, Compartment, Extension } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorSelection, EditorState, Compartment, Extension } from "@codemirror/state";
+import { EditorView, keymap, type Command } from "@codemirror/view";
 import {
-  cursorLineBoundaryBackward,
   defaultKeymap,
   history,
   historyKeymap,
-  selectLineBoundaryBackward,
 } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
-import { richLineStartBinding } from "../../shared/src/richLineStartKeymap";
+import {
+  getRichLineStartOffset,
+  richLineStartBinding,
+} from "../../shared/src/richLineStartKeymap";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -58,6 +59,23 @@ function findHeadingLineForId(view: EditorView, targetId: string) {
   return null;
 }
 
+function moveToRichLineStart(view: EditorView, extendSelection: boolean): boolean {
+  const ranges = view.state.selection.ranges.map((range) => {
+    const line = view.state.doc.lineAt(range.head);
+    const target = line.from + getRichLineStartOffset(line.text);
+    const nextHead = range.head === target ? line.from : target;
+    return extendSelection
+      ? EditorSelection.range(range.anchor, nextHead)
+      : EditorSelection.cursor(nextHead);
+  });
+
+  view.dispatch({
+    selection: EditorSelection.create(ranges, view.state.selection.mainIndex),
+    scrollIntoView: true,
+  });
+  return true;
+}
+
 export function createEditor({
   parent,
   initialText = "",
@@ -69,11 +87,13 @@ export function createEditor({
   }
 
   const dynamicExtensions = new Compartment();
+  const cursorRichLineStart: Command = (view) => moveToRichLineStart(view, false);
+  const selectRichLineStart: Command = (view) => moveToRichLineStart(view, true);
   const richLineStartKeymap = [
     {
       ...richLineStartBinding,
-      run: cursorLineBoundaryBackward,
-      shift: selectLineBoundaryBackward,
+      run: cursorRichLineStart,
+      shift: selectRichLineStart,
     },
   ];
   const baseExtensions = [
@@ -115,7 +135,6 @@ export function createEditor({
         return true;
       },
     }),
-    keymap.of([...richLineStartKeymap, ...defaultKeymap]),
     history({
       newGroupDelay: 1500,
       joinToEvent: (tr, isAdjacent) => {
