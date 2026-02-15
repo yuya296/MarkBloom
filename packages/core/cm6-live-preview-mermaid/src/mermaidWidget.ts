@@ -213,7 +213,7 @@ class MermaidWidget extends WidgetType {
 
     const direct = candidate as Partial<MermaidApi>;
     if (MermaidWidget.isMermaidApi(direct)) {
-      return direct as MermaidApi;
+      return direct;
     }
 
     const nestedDefault = (candidate as { default?: unknown }).default;
