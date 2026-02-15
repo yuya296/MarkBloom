@@ -1,4 +1,4 @@
-import { EditorState, Compartment, Extension } from "@codemirror/state";
+import { EditorState, Compartment, Extension, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
@@ -121,7 +121,7 @@ export function createEditor({
         return true;
       },
     }),
-    markdownSmartBol({ shortcuts: getDefaultSmartBolShortcuts() }),
+    Prec.high(markdownSmartBol({ shortcuts: getDefaultSmartBolShortcuts() })),
     keymap.of(defaultKeymap),
     markdown({
       extensions: [Strikethrough, GFM],
