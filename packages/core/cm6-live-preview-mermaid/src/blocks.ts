@@ -1,4 +1,3 @@
-import { syntaxTree } from "@codemirror/language";
 import type { EditorState } from "@codemirror/state";
 import type { Range } from "@yuya296/cm6-live-preview-core";
 
@@ -53,50 +52,48 @@ function extractFenceSource(state: EditorState, fromLineNumber: number, toLineNu
 
 export function collectMermaidBlocksFromState(state: EditorState): MermaidBlockInfo[] {
   const blocks: MermaidBlockInfo[] = [];
+  let lineNumber = 1;
 
-  syntaxTree(state).iterate({
-    enter: (node) => {
-      if (node.name !== "FencedCode") {
-        return;
+  while (lineNumber <= state.doc.lines) {
+    const startLine = state.doc.line(lineNumber);
+    if (!isMermaidFence(startLine.text)) {
+      lineNumber += 1;
+      continue;
+    }
+
+    const startFence = parseFenceStart(startLine.text);
+    if (!startFence) {
+      lineNumber += 1;
+      continue;
+    }
+
+    let endLine = startLine;
+    let foundClose = false;
+    for (let candidate = lineNumber + 1; candidate <= state.doc.lines; candidate += 1) {
+      const line = state.doc.line(candidate);
+      if (isFenceClose(line.text, startFence.marker, startFence.length)) {
+        endLine = line;
+        foundClose = true;
+        break;
       }
+    }
+    if (!foundClose) {
+      lineNumber += 1;
+      continue;
+    }
 
-      const contentStartLine = state.doc.lineAt(node.from);
-      const startLineCandidates =
-        contentStartLine.number > 1
-          ? [contentStartLine, state.doc.line(contentStartLine.number - 1)]
-          : [contentStartLine];
-      const startLine = startLineCandidates.find((line) => isMermaidFence(line.text)) ?? null;
-      if (!startLine) {
-        return;
-      }
+    const replaceRange = { from: startLine.from, to: endLine.to };
+    const rawJudgeRange = { from: startLine.from, to: endLine.to };
+    const source = extractFenceSource(state, startLine.number, endLine.number);
+    blocks.push({
+      replaceRange,
+      rawJudgeRange,
+      openingLineFrom: startLine.from,
+      source,
+    });
 
-      const startFence = parseFenceStart(startLine.text);
-      if (!startFence) {
-        return;
-      }
-
-      let endLine = state.doc.lineAt(node.to);
-      if (
-        !isFenceClose(endLine.text, startFence.marker, startFence.length) &&
-        endLine.number > startLine.number
-      ) {
-        const previousLine = state.doc.line(endLine.number - 1);
-        if (isFenceClose(previousLine.text, startFence.marker, startFence.length)) {
-          endLine = previousLine;
-        }
-      }
-
-      const replaceRange = { from: startLine.from, to: endLine.to };
-      const rawJudgeRange = { from: node.from, to: node.to };
-      const source = extractFenceSource(state, startLine.number, endLine.number);
-      blocks.push({
-        replaceRange,
-        rawJudgeRange,
-        openingLineFrom: startLine.from,
-        source,
-      });
-    },
-  });
+    lineNumber = endLine.number + 1;
+  }
 
   return blocks;
 }

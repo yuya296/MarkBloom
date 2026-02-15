@@ -15,6 +15,8 @@ class MermaidWidget extends WidgetType {
   private static initializedTheme: MermaidRuntimeTheme | null = null;
   private static sequence = 0;
   private static mermaidApi: MermaidApi | null | undefined;
+  private static renderGenerations = new WeakMap<HTMLElement, number>();
+  private static renderFrames = new WeakMap<HTMLElement, number>();
 
   constructor(
     private readonly source: string,
@@ -28,7 +30,8 @@ class MermaidWidget extends WidgetType {
       this.source === other.source &&
       this.options.className === other.options.className &&
       this.options.errorClassName === other.options.errorClassName &&
-      this.options.mode === other.options.mode
+      this.options.mode === other.options.mode &&
+      this.options.mermaidTheme === other.options.mermaidTheme
     );
   }
 
@@ -44,9 +47,69 @@ class MermaidWidget extends WidgetType {
 
     const container = document.createElement("div");
     container.className = "cm-lp-mermaid-content";
+    container.textContent = "Rendering Mermaid...";
     wrapper.appendChild(container);
-    void this.renderDiagram(source, container, wrapper);
+    this.scheduleRender(source, container, wrapper);
     return wrapper;
+  }
+
+  updateDOM(dom: HTMLElement): boolean {
+    const wrapper = dom;
+    if (!wrapper.classList.contains(this.options.className)) {
+      return false;
+    }
+    const container = wrapper.querySelector<HTMLElement>(".cm-lp-mermaid-content");
+    const source = this.source.trim();
+    if (!container) {
+      return false;
+    }
+    if (!source) {
+      wrapper.textContent = "(empty mermaid diagram)";
+      return true;
+    }
+
+    const hasSvg = Boolean(container.querySelector("svg"));
+    const hasError = wrapper.getAttribute("data-error") === "true";
+    if (!hasSvg && !hasError) {
+      this.scheduleRender(source, container, wrapper);
+      return true;
+    }
+
+    if (hasSvg) {
+      this.attachOpenInNewTabButton(wrapper, container);
+    }
+    return true;
+  }
+
+  private scheduleRender(source: string, container: HTMLElement, wrapper: HTMLElement) {
+    const pendingFrame = MermaidWidget.renderFrames.get(container);
+    if (typeof pendingFrame === "number") {
+      cancelAnimationFrame(pendingFrame);
+      MermaidWidget.renderFrames.delete(container);
+    }
+
+    const run = () => {
+      if (!wrapper.isConnected) {
+        const nextFrame = requestAnimationFrame(run);
+        MermaidWidget.renderFrames.set(container, nextFrame);
+        return;
+      }
+      MermaidWidget.renderFrames.delete(container);
+      void this.renderDiagram(source, container, wrapper);
+    };
+
+    const frame = requestAnimationFrame(run);
+    MermaidWidget.renderFrames.set(container, frame);
+  }
+
+  private static bumpRenderGeneration(container: HTMLElement): number {
+    const generation = (MermaidWidget.renderGenerations.get(container) ?? 0) + 1;
+    MermaidWidget.renderGenerations.set(container, generation);
+    return generation;
+  }
+
+  private static isCurrentRenderGeneration(container: HTMLElement, generation: number): boolean {
+    return MermaidWidget.renderGenerations.get(container) === generation;
   }
 
   private async renderDiagram(
@@ -54,6 +117,11 @@ class MermaidWidget extends WidgetType {
     container: HTMLElement,
     wrapper: HTMLElement
   ) {
+    const generation = MermaidWidget.bumpRenderGeneration(container);
+    container.textContent = "Rendering Mermaid...";
+    wrapper.classList.remove(this.options.errorClassName);
+    wrapper.removeAttribute("data-error");
+
     try {
       let mermaid = await MermaidWidget.loadMermaidApi();
       if (!MermaidWidget.isMermaidApi(mermaid)) {
@@ -78,14 +146,14 @@ class MermaidWidget extends WidgetType {
 
       const id = `cm-lp-mermaid-${MermaidWidget.sequence++}`;
       const { svg, bindFunctions } = await mermaid.render(id, source);
-      if (!container.isConnected) {
+      if (!MermaidWidget.isCurrentRenderGeneration(container, generation)) {
         return;
       }
       container.innerHTML = svg;
       bindFunctions?.(container);
       this.attachOpenInNewTabButton(wrapper, container);
     } catch (error) {
-      if (!container.isConnected) {
+      if (!MermaidWidget.isCurrentRenderGeneration(container, generation)) {
         return;
       }
       wrapper.classList.add(this.options.errorClassName);
@@ -108,6 +176,8 @@ class MermaidWidget extends WidgetType {
   }
 
   private attachOpenInNewTabButton(wrapper: HTMLElement, container: HTMLElement) {
+    wrapper.querySelector(".cm-lp-mermaid-open-button")?.remove();
+
     const svg = container.querySelector("svg");
     if (!(svg instanceof SVGElement)) {
       return;
@@ -175,10 +245,6 @@ class MermaidWidget extends WidgetType {
   private static async loadMermaidApi(options?: {
     skipGlobal?: boolean;
   }): Promise<MermaidApi | null> {
-    if (MermaidWidget.mermaidApi !== undefined) {
-      return MermaidWidget.mermaidApi;
-    }
-
     if (!options?.skipGlobal) {
       const fromWindow = globalThis as typeof globalThis & {
         mermaid?: unknown;
@@ -188,6 +254,10 @@ class MermaidWidget extends WidgetType {
         MermaidWidget.mermaidApi = windowApi;
         return MermaidWidget.mermaidApi;
       }
+    }
+
+    if (MermaidWidget.mermaidApi !== undefined) {
+      return MermaidWidget.mermaidApi;
     }
 
     try {
