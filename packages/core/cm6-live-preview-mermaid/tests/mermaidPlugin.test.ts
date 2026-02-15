@@ -65,3 +65,13 @@ test("creates appended widget when cursor enters block from below", () => {
   assert.equal(decorations.length, 1);
   assert.equal(decorations[0].from, decorations[0].to);
 });
+
+test("does not switch to raw mode when cursor is at closing fence end", () => {
+  const plugin = mermaidLivePreviewPlugin();
+  const doc = ["```mermaid", "graph TD", "A-->B", "```", "after"].join("\n");
+  const closingFenceEnd = doc.lastIndexOf("```") + 3;
+  const ctx = createContext(doc, { cursorPos: closingFenceEnd });
+  const decorations = plugin.decorate(ctx);
+  assert.equal(decorations.length, 2);
+  assert.ok(decorations.some((decoration) => decoration.from < decoration.to));
+});

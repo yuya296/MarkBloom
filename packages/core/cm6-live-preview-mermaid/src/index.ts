@@ -4,9 +4,11 @@ import {
   mermaidLivePreviewPlugin,
   type MermaidLivePreviewPluginOptions,
 } from "./mermaidPlugin";
+import { mermaidCursorNavigation } from "./cursorNavigation";
 import { mermaidLivePreviewTheme } from "./theme";
 
 export type { MermaidLivePreviewPluginOptions } from "./mermaidPlugin";
+export { mermaidCursorNavigation } from "./cursorNavigation";
 export { mermaidLivePreviewTheme } from "./theme";
 
 export type MermaidLivePreviewBundle = {
@@ -18,7 +20,7 @@ export function mermaidLivePreview(
   options: MermaidLivePreviewPluginOptions = {}
 ): MermaidLivePreviewBundle {
   return {
-    extensions: [mermaidLivePreviewTheme()],
+    extensions: [mermaidLivePreviewTheme(), mermaidCursorNavigation()],
     plugin: mermaidLivePreviewPlugin(options),
   };
 }
