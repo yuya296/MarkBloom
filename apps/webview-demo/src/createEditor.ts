@@ -64,7 +64,8 @@ function getDefaultSmartBolShortcuts(): readonly MarkdownSmartBolShortcut[] {
     ).userAgentData?.platform ??
     navigator.platform ??
     "";
-  const isMac = /Mac|iPhone|iPad|iPod/u.test(platform);
+  const userAgent = navigator.userAgent ?? "";
+  const isMac = /Mac|iPhone|iPad|iPod/u.test(`${platform} ${userAgent}`);
   if (isMac) {
     return [{ mac: "Ctrl-a" }, { mac: "Cmd-ArrowLeft" }];
   }
