@@ -17,6 +17,15 @@ class MermaidWidget extends WidgetType {
   private static mermaidApi: MermaidApi | null | undefined;
   private static renderGenerations = new WeakMap<HTMLElement, number>();
   private static renderFrames = new WeakMap<HTMLElement, number>();
+  private static readonly blockedSvgElements = new Set([
+    "script",
+    "foreignobject",
+    "iframe",
+    "object",
+    "embed",
+    "link",
+    "meta",
+  ]);
 
   constructor(
     private readonly source: string,
@@ -149,7 +158,11 @@ class MermaidWidget extends WidgetType {
       if (!MermaidWidget.isCurrentRenderGeneration(container, generation)) {
         return;
       }
-      container.innerHTML = svg;
+      const sanitizedSvg = MermaidWidget.parseAndSanitizeSvg(svg, container.ownerDocument);
+      if (!sanitizedSvg) {
+        throw new Error("Rendered Mermaid output is not valid SVG");
+      }
+      container.replaceChildren(sanitizedSvg);
       bindFunctions?.(container);
       this.attachOpenInNewTabButton(wrapper, container);
     } catch (error) {
@@ -217,7 +230,15 @@ class MermaidWidget extends WidgetType {
     }
 
     previewWindow.document.title = "Mermaid Preview";
-    previewWindow.document.body.innerHTML = `<main class="mermaid-preview">${svgMarkup}</main>`;
+    const previewRoot = previewWindow.document.createElement("main");
+    previewRoot.className = "mermaid-preview";
+    const sanitizedSvg = MermaidWidget.parseAndSanitizeSvg(svgMarkup, previewWindow.document);
+    if (sanitizedSvg) {
+      previewRoot.appendChild(sanitizedSvg);
+    } else {
+      previewRoot.textContent = "Failed to open Mermaid preview";
+    }
+    previewWindow.document.body.replaceChildren(previewRoot);
 
     const style = previewWindow.document.createElement("style");
     style.textContent = `
@@ -240,6 +261,59 @@ class MermaidWidget extends WidgetType {
       }
     `;
     previewWindow.document.head.appendChild(style);
+  }
+
+  private static parseAndSanitizeSvg(
+    svgMarkup: string,
+    doc: Document
+  ): SVGElement | null {
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(svgMarkup, "image/svg+xml");
+    if (parsed.querySelector("parsererror")) {
+      return null;
+    }
+
+    const root = parsed.documentElement;
+    if (!root || root.tagName.toLowerCase() !== "svg") {
+      return null;
+    }
+
+    MermaidWidget.sanitizeSvgElementTree(root);
+    const imported = doc.importNode(root, true) as unknown as Element;
+    MermaidWidget.sanitizeSvgElementTree(imported);
+    return imported as unknown as SVGElement;
+  }
+
+  private static sanitizeSvgElementTree(root: Element) {
+    const allElements = [root, ...root.querySelectorAll("*")];
+    for (const element of allElements) {
+      const tagName = (element.localName || element.tagName).toLowerCase();
+      if (MermaidWidget.blockedSvgElements.has(tagName)) {
+        element.remove();
+        continue;
+      }
+      MermaidWidget.sanitizeAttributes(element);
+    }
+  }
+
+  private static sanitizeAttributes(element: Element) {
+    for (const attribute of [...element.attributes]) {
+      const attributeName = attribute.name.toLowerCase();
+      const attributeValue = attribute.value.trim().toLowerCase();
+
+      if (attributeName.startsWith("on")) {
+        element.removeAttribute(attribute.name);
+        continue;
+      }
+
+      if (
+        (attributeName === "href" || attributeName === "xlink:href") &&
+        (attributeValue.startsWith("javascript:") ||
+          attributeValue.startsWith("data:text/html"))
+      ) {
+        element.removeAttribute(attribute.name);
+      }
+    }
   }
 
   private static async loadMermaidApi(options?: {

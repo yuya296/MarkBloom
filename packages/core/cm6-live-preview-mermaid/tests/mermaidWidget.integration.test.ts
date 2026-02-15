@@ -108,3 +108,32 @@ test("keeps latest SVG after rapid raw/rich transitions", async () => {
     restoreMermaid();
   }
 });
+
+test("sanitizes unsafe elements and attributes from rendered SVG", async () => {
+  const doc = ["```mermaid", "graph TD", "A-->B", "```"].join("\n");
+  const api = {
+    initialize() {},
+    render: async () => ({
+      svg: "<svg onload='alert(1)'><script>alert(1)</script><foreignObject></foreignObject><g onclick='alert(1)'></g></svg>",
+    }),
+  };
+  const restoreMermaid = installMockMermaid(api);
+  const harness = await createMermaidEditorHarness(doc, 0);
+
+  try {
+    await flushEditorUpdates(5);
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm-lp-mermaid");
+    assert.ok(wrapper, "mermaid widget wrapper must exist");
+    assert.equal(wrapper.querySelectorAll("script").length, 0);
+    assert.equal(wrapper.querySelectorAll("foreignObject").length, 0);
+    const svg = wrapper.querySelector("svg");
+    assert.ok(svg, "sanitized svg should exist");
+    assert.equal(svg.getAttribute("onload"), null);
+    const group = wrapper.querySelector("g");
+    assert.ok(group, "svg group should remain");
+    assert.equal(group.getAttribute("onclick"), null);
+  } finally {
+    harness.teardown();
+    restoreMermaid();
+  }
+});
