@@ -1,8 +1,13 @@
 import { EditorSelection, type Extension } from "@codemirror/state";
-import { keymap, type Command } from "@codemirror/view";
+import { keymap, type Command, type KeyBinding } from "@codemirror/view";
+
+export type MarkdownSmartBolShortcut = {
+  key?: string;
+  mac?: string;
+};
 
 export type MarkdownSmartBolOptions = {
-  macKey?: string;
+  shortcuts?: readonly MarkdownSmartBolShortcut[];
 };
 
 function getIndentLength(lineText: string): number {
@@ -57,13 +62,13 @@ function moveToMarkdownSmartBol(view: Parameters<Command>[0], extendSelection: b
 export function markdownSmartBol(options: MarkdownSmartBolOptions = {}): Extension {
   const run: Command = (view) => moveToMarkdownSmartBol(view, false);
   const shift: Command = (view) => moveToMarkdownSmartBol(view, true);
+  const shortcuts = options.shortcuts ?? [{ mac: "Ctrl-a" }];
+  const bindings: KeyBinding[] = shortcuts.map((shortcut) => ({
+    ...shortcut,
+    run,
+    shift,
+    preventDefault: true,
+  }));
 
-  return keymap.of([
-    {
-      mac: options.macKey ?? "Ctrl-a",
-      run,
-      shift,
-      preventDefault: true,
-    },
-  ]);
+  return keymap.of(bindings);
 }

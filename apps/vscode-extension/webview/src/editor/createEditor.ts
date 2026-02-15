@@ -4,7 +4,10 @@ import { defaultKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
-import { markdownSmartBol } from "@yuya296/cm6-markdown-smart-bol";
+import {
+  markdownSmartBol,
+  type MarkdownSmartBolShortcut,
+} from "@yuya296/cm6-markdown-smart-bol";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -50,6 +53,22 @@ function findHeadingLineForId(view: EditorView, targetId: string) {
     }
   }
   return null;
+}
+
+function getDefaultSmartBolShortcuts(): readonly MarkdownSmartBolShortcut[] {
+  const platform =
+    (
+      navigator as Navigator & {
+        userAgentData?: { platform?: string };
+      }
+    ).userAgentData?.platform ??
+    navigator.platform ??
+    "";
+  const isMac = /Mac|iPhone|iPad|iPod/u.test(platform);
+  if (isMac) {
+    return [{ mac: "Ctrl-a" }, { mac: "Cmd-ArrowLeft" }];
+  }
+  return [{ key: "Home" }];
 }
 
 export function createEditor({
@@ -102,7 +121,7 @@ export function createEditor({
         return true;
       },
     }),
-    markdownSmartBol(),
+    markdownSmartBol({ shortcuts: getDefaultSmartBolShortcuts() }),
     keymap.of(defaultKeymap),
     markdown({
       extensions: [Strikethrough, GFM],
