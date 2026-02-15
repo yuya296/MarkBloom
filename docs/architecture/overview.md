@@ -13,6 +13,7 @@
 | `cm6-live-preview` | 上記3つを束ね、プリセットとして配布する |
 | `cm6-table` | table editor UI（2モード編集 + 行列ハンドル） |
 | `cm6-diff-gutter` | baseline との差分を行頭ガターで可視化する |
+| `cm6-markdown-smart-bol` | Markdown行の`Ctrl+A`をSmart BOL（見出し考慮の行頭移動）に拡張する |
 
 ## Repository Layout
 
@@ -29,6 +30,7 @@ graph TD
   core --> typographyTheme["cm6-typography-theme"]
   core --> cm6Table["cm6-table"]
   core --> cm6DiffGutter["cm6-diff-gutter"]
+  core --> cm6MarkdownSmartBol["cm6-markdown-smart-bol"]
 ```
 
 ## Dependency DAG
@@ -39,11 +41,13 @@ graph TD
   webview-demo --> cm6-live-preview-mermaid
   webview-demo --> cm6-table
   webview-demo --> cm6-diff-gutter
+  webview-demo --> cm6-markdown-smart-bol
 
   vscode-extension --> cm6-live-preview
   vscode-extension --> cm6-live-preview-mermaid
   vscode-extension --> cm6-table
   vscode-extension --> cm6-diff-gutter
+  vscode-extension --> cm6-markdown-smart-bol
 
   cm6-live-preview --> cm6-live-preview-core
   cm6-live-preview --> cm6-markdown-semantics

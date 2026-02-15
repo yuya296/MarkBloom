@@ -53,6 +53,10 @@ export default defineConfig({
         configDir,
         "node_modules/@codemirror/lang-markdown",
       ),
+      "@yuya296/cm6-markdown-smart-bol": path.resolve(
+        configDir,
+        "../../packages/core/cm6-markdown-smart-bol/src/index.ts",
+      ),
     },
   },
   optimizeDeps: {
@@ -65,6 +69,7 @@ export default defineConfig({
       "@yuya296/cm6-typography-theme",
       "@yuya296/cm6-live-preview-mermaid",
       "@yuya296/cm6-diff-gutter",
+      "@yuya296/cm6-markdown-smart-bol",
     ],
   },
 });

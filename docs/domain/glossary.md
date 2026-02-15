@@ -22,6 +22,8 @@
 - view: state を DOM として描画したもの（EditorView）。
 - renderState: 要素単位の表示状態。`rich` と `raw` を持つ。
 - Trigger: `renderState` を切り替える判定条件。
+- Smart BOL: Markdown行頭移動で、まず行内容に応じた開始位置へ移動し（見出し・リスト・引用・チェックリストでは記号直後、通常行はインデント終端）、次回の同一操作で物理行頭へ移動する挙動。BOLはBeginning Of Lineの略。
+- cm6-markdown-smart-bol: Smart BOLを`Ctrl+A`（macOS）に割り当てる CM6 拡張パッケージ。
 - Reveal Zones: 記号を露出させる範囲（Block/Inline）。
 - HTMLTag: Markdown構文木で段落内インラインHTMLを表すノード（例: `<span>...</span>`）。Live Previewでは開始/終了が対応したタグとself-closingタグ（例: `<span .../>`）をnearby以外で隠し、開始/終了タグで囲まれた本文に対して許可された見た目属性を適用する。
 - Task Checkbox Widget: Live Previewで`[ ]`/`[x]`を置換表示するクリック可能なcheckbox Widget。必要に応じてsource markdownをトグルする。

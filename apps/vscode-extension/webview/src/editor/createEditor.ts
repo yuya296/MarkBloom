@@ -1,9 +1,13 @@
-import { EditorState, Compartment, Extension } from "@codemirror/state";
+import { EditorState, Compartment, Extension, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
+import {
+  markdownSmartBol,
+  type MarkdownSmartBolShortcut,
+} from "@yuya296/cm6-markdown-smart-bol";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -51,6 +55,23 @@ function findHeadingLineForId(view: EditorView, targetId: string) {
   return null;
 }
 
+function getDefaultSmartBolShortcuts(): readonly MarkdownSmartBolShortcut[] {
+  const platform =
+    (
+      navigator as Navigator & {
+        userAgentData?: { platform?: string };
+      }
+    ).userAgentData?.platform ??
+    navigator.platform ??
+    "";
+  const userAgent = navigator.userAgent ?? "";
+  const isMac = /Mac|iPhone|iPad|iPod/u.test(`${platform} ${userAgent}`);
+  if (isMac) {
+    return [{ mac: "Ctrl-a" }, { mac: "Cmd-ArrowLeft" }];
+  }
+  return [{ key: "Home" }];
+}
+
 export function createEditor({
   parent,
   initialText = "",
@@ -62,7 +83,6 @@ export function createEditor({
   }
 
   const dynamicExtensions = new Compartment();
-
   const baseExtensions = [
     EditorView.domEventHandlers({
       click: (event) => {
@@ -102,6 +122,7 @@ export function createEditor({
         return true;
       },
     }),
+    Prec.high(markdownSmartBol({ shortcuts: getDefaultSmartBolShortcuts() })),
     keymap.of(defaultKeymap),
     markdown({
       extensions: [Strikethrough, GFM],
