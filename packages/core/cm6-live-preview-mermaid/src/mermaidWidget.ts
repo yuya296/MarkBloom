@@ -55,7 +55,13 @@ class MermaidWidget extends WidgetType {
     wrapper: HTMLElement
   ) {
     try {
-      const mermaid = await MermaidWidget.loadMermaidApi();
+      let mermaid = await MermaidWidget.loadMermaidApi();
+      if (!MermaidWidget.isMermaidApi(mermaid)) {
+        // A polluted/stale global can pass through runtime environments unexpectedly.
+        // Force a clean module import path before failing the widget.
+        MermaidWidget.mermaidApi = undefined;
+        mermaid = await MermaidWidget.loadMermaidApi({ skipGlobal: true });
+      }
       if (!mermaid) {
         throw new Error("Mermaid runtime is not available");
       }
@@ -166,18 +172,22 @@ class MermaidWidget extends WidgetType {
     previewWindow.document.head.appendChild(style);
   }
 
-  private static async loadMermaidApi(): Promise<MermaidApi | null> {
+  private static async loadMermaidApi(options?: {
+    skipGlobal?: boolean;
+  }): Promise<MermaidApi | null> {
     if (MermaidWidget.mermaidApi !== undefined) {
       return MermaidWidget.mermaidApi;
     }
 
-    const fromWindow = globalThis as typeof globalThis & {
-      mermaid?: unknown;
-    };
-    const windowApi = MermaidWidget.resolveMermaidApi(fromWindow.mermaid);
-    if (windowApi) {
-      MermaidWidget.mermaidApi = windowApi;
-      return MermaidWidget.mermaidApi;
+    if (!options?.skipGlobal) {
+      const fromWindow = globalThis as typeof globalThis & {
+        mermaid?: unknown;
+      };
+      const windowApi = MermaidWidget.resolveMermaidApi(fromWindow.mermaid);
+      if (windowApi) {
+        MermaidWidget.mermaidApi = windowApi;
+        return MermaidWidget.mermaidApi;
+      }
     }
 
     try {
@@ -202,25 +212,25 @@ class MermaidWidget extends WidgetType {
     }
 
     const direct = candidate as Partial<MermaidApi>;
-    if (
-      typeof direct.initialize === "function" &&
-      typeof direct.render === "function"
-    ) {
+    if (MermaidWidget.isMermaidApi(direct)) {
       return direct as MermaidApi;
     }
 
     const nestedDefault = (candidate as { default?: unknown }).default;
-    if (nestedDefault && typeof nestedDefault === "object") {
-      const nested = nestedDefault as Partial<MermaidApi>;
-      if (
-        typeof nested.initialize === "function" &&
-        typeof nested.render === "function"
-      ) {
-        return nested as MermaidApi;
-      }
+    const nestedApi = MermaidWidget.resolveMermaidApi(nestedDefault);
+    if (nestedApi) {
+      return nestedApi;
     }
 
     return null;
+  }
+
+  private static isMermaidApi(candidate: unknown): candidate is MermaidApi {
+    if (!candidate || typeof candidate !== "object") {
+      return false;
+    }
+    const api = candidate as Partial<MermaidApi>;
+    return typeof api.initialize === "function" && typeof api.render === "function";
   }
 }
 
