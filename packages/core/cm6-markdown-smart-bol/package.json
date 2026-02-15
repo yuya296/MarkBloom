@@ -31,6 +31,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --out-dir dist --clean",
     "lint": "eslint src --max-warnings 0",
+    "test": "tsx --test tests/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
@@ -41,6 +42,7 @@
     "@codemirror/state": "^6.5.3",
     "@codemirror/view": "^6.39.8",
     "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

@@ -9,10 +9,24 @@ function getIndentLength(lineText: string): number {
   return lineText.match(/^\s*/u)?.[0].length ?? 0;
 }
 
+const TASK_LIST_MARKER = /^(\s{0,3}(?:[-+*]|\d+[.)])\s+\[(?: |x|X)\]\s+)/u;
+const HEADING_MARKER = /^(\s{0,3}#{1,6}\s+)/u;
+const BLOCKQUOTE_MARKER = /^(\s{0,3}(?:>\s*)+)/u;
+const LIST_MARKER = /^(\s{0,3}(?:[-+*]|\d+[.)])\s+)/u;
+
+const tokenRules: ReadonlyArray<{ pattern: RegExp; groupIndex: number }> = [
+  { pattern: TASK_LIST_MARKER, groupIndex: 1 },
+  { pattern: HEADING_MARKER, groupIndex: 1 },
+  { pattern: BLOCKQUOTE_MARKER, groupIndex: 1 },
+  { pattern: LIST_MARKER, groupIndex: 1 },
+];
+
 export function getMarkdownSmartBolOffset(lineText: string): number {
-  const headingMatch = lineText.match(/^(\s{0,3})(#{1,6}\s+)/u);
-  if (headingMatch) {
-    return headingMatch[1].length + headingMatch[2].length;
+  for (const rule of tokenRules) {
+    const match = lineText.match(rule.pattern);
+    if (match) {
+      return match[rule.groupIndex].length;
+    }
   }
   return getIndentLength(lineText);
 }
