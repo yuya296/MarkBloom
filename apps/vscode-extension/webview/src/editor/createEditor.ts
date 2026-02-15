@@ -1,14 +1,10 @@
 import { EditorState, Compartment, Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import {
-  cursorLineBoundaryBackward,
-  defaultKeymap,
-  selectLineBoundaryBackward,
-} from "@codemirror/commands";
+import { defaultKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
-import { richLineStartBinding } from "../../../../shared/src/richLineStartKeymap";
+import { markdownSmartBol } from "@yuya296/cm6-markdown-smart-bol";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -67,13 +63,6 @@ export function createEditor({
   }
 
   const dynamicExtensions = new Compartment();
-  const richLineStartKeymap = [
-    {
-      ...richLineStartBinding,
-      run: cursorLineBoundaryBackward,
-      shift: selectLineBoundaryBackward,
-    },
-  ];
   const baseExtensions = [
     EditorView.domEventHandlers({
       click: (event) => {
@@ -113,7 +102,8 @@ export function createEditor({
         return true;
       },
     }),
-    keymap.of([...richLineStartKeymap, ...defaultKeymap]),
+    markdownSmartBol(),
+    keymap.of(defaultKeymap),
     markdown({
       extensions: [Strikethrough, GFM],
       codeLanguages: languages,

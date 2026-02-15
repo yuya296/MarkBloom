@@ -1,17 +1,10 @@
-import { EditorSelection, EditorState, Compartment, Extension } from "@codemirror/state";
-import { EditorView, keymap, type Command } from "@codemirror/view";
-import {
-  defaultKeymap,
-  history,
-  historyKeymap,
-} from "@codemirror/commands";
+import { EditorState, Compartment, Extension } from "@codemirror/state";
+import { EditorView, keymap } from "@codemirror/view";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { GFM, Strikethrough } from "@lezer/markdown";
-import {
-  getRichLineStartOffset,
-  richLineStartBinding,
-} from "../../shared/src/richLineStartKeymap";
+import { markdownSmartBol } from "@yuya296/cm6-markdown-smart-bol";
 
 export type CreateEditorOptions = {
   parent: HTMLElement;
@@ -59,23 +52,6 @@ function findHeadingLineForId(view: EditorView, targetId: string) {
   return null;
 }
 
-function moveToRichLineStart(view: EditorView, extendSelection: boolean): boolean {
-  const ranges = view.state.selection.ranges.map((range) => {
-    const line = view.state.doc.lineAt(range.head);
-    const target = line.from + getRichLineStartOffset(line.text);
-    const nextHead = range.head === target ? line.from : target;
-    return extendSelection
-      ? EditorSelection.range(range.anchor, nextHead)
-      : EditorSelection.cursor(nextHead);
-  });
-
-  view.dispatch({
-    selection: EditorSelection.create(ranges, view.state.selection.mainIndex),
-    scrollIntoView: true,
-  });
-  return true;
-}
-
 export function createEditor({
   parent,
   initialText = "",
@@ -87,15 +63,6 @@ export function createEditor({
   }
 
   const dynamicExtensions = new Compartment();
-  const cursorRichLineStart: Command = (view) => moveToRichLineStart(view, false);
-  const selectRichLineStart: Command = (view) => moveToRichLineStart(view, true);
-  const richLineStartKeymap = [
-    {
-      ...richLineStartBinding,
-      run: cursorRichLineStart,
-      shift: selectRichLineStart,
-    },
-  ];
   const baseExtensions = [
     EditorView.domEventHandlers({
       click: (event) => {
@@ -141,7 +108,8 @@ export function createEditor({
         return isAdjacent || tr.docChanged;
       },
     }),
-    keymap.of([...richLineStartKeymap, ...historyKeymap, ...defaultKeymap]),
+    markdownSmartBol(),
+    keymap.of([...historyKeymap, ...defaultKeymap]),
     markdown({
       extensions: [Strikethrough, GFM],
       codeLanguages: languages,

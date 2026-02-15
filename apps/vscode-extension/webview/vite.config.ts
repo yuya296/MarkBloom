@@ -25,6 +25,11 @@ export default defineConfig({
         "../../..",
         "packages/core/cm6-live-preview/src/index.ts"
       ),
+      "@yuya296/cm6-markdown-smart-bol": path.resolve(
+        webviewRoot,
+        "../../..",
+        "packages/core/cm6-markdown-smart-bol/src/index.ts"
+      ),
     },
   },
   optimizeDeps: {
@@ -32,6 +37,7 @@ export default defineConfig({
       "@yuya296/cm6-table",
       "@yuya296/cm6-live-preview",
       "@yuya296/cm6-diff-gutter",
+      "@yuya296/cm6-markdown-smart-bol",
     ],
   },
   build: {
