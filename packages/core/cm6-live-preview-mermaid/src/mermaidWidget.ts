@@ -1,15 +1,18 @@
 import { Decoration, WidgetType } from "@codemirror/view";
 
 export type MermaidWidgetMode = "replace" | "append";
+export type MermaidThemeMode = "auto" | "light" | "dark";
+type MermaidRuntimeTheme = "default" | "dark";
 
 type MermaidWidgetOptions = {
   className: string;
   errorClassName: string;
   mode: MermaidWidgetMode;
+  mermaidTheme: MermaidThemeMode;
 };
 
 class MermaidWidget extends WidgetType {
-  private static initialized = false;
+  private static initializedTheme: MermaidRuntimeTheme | null = null;
   private static sequence = 0;
   private static mermaidApi: MermaidApi | null | undefined;
 
@@ -57,12 +60,14 @@ class MermaidWidget extends WidgetType {
         throw new Error("Mermaid runtime is not available");
       }
 
-      if (!MermaidWidget.initialized) {
+      const runtimeTheme = MermaidWidget.resolveRuntimeTheme(this.options.mermaidTheme);
+      if (MermaidWidget.initializedTheme !== runtimeTheme) {
         mermaid.initialize({
           startOnLoad: false,
           securityLevel: "strict",
+          theme: runtimeTheme,
         });
-        MermaidWidget.initialized = true;
+        MermaidWidget.initializedTheme = runtimeTheme;
       }
 
       const id = `cm-lp-mermaid-${MermaidWidget.sequence++}`;
@@ -84,6 +89,16 @@ class MermaidWidget extends WidgetType {
           ? `Mermaid render error: ${error.message}`
           : "Mermaid render error";
     }
+  }
+
+  private static resolveRuntimeTheme(theme: MermaidThemeMode): MermaidRuntimeTheme {
+    if (theme === "light") {
+      return "default";
+    }
+    if (theme === "dark") {
+      return "dark";
+    }
+    return document.documentElement.dataset.theme === "dark" ? "dark" : "default";
   }
 
   private attachOpenInNewTabButton(wrapper: HTMLElement, container: HTMLElement) {
@@ -185,7 +200,11 @@ class MermaidWidget extends WidgetType {
 }
 
 type MermaidApi = {
-  initialize: (options: { startOnLoad: boolean; securityLevel: "strict" | "loose" }) => void;
+  initialize: (options: {
+    startOnLoad: boolean;
+    securityLevel: "strict" | "loose";
+    theme: MermaidRuntimeTheme;
+  }) => void;
   render: (
     id: string,
     source: string

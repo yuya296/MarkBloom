@@ -5,11 +5,16 @@ import type {
   LivePreviewPluginContext,
   Range,
 } from "@yuya296/cm6-live-preview-core";
-import { mermaidBlockReplace, mermaidBlockWidget } from "./mermaidWidget";
+import {
+  mermaidBlockReplace,
+  mermaidBlockWidget,
+  type MermaidThemeMode,
+} from "./mermaidWidget";
 
 export type MermaidLivePreviewPluginOptions = {
   className?: string;
   errorClassName?: string;
+  mermaidTheme?: MermaidThemeMode;
 };
 
 type MermaidBlockInfo = {
@@ -132,6 +137,7 @@ export function mermaidLivePreviewPlugin(
 ): LivePreviewPlugin {
   const className = options.className ?? "cm-lp-mermaid";
   const errorClassName = options.errorClassName ?? "cm-lp-mermaid-error";
+  const mermaidTheme = options.mermaidTheme ?? "auto";
 
   return {
     name: "mermaid-live-preview",
@@ -151,6 +157,7 @@ export function mermaidLivePreviewPlugin(
             decoration: mermaidBlockWidget(block.source, {
               className,
               errorClassName,
+              mermaidTheme,
             }),
           });
           continue;
@@ -162,6 +169,7 @@ export function mermaidLivePreviewPlugin(
           decoration: mermaidBlockReplace(block.source, {
             className,
             errorClassName,
+            mermaidTheme,
           }),
         });
         decorations.push({

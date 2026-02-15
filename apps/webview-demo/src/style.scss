@@ -324,49 +324,6 @@ footer.footer {
   font-style: italic;
 }
 
-.cm-editor .cm-lp-mermaid {
-  display: block;
-  margin: 0.6rem 0;
-  padding: 0.75rem;
-  border: 1px solid var(--editor-border);
-  border-radius: 8px;
-  background: var(--editor-surface);
-  overflow-x: auto;
-  position: relative;
-}
-
-.cm-editor .cm-lp-mermaid-error {
-  border-color: var(--editor-diff-modified);
-}
-
-.cm-editor .cm-lp-mermaid-content {
-  display: flex;
-  justify-content: center;
-}
-
-.cm-editor .cm-lp-mermaid-content svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-.cm-editor .cm-lp-mermaid-open-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  border: 1px solid var(--editor-border);
-  background: var(--app-button-bg);
-  color: var(--app-text);
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.cm-editor .cm-line.cm-lp-mermaid-fence-line-hidden {
-  display: none;
-}
-
 .cm-editor .cm-lp-task-checkbox {
   display: inline-flex;
   align-items: center;

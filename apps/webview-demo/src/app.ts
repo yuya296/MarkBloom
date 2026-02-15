@@ -4,7 +4,7 @@ import initialText from "../assets/sample.md?raw";
 import { diffGutter } from "@yuya296/cm6-diff-gutter";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
 import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
-import { mermaidLivePreviewPlugin } from "@yuya296/cm6-live-preview-mermaid";
+import { mermaidLivePreview } from "@yuya296/cm6-live-preview-mermaid";
 import { createEditor } from "./createEditor";
 import { editorTheme } from "./editorTheme";
 import { editorHighlightStyle } from "./editorHighlightStyle";
@@ -62,13 +62,15 @@ function buildExtensions({
   extensions.push(editorTheme());
 
   if (livePreviewEnabled) {
+    const mermaid = mermaidLivePreview();
+    extensions.push(...mermaid.extensions);
     extensions.push(
       livePreviewPreset({
         livePreview: {
           blockRevealEnabled,
           imageBasePath: new URL("../assets/", import.meta.url).toString(),
           imageRawShowsPreview: true,
-          plugins: [mermaidLivePreviewPlugin()],
+          plugins: [mermaid.plugin],
         },
       })
     );
