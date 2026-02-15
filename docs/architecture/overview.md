@@ -7,6 +7,7 @@
 | `webview-demo` | CodeMirror6 のデモ（EditorState/EditorView/共通設定） |
 | `vscode-extension` | VS Code 拡張。Webview で CM6 + MarkBloom 拡張を組み合わせる |
 | `cm6-live-preview-core` | Markdown記号の表示状態を動的に切り替える（syntax hide / secondary / raw） |
+| `cm6-live-preview-mermaid` | Live Preview pluginとして mermaid fenced code を図widget表示する |
 | `cm6-markdown-semantics` | Markdown要素を検出して範囲に semantic class を付与する |
 | `cm6-typography-theme` | semantic class に対する見た目（CSSテーマ）を提供する |
 | `cm6-live-preview` | 上記3つを束ね、プリセットとして配布する |
@@ -24,6 +25,7 @@ graph TD
 
   core["packages/core/"] --> livePreview["cm6-live-preview"]
   core --> livePreviewCore["cm6-live-preview-core"]
+  core --> livePreviewMermaid["cm6-live-preview-mermaid"]
   core --> markdownSemantics["cm6-markdown-semantics"]
   core --> typographyTheme["cm6-typography-theme"]
   core --> cm6Table["cm6-table"]
@@ -36,11 +38,13 @@ graph TD
 ```mermaid
 graph TD
   webview-demo --> cm6-live-preview
+  webview-demo --> cm6-live-preview-mermaid
   webview-demo --> cm6-table
   webview-demo --> cm6-diff-gutter
   webview-demo --> cm6-markdown-smart-bol
 
   vscode-extension --> cm6-live-preview
+  vscode-extension --> cm6-live-preview-mermaid
   vscode-extension --> cm6-table
   vscode-extension --> cm6-diff-gutter
   vscode-extension --> cm6-markdown-smart-bol
@@ -48,6 +52,7 @@ graph TD
   cm6-live-preview --> cm6-live-preview-core
   cm6-live-preview --> cm6-markdown-semantics
   cm6-live-preview --> cm6-typography-theme
+  cm6-live-preview-mermaid --> cm6-live-preview-core
 ```
 
 ## Release Topology

@@ -10,7 +10,7 @@ import {
   type DisplayStyle,
   type RawModeTrigger,
 } from "../config";
-import type { LivePreviewOptions } from "../index";
+import type { LivePreviewOptions } from "../options";
 import { listMarkerReplace, taskCheckboxReplace } from "../theme/markerWidgets";
 
 const blockMarkerPattern = {

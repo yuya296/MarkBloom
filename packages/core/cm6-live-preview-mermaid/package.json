@@ -1,0 +1,60 @@
+{
+  "name": "@yuya296/cm6-live-preview-mermaid",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuya296/MarkBloom.git",
+    "directory": "packages/core/cm6-live-preview-mermaid"
+  },
+  "homepage": "https://github.com/yuya296/MarkBloom",
+  "bugs": {
+    "url": "https://github.com/yuya296/MarkBloom/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist --clean",
+    "lint": "eslint src --max-warnings 0",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "mermaid": "^11.4.1",
+    "type-fest": "^4.41.0"
+  },
+  "peerDependencies": {
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
+    "@yuya296/cm6-live-preview-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.7",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
+    "@yuya296/cm6-live-preview-core": "workspace:*",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.20.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}
