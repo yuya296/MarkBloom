@@ -75,3 +75,43 @@ test("continues building decorations when plugin throws", () => {
   });
   assert.ok(count >= 0);
 });
+
+test("skips out-of-bounds decorations returned from plugins", () => {
+  const state = createState("hello");
+  const plugin: LivePreviewPlugin = {
+    name: "out-of-bounds-plugin",
+    decorate() {
+      return [
+        {
+          from: -1,
+          to: 2,
+          decoration: Decoration.mark({ class: "cm-lp-invalid" }),
+        },
+        {
+          from: 0,
+          to: 999,
+          decoration: Decoration.mark({ class: "cm-lp-invalid" }),
+        },
+        {
+          from: 1,
+          to: 3,
+          decoration: Decoration.mark({ class: "cm-lp-valid" }),
+        },
+      ];
+    },
+  };
+
+  assert.doesNotThrow(() => {
+    const decorations = buildDecorations(
+      state,
+      resolveLivePreviewOptions({
+        plugins: [plugin],
+      })
+    );
+    let count = 0;
+    decorations.between(0, state.doc.length, () => {
+      count += 1;
+    });
+    assert.equal(count, 1);
+  });
+});

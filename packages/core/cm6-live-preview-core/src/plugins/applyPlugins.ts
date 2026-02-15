@@ -9,6 +9,8 @@ export function applyLivePreviewPlugins(
   ctx: LivePreviewPluginContext,
   options: ResolvedLivePreviewOptions
 ) {
+  const docLength = ctx.state.doc.length;
+
   for (const plugin of options.plugins) {
     const pluginName = plugin.name || "unnamed-plugin";
     try {
@@ -22,7 +24,13 @@ export function applyLivePreviewPlugins(
         ) {
           continue;
         }
-        if (item.from > item.to) {
+        if (
+          item.from > item.to ||
+          item.from < 0 ||
+          item.to < 0 ||
+          item.from > docLength ||
+          item.to > docLength
+        ) {
           continue;
         }
         push(item.from, item.to, item.decoration);
