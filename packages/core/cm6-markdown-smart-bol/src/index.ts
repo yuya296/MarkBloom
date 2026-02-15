@@ -11,12 +11,17 @@ function getIndentLength(lineText: string): number {
 
 const TASK_LIST_MARKER = /^(\s{0,3}(?:[-+*]|\d+[.)])\s+\[(?: |x|X)\]\s+)/u;
 const HEADING_MARKER = /^(\s{0,3}#{1,6}\s+)/u;
+const BLOCKQUOTE_TASK_LIST_MARKER =
+  /^(\s{0,3}(?:>\s*)+(?:[-+*]|\d+[.)])\s+\[(?: |x|X)\]\s+)/u;
+const BLOCKQUOTE_LIST_MARKER = /^(\s{0,3}(?:>\s*)+(?:[-+*]|\d+[.)])\s+)/u;
 const BLOCKQUOTE_MARKER = /^(\s{0,3}(?:>\s*)+)/u;
 const LIST_MARKER = /^(\s{0,3}(?:[-+*]|\d+[.)])\s+)/u;
 
 const tokenRules: ReadonlyArray<{ pattern: RegExp; groupIndex: number }> = [
   { pattern: TASK_LIST_MARKER, groupIndex: 1 },
   { pattern: HEADING_MARKER, groupIndex: 1 },
+  { pattern: BLOCKQUOTE_TASK_LIST_MARKER, groupIndex: 1 },
+  { pattern: BLOCKQUOTE_LIST_MARKER, groupIndex: 1 },
   { pattern: BLOCKQUOTE_MARKER, groupIndex: 1 },
   { pattern: LIST_MARKER, groupIndex: 1 },
 ];
