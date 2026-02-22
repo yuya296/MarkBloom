@@ -43,13 +43,17 @@ MarkBloom は、**Markdown を “真実のソース” のまま**、人間が 
 ## 依存関係モデル
 
 - app 層（`apps/*`）は core 層（`@yuya296/cm6-*`）に依存します。
+- `apps/vscode-extension` と `apps/webview-demo` は共通で次を利用します:
+  - `@yuya296/cm6-live-preview`
+  - `@yuya296/cm6-diff-gutter`
+  - `@yuya296/cm6-markdown-smart-bol`
 - `@yuya296/cm6-live-preview` は次を束ねます:
   - `@yuya296/cm6-live-preview-core`
   - `@yuya296/cm6-markdown-semantics`
   - `@yuya296/cm6-typography-theme`
-- `apps/vscode-extension` と `apps/webview-demo` は共通で次を利用します:
-  - `@yuya296/cm6-live-preview`
+  - `@yuya296/cm6-live-preview-mermaid`
   - `@yuya296/cm6-table`
+- `table` / `mermaid` は app 側の `livePreviewPreset` オプションで有効化します。
 
 図とリリース経路は `docs/architecture/overview.md` を参照してください。
 

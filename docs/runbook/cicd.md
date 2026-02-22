@@ -19,6 +19,7 @@
 ## CI (自動)
 - Trigger: `pull_request`, `push` (main)
 - workflow: `.github/workflows/ci.yml`
+- Node 実行バージョン: `22` と `24` の matrix
 - 実行内容（最小）
   - `pnpm install --frozen-lockfile`
   - `node scripts/check-compatibility.mjs`
@@ -31,6 +32,7 @@
 ## Webview Pages (自動公開)
 - 対象: `apps/webview-demo`
 - workflow: `.github/workflows/webview-pages.yml`
+- Node 実行バージョン: `24`
 - Trigger:
   - `push` (`main`) -> 最新断面を更新
   - `pull_request` (`opened`, `synchronize`, `reopened`) -> PR断面を更新
@@ -56,6 +58,7 @@
 
 ### Core release
 - workflow: `.github/workflows/core-release.yml`
+- Node 実行バージョン: `24`
 - 実行内容:
   - lockstep version 検証
   - `node scripts/check-compatibility.mjs`
@@ -66,6 +69,7 @@
 
 ### VS Code release
 - workflow: `.github/workflows/vscode-release.yml`
+- Node 実行バージョン: `24`
 - 実行内容:
   - extension version 検証
   - `node scripts/check-compatibility.mjs`
@@ -73,6 +77,12 @@
   - `pnpm -C apps/vscode-extension package|publish`
   - tag作成 (`vscode-vX.Y.Z`)
   - GitHub Release 作成（`release_notes/vscode.md` ベース）
+
+## Node 実行ポリシー
+- 開発の最小要件は `Node 22+`
+- 開発時の推奨バージョンは `.nvmrc` の `24`（`nvm use` を前提）
+- CI は互換性確認のため `22` / `24` 両方で実行する
+- 公開系 workflow（release / pages / audit）は `24` 固定で実行する
 
 ## Notes
 - main への push では publish しない
