@@ -36,7 +36,11 @@ export function livePreview(options: LivePreviewOptions = {}): Extension {
     create(state) {
       return buildDecorations(state, resolved);
     },
-    update(_decorations, tr) {
+    update(decorations, tr) {
+      const selectionChanged = !tr.startState.selection.eq(tr.state.selection);
+      if (!tr.docChanged && !selectionChanged && !tr.reconfigured) {
+        return decorations;
+      }
       return buildDecorations(tr.state, resolved);
     },
     provide: (field) => EditorView.decorations.from(field),

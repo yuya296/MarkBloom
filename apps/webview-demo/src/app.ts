@@ -2,7 +2,7 @@ import { EditorState, Extension } from "@codemirror/state";
 import { lineNumbers, EditorView } from "@codemirror/view";
 import initialText from "../assets/sample.md?raw";
 import { diffGutter } from "@yuya296/cm6-diff-gutter";
-import { livePreviewPreset } from "@yuya296/cm6-live-preview";
+import { livePreviewPreset, resolveImageBasePath } from "@yuya296/cm6-live-preview";
 import { createEditor } from "./createEditor";
 import { editorTheme } from "./editorTheme";
 import { editorHighlightStyle } from "./editorHighlightStyle";
@@ -64,7 +64,7 @@ function buildExtensions({
       livePreview: livePreviewEnabled
         ? {
             blockRevealEnabled,
-            imageBasePath: new URL("../assets/", import.meta.url).toString(),
+            imageBasePath: resolveImageBasePath(import.meta.env.BASE_URL),
             imageRawShowsPreview: true,
           }
         : false,

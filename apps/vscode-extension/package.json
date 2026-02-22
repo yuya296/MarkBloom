@@ -15,7 +15,8 @@
   "type": "commonjs",
   "main": "./dist/extension.js",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.90.0",
+    "node": ">=20.19.0"
   },
   "activationEvents": [
     "onCustomEditor:markbloom.editor",

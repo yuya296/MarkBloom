@@ -111,6 +111,16 @@ const defaultOptions: Required<TableEditorOptions> = {
   renderMode: "widget",
 };
 
+function tableDataSignature(data: TableData): string {
+  const cols = getColumnCount(data);
+  const header = data.header?.cells.map((cell) => cell.text).join("\u001f") ?? "";
+  const rows = data.rows
+    .map((row) => row.cells.map((cell) => cell.text).join("\u001f"))
+    .join("\u001e");
+  const alignments = data.alignments.map((value) => value ?? "").join("\u001f");
+  return `${header}\u001d${rows}\u001d${alignments}\u001d${cols}`;
+}
+
 const toCssTextAlign = (alignment: TableAlignment | null) => {
   switch (alignment) {
     case "center":
@@ -125,6 +135,7 @@ const toCssTextAlign = (alignment: TableAlignment | null) => {
 // cm-widget-measure: static
 class TableWidget extends WidgetType {
   private readonly abortController = new AbortController();
+  private readonly signature: string;
   private static readonly selectionByView = new WeakMap<
     EditorView,
     Map<string, SelectionState>
@@ -172,12 +183,13 @@ class TableWidget extends WidgetType {
 
   constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
+    this.signature = tableDataSignature(data);
   }
 
   eq(other: TableWidget): boolean {
     return (
       this.tableInfo.key === other.tableInfo.key &&
-      JSON.stringify(this.data) === JSON.stringify(other.data)
+      this.signature === other.signature
     );
   }
 
@@ -2210,7 +2222,11 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     create(state) {
       return buildDecorations(state, resolved);
     },
-    update(_decorations, tr) {
+    update(decorations, tr) {
+      const selectionChanged = !tr.startState.selection.eq(tr.state.selection);
+      if (!tr.docChanged && !selectionChanged && !tr.reconfigured) {
+        return decorations;
+      }
       return buildDecorations(tr.state, resolved);
     },
     provide: (field) => EditorView.decorations.from(field),

@@ -7,6 +7,7 @@ import {
 import { markdownSemantics, type MarkdownSemanticsOptions } from "@yuya296/cm6-markdown-semantics";
 import { tableEditor, type TableEditorOptions } from "@yuya296/cm6-table";
 import { typographyTheme, type TypographyThemeOptions } from "@yuya296/cm6-typography-theme";
+export { resolveImageBasePath } from "./imageBasePath";
 
 type MermaidPresetOption = boolean | MermaidLivePreviewPluginOptions;
 type TablePresetOption = boolean | TableEditorOptions;

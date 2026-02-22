@@ -1,7 +1,7 @@
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { diffGutter, setDiffBaseline } from "@yuya296/cm6-diff-gutter";
-import { livePreviewPreset } from "@yuya296/cm6-live-preview";
+import { livePreviewPreset, resolveImageBasePath } from "@yuya296/cm6-live-preview";
 import { createEditor, EditorHandle } from "./editor/createEditor";
 import { editorHighlightStyle } from "./editor/editorHighlightStyle";
 import { editorTheme } from "./editor/editorTheme";
@@ -142,7 +142,13 @@ const buildExtensions = ({
 
   extensions.push(
     livePreviewPreset({
-      livePreview: livePreviewEnabled ? { blockRevealEnabled: true } : false,
+      livePreview: livePreviewEnabled
+        ? {
+            blockRevealEnabled: true,
+            imageBasePath: resolveImageBasePath(import.meta.env.BASE_URL),
+            imageRawShowsPreview: true,
+          }
+        : false,
       mermaid: livePreviewEnabled,
       table: tableEnabled,
     })
