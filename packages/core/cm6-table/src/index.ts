@@ -2252,16 +2252,7 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     },
   ]);
 
-  const imeGuard = EditorView.domEventHandlers({
-    keydown(event) {
-      if (event.isComposing) {
-        return false;
-      }
-      return false;
-    },
-  });
-
-  return [theme, decorations, imeGuard, Prec.highest(tableBoundaryNavigation)];
+  return [theme, decorations, Prec.highest(tableBoundaryNavigation)];
 }
 
 export * from "./types";

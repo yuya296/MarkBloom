@@ -282,6 +282,7 @@ test("arrow down at document end keeps selection on last row", async () => {
 
     clickCell(wrapper, 1, 0);
     dispatchKey(wrapper, "ArrowDown");
+    await flushEditorUpdates();
 
     const cell = selectedCell(wrapper);
     assert.ok(cell);
