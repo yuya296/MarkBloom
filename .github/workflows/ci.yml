@@ -9,11 +9,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["22", "24"]
     permissions:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Detect CI-relevant changes
         id: changes
@@ -37,9 +40,9 @@ jobs:
 
       - name: Setup Node
         if: steps.changes.outputs.ci == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "20.19.0"
+          node-version: ${{ matrix.node-version }}
 
       - name: Enable Corepack
         if: steps.changes.outputs.ci == 'true'
