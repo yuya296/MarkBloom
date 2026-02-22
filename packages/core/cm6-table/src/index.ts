@@ -932,14 +932,24 @@ class TableWidget extends WidgetType {
     };
 
     const restoreTableFocusAfterCommit = (targetCell: CellSelection) => {
-      requestAnimationFrame(() => {
-        const head = view.state.selection.main.head;
-        const lineNumber = view.state.doc.lineAt(head).number;
-        const boundary = collectTableBoundaries(view.state).find(
-          (table) =>
-            lineNumber >= table.startLineNumber && lineNumber <= table.endLineNumber
+      const tryRestore = (attempt: number) => {
+        const boundaries = collectTableBoundaries(view.state);
+        const preferredLine = Math.min(
+          Math.max(this.tableInfo.startLineNumber, 1),
+          view.state.doc.lines
         );
+        const boundary =
+          boundaries.find((table) => table.startLineNumber === preferredLine) ??
+          boundaries.find(
+            (table) =>
+              preferredLine >= table.startLineNumber &&
+              preferredLine <= table.endLineNumber
+          );
         if (!boundary) {
+          if (attempt < 4) {
+            requestAnimationFrame(() => tryRestore(attempt + 1));
+            return;
+          }
           view.focus();
           return;
         }
@@ -947,6 +957,10 @@ class TableWidget extends WidgetType {
           `.cm6-table-editor[data-table-id="${boundary.key}"]`
         );
         if (!wrapperEl) {
+          if (attempt < 4) {
+            requestAnimationFrame(() => tryRestore(attempt + 1));
+            return;
+          }
           view.focus();
           return;
         }
@@ -956,7 +970,8 @@ class TableWidget extends WidgetType {
             detail: { row, col: targetCell.col },
           })
         );
-      });
+      };
+      requestAnimationFrame(() => tryRestore(0));
     };
 
     const stopEditing = (commit: boolean, nextSelection: CellSelection | null = null) => {

@@ -489,6 +489,38 @@ test("enter commit keeps focus on table navigation", async () => {
   }
 });
 
+test("enter commit keeps table focus after entering from outside cursor move", async () => {
+  const harness = await createTableEditorHarness(
+    ["before", "| A | B |", "| --- | --- |", "| 1 | 2 |", "", "after"].join("\n")
+  );
+  try {
+    harness.view.dispatch({
+      selection: { anchor: harness.view.state.doc.line(1).from },
+      scrollIntoView: false,
+    });
+    dispatchKey(harness.view.contentDOM, "ArrowDown");
+    await flushEditorUpdates();
+
+    let wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    const editor = harness.parent.querySelector<HTMLTextAreaElement>(".cm-table-overlay-input");
+    assert.ok(wrapper);
+    assert.ok(editor);
+
+    dispatchKey(wrapper, "Enter");
+    await flushEditorUpdates();
+    editor.value = "outside-in";
+    dispatchKey(editor, "Enter");
+    await flushEditorUpdates();
+
+    wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+    assert.equal(document.activeElement, wrapper);
+    assert.ok(selectedCell(wrapper));
+  } finally {
+    harness.teardown();
+  }
+});
+
 test("ime composing enter does not commit", async () => {
   const harness = await createTableEditorHarness(
     ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
