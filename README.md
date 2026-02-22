@@ -37,7 +37,7 @@ MarkBloom is a VS Code extension for **reviewing and editing Markdown** in a way
 
 ## Development requirements
 
-- Node.js `20.19.0+` (or `22.12+`)
+- Node.js `22+` (recommended: `24.x` via `.nvmrc`)
 - pnpm `10.27.0` (managed via Corepack)
 
 If Node is below the minimum version, `pnpm -C apps/webview-demo dev` fails early with a clear version error.
