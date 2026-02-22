@@ -58,11 +58,6 @@ export function mermaidLivePreviewPlugin(
           }),
         });
         decorations.push({
-          from: block.openingLineFrom,
-          to: block.openingLineFrom,
-          decoration: Decoration.line({ class: "cm-lp-mermaid-fence-line-hidden" }),
-        });
-        decorations.push({
           from: block.replaceRange.from,
           to: block.replaceRange.from,
           decoration: mermaidBlockWidget(block.source, {

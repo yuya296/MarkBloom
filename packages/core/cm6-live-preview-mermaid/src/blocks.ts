@@ -4,7 +4,6 @@ import type { Range } from "@yuya296/cm6-live-preview-core";
 export type MermaidBlockInfo = {
   replaceRange: Range;
   rawJudgeRange: Range;
-  openingLineFrom: number;
   source: string;
 };
 
@@ -88,7 +87,6 @@ export function collectMermaidBlocksFromState(state: EditorState): MermaidBlockI
     blocks.push({
       replaceRange,
       rawJudgeRange,
-      openingLineFrom: startLine.from,
       source,
     });
 
