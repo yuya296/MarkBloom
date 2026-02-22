@@ -33,6 +33,13 @@ MarkBloom は、**Markdown を “真実のソース” のまま**、人間が 
 - 最新断面（`main`）: https://yuya296.github.io/MarkBloom/
 - Pages 上の内容は公開されます。デモには機密情報・私有データを含めないでください。
 
+## 開発要件
+
+- Node.js `20.19.0+`（または `22.12+`）
+- pnpm `10.27.0`（Corepack 管理）
+
+最小 Node バージョン未満では、`pnpm -C apps/webview-demo dev` 実行時にバージョン不足エラーで即時停止します。
+
 ## 依存関係モデル
 
 - app 層（`apps/*`）は core 層（`@yuya296/cm6-*`）に依存します。

@@ -35,6 +35,13 @@ MarkBloom is a VS Code extension for **reviewing and editing Markdown** in a way
 - Latest snapshot (`main`): https://yuya296.github.io/MarkBloom/
 - Pages content is publicly accessible. Do not include sensitive or private data in demo content.
 
+## Development requirements
+
+- Node.js `20.19.0+` (or `22.12+`)
+- pnpm `10.27.0` (managed via Corepack)
+
+If Node is below the minimum version, `pnpm -C apps/webview-demo dev` fails early with a clear version error.
+
 ## Dependency model
 
 - App layer (`apps/*`) depends on core layer (`@yuya296/cm6-*`).
