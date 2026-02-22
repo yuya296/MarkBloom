@@ -89,16 +89,47 @@ export function createEditor({
         if (!(event.target instanceof HTMLElement)) {
           return false;
         }
+        const view = EditorView.findFromDOM(event.target);
+        if (!view) {
+          return false;
+        }
+
+        // Safari/WebKit + CM6 occasionally resolves clicks on a line to the next
+        // line when clicking around the lower area of that visual line.
+        if (
+          event.button === 0 &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey &&
+          !event.shiftKey &&
+          !(event.target instanceof HTMLInputElement) &&
+          !(event.target instanceof HTMLButtonElement) &&
+          !(event.target instanceof HTMLAnchorElement)
+        ) {
+          const lineElement = event.target.closest(".cm-line");
+          if (lineElement instanceof HTMLElement) {
+            const lineFrom = view.posAtDOM(lineElement, 0);
+            const clickedLine = view.state.doc.lineAt(lineFrom);
+            const selectedLine = view.state.doc.lineAt(view.state.selection.main.head);
+            const rect = lineElement.getBoundingClientRect();
+            if (
+              selectedLine.number === clickedLine.number + 1 &&
+              event.clientY < rect.bottom
+            ) {
+              view.dispatch({
+                selection: { anchor: clickedLine.to },
+              });
+              return true;
+            }
+          }
+        }
+
         const link = event.target.closest(".mb-link[data-href]");
         if (!(link instanceof HTMLElement)) {
           return false;
         }
         const href = link.dataset.href;
         if (!href) {
-          return false;
-        }
-        const view = EditorView.findFromDOM(event.target);
-        if (!view) {
           return false;
         }
         if (href.startsWith("#")) {
