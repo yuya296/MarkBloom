@@ -1,16 +1,19 @@
 import { syntaxTree } from "@codemirror/language";
 import {
   Annotation,
+  Prec,
   RangeSetBuilder,
   StateField,
   type EditorState,
   type Extension,
+  type TransactionSpec,
 } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
   EditorView,
   WidgetType,
+  keymap,
 } from "@codemirror/view";
 import type { SyntaxNode } from "@lezer/common";
 import type { TableAlignment, TableData } from "./types";
@@ -41,7 +44,7 @@ export type TableEditorOptions = {
 };
 
 type TableInfo = {
-  id: number;
+  key: string;
   from: number;
   to: number;
   startLineFrom: number;
@@ -89,7 +92,20 @@ type ColumnDropMarker =
     }
   | null;
 
+type TableBoundaryInfo = {
+  key: string;
+  startLineNumber: number;
+  endLineNumber: number;
+  totalRows: number;
+};
+
+type FocusCellRequest = {
+  row: number;
+  col: number;
+};
+
 const tableEditAnnotation = Annotation.define<boolean>();
+const focusCellRequestEvent = "cm6-table-focus-cell-request";
 const defaultOptions: Required<TableEditorOptions> = {
   enabled: true,
   renderMode: "widget",
@@ -106,12 +122,36 @@ const toCssTextAlign = (alignment: TableAlignment | null) => {
   }
 };
 
+// cm-widget-measure: static
 class TableWidget extends WidgetType {
   private readonly abortController = new AbortController();
-  private static readonly selectionByTableId = new Map<number, SelectionState>();
+  private static readonly selectionByView = new WeakMap<
+    EditorView,
+    Map<string, SelectionState>
+  >();
+  private static readonly focusRestoreGenerationByView = new WeakMap<EditorView, number>();
   private static readonly rowHandleOutsideOffset = 10;
   private static readonly colHandleOutsideOffset = 9;
   private static readonly rowHandleVisualOffsetY = -1;
+
+  private static selectionMapForView(view: EditorView): Map<string, SelectionState> {
+    let selectionMap = TableWidget.selectionByView.get(view);
+    if (!selectionMap) {
+      selectionMap = new Map<string, SelectionState>();
+      TableWidget.selectionByView.set(view, selectionMap);
+    }
+    return selectionMap;
+  }
+
+  private static getFocusRestoreGeneration(view: EditorView): number {
+    return TableWidget.focusRestoreGenerationByView.get(view) ?? 0;
+  }
+
+  private static bumpFocusRestoreGeneration(view: EditorView): number {
+    const next = TableWidget.getFocusRestoreGeneration(view) + 1;
+    TableWidget.focusRestoreGenerationByView.set(view, next);
+    return next;
+  }
 
   private static createDragIndicatorIcon(): SVGElement {
     const ns = "http://www.w3.org/2000/svg";
@@ -136,7 +176,7 @@ class TableWidget extends WidgetType {
 
   eq(other: TableWidget): boolean {
     return (
-      this.tableInfo.id === other.tableInfo.id &&
+      this.tableInfo.key === other.tableInfo.key &&
       JSON.stringify(this.data) === JSON.stringify(other.data)
     );
   }
@@ -144,7 +184,7 @@ class TableWidget extends WidgetType {
   toDOM(view: EditorView): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "cm-table-editor cm6-table-editor";
-    wrapper.dataset.tableId = String(this.tableInfo.id);
+    wrapper.dataset.tableId = this.tableInfo.key;
     wrapper.dataset.mode = "nav";
     wrapper.tabIndex = 0;
 
@@ -214,6 +254,9 @@ class TableWidget extends WidgetType {
     let draggingColHandle: HTMLButtonElement | null = null;
 
     const getTotalRows = () => data.rows.length + 1;
+    const cancelPendingFocusRestore = () => {
+      TableWidget.bumpFocusRestoreGeneration(view);
+    };
 
     const clampCell = (nextRow: number, nextCol: number): CellSelection => {
       const row = Math.min(Math.max(nextRow, 0), getTotalRows() - 1);
@@ -634,9 +677,9 @@ class TableWidget extends WidgetType {
       );
       selection = remappedSelection;
       if (remappedSelection) {
-        TableWidget.selectionByTableId.set(this.tableInfo.id, remappedSelection);
+        TableWidget.selectionMapForView(view).set(this.tableInfo.key, remappedSelection);
       } else {
-        TableWidget.selectionByTableId.delete(this.tableInfo.id);
+        TableWidget.selectionMapForView(view).delete(this.tableInfo.key);
       }
       dispatchCommit();
     };
@@ -658,9 +701,9 @@ class TableWidget extends WidgetType {
       );
       selection = remappedSelection;
       if (remappedSelection) {
-        TableWidget.selectionByTableId.set(this.tableInfo.id, remappedSelection);
+        TableWidget.selectionMapForView(view).set(this.tableInfo.key, remappedSelection);
       } else {
-        TableWidget.selectionByTableId.delete(this.tableInfo.id);
+        TableWidget.selectionMapForView(view).delete(this.tableInfo.key);
       }
       dispatchCommit();
     };
@@ -865,7 +908,7 @@ class TableWidget extends WidgetType {
 
     const setSelection = (next: SelectionState, focusWrapper = true) => {
       selection = next;
-      TableWidget.selectionByTableId.set(this.tableInfo.id, next);
+      TableWidget.selectionMapForView(view).set(this.tableInfo.key, next);
       applySelectionClasses();
       if (focusWrapper && !isEditing) {
         wrapper.focus({ preventScroll: true });
@@ -903,15 +946,65 @@ class TableWidget extends WidgetType {
       editor.style.textAlign = toCssTextAlign(data.alignments[cell.col] ?? null);
     };
 
+    const restoreTableFocusAfterCommit = (targetCell: CellSelection) => {
+      const generation = TableWidget.bumpFocusRestoreGeneration(view);
+      const tryRestore = (attempt: number) => {
+        if (generation !== TableWidget.getFocusRestoreGeneration(view)) {
+          return;
+        }
+        const boundaries = collectTableBoundaries(view.state);
+        const preferredLine = Math.min(
+          Math.max(this.tableInfo.startLineNumber, 1),
+          view.state.doc.lines
+        );
+        const boundary =
+          boundaries.find((table) => table.startLineNumber === preferredLine) ??
+          boundaries.find(
+            (table) =>
+              preferredLine >= table.startLineNumber &&
+              preferredLine <= table.endLineNumber
+          );
+        if (!boundary) {
+          if (attempt < 4) {
+            requestAnimationFrame(() => tryRestore(attempt + 1));
+            return;
+          }
+          view.focus();
+          return;
+        }
+        const wrapperEl = view.dom.querySelector<HTMLElement>(
+          `.cm6-table-editor[data-table-id="${boundary.key}"]`
+        );
+        if (!wrapperEl) {
+          if (attempt < 4) {
+            requestAnimationFrame(() => tryRestore(attempt + 1));
+            return;
+          }
+          view.focus();
+          return;
+        }
+        const row = Math.min(Math.max(targetCell.row, 0), boundary.totalRows - 1);
+        wrapperEl.dispatchEvent(
+          new CustomEvent<FocusCellRequest>(focusCellRequestEvent, {
+            detail: { row, col: targetCell.col },
+          })
+        );
+      };
+      requestAnimationFrame(() => tryRestore(0));
+    };
+
     const stopEditing = (commit: boolean, nextSelection: CellSelection | null = null) => {
       if (!isEditing) {
         return;
       }
       const current = selection && selection.kind === "cell" ? selection : null;
+      let restoreFocusOnCurrentWrapper = true;
       if (commit && current) {
         setCellText(current, toMarkdownText(editor.value));
         updateCellDisplay(current);
         dispatchCommit();
+        restoreTableFocusAfterCommit(nextSelection ?? current);
+        restoreFocusOnCurrentWrapper = false;
       }
       isEditing = false;
       wrapper.dataset.mode = "nav";
@@ -921,10 +1014,13 @@ class TableWidget extends WidgetType {
       if (nextSelection) {
         setSelection(nextSelection, false);
       }
-      wrapper.focus({ preventScroll: true });
+      if (restoreFocusOnCurrentWrapper) {
+        wrapper.focus({ preventScroll: true });
+      }
     };
 
     const startEditing = (cell: CellSelection) => {
+      cancelPendingFocusRestore();
       closeMenu();
       setSelection(cell, false);
       isEditing = true;
@@ -1272,6 +1368,34 @@ class TableWidget extends WidgetType {
       return { kind: "cell", row: nextRow, col: nextCol };
     };
 
+    const moveSelectionOutsideTable = (lineNumber: number): boolean => {
+      if (lineNumber < 1 || lineNumber > view.state.doc.lines) {
+        return false;
+      }
+      const target = view.state.doc.line(lineNumber);
+      selection = null;
+      applySelectionClasses();
+      clearHoveredHandles();
+      closeMenu();
+      dispatchOutsideSelection(view, target.from, true);
+      return true;
+    };
+
+    const getCurrentBoundary = (): TableBoundaryInfo => {
+      const live = collectTableBoundaries(view.state).find(
+        (table) => table.key === this.tableInfo.key
+      );
+      if (live) {
+        return live;
+      }
+      return {
+        key: this.tableInfo.key,
+        startLineNumber: this.tableInfo.startLineNumber,
+        endLineNumber: this.tableInfo.endLineNumber,
+        totalRows: getTotalRows(),
+      };
+    };
+
     const updateHoveredHandlesFromPointerEvent = (event: PointerEvent | MouseEvent) => {
       if (isHandleElement(event.target)) {
         return;
@@ -1349,6 +1473,7 @@ class TableWidget extends WidgetType {
     wrapper.addEventListener(
       "pointerdown",
       (event) => {
+        cancelPendingFocusRestore();
         const target = event.target;
         if (!(target instanceof Element)) {
           return;
@@ -1437,6 +1562,7 @@ class TableWidget extends WidgetType {
     wrapper.addEventListener(
       "keydown",
       (event) => {
+        cancelPendingFocusRestore();
         if (isEditing) {
           return;
         }
@@ -1447,12 +1573,34 @@ class TableWidget extends WidgetType {
         let next: CellSelection | null = null;
 
         switch (event.key) {
-          case "ArrowUp":
+          case "ArrowUp": {
+            const boundary = getCurrentBoundary();
+            if (
+              active.row === 0 &&
+              boundary.startLineNumber > 1 &&
+              moveSelectionOutsideTable(boundary.startLineNumber - 1)
+            ) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
             next = clampCell(active.row - 1, active.col);
             break;
-          case "ArrowDown":
+          }
+          case "ArrowDown": {
+            const boundary = getCurrentBoundary();
+            if (
+              active.row === getTotalRows() - 1 &&
+              boundary.endLineNumber < view.state.doc.lines &&
+              moveSelectionOutsideTable(boundary.endLineNumber + 1)
+            ) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
             next = clampCell(active.row + 1, active.col);
             break;
+          }
           case "ArrowLeft":
             next = clampCell(active.row, active.col - 1);
             break;
@@ -1482,6 +1630,25 @@ class TableWidget extends WidgetType {
       { signal }
     );
 
+    wrapper.addEventListener(
+      focusCellRequestEvent,
+      (event) => {
+        const custom = event as CustomEvent<FocusCellRequest>;
+        const detail = custom.detail;
+        if (
+          !detail ||
+          !Number.isFinite(detail.row) ||
+          !Number.isFinite(detail.col)
+        ) {
+          return;
+        }
+        closeMenu();
+        stopEditing(true);
+        setSelection(clampCell(detail.row, detail.col));
+      },
+      { signal }
+    );
+
     editor.addEventListener(
       "compositionstart",
       () => {
@@ -1500,6 +1667,7 @@ class TableWidget extends WidgetType {
     editor.addEventListener(
       "keydown",
       (event) => {
+        cancelPendingFocusRestore();
         if (!isEditing || !selection || selection.kind !== "cell") {
           return;
         }
@@ -1577,10 +1745,19 @@ class TableWidget extends WidgetType {
     document.addEventListener(
       "pointerdown",
       (event) => {
+        cancelPendingFocusRestore();
         const target = event.target;
         if (!(target instanceof Node) || !wrapper.contains(target)) {
           closeMenu();
         }
+      },
+      { signal, capture: true }
+    );
+
+    document.addEventListener(
+      "keydown",
+      () => {
+        cancelPendingFocusRestore();
       },
       { signal, capture: true }
     );
@@ -1601,7 +1778,7 @@ class TableWidget extends WidgetType {
       { signal }
     );
 
-    const cached = TableWidget.selectionByTableId.get(this.tableInfo.id);
+    const cached = TableWidget.selectionMapForView(view).get(this.tableInfo.key);
     if (cached) {
       setSelection(cached, false);
     } else {
@@ -1630,16 +1807,86 @@ function dispatchOutsideUpdate(
     annotations: Annotation<unknown>;
   }
 ) {
-  const dispatch = () => {
-    const scrollTop = view.scrollDOM.scrollTop;
-    const scrollLeft = view.scrollDOM.scrollLeft;
-    view.dispatch({ ...transaction, scrollIntoView: false });
-    requestAnimationFrame(() => {
-      view.scrollDOM.scrollTop = scrollTop;
-      view.scrollDOM.scrollLeft = scrollLeft;
-    });
-  };
-  setTimeout(dispatch, 0);
+  dispatchOutsideTransaction(view, transaction);
+}
+
+function dispatchOutsideSelection(view: EditorView, anchor: number, focusEditor = false) {
+  if (focusEditor) {
+    view.focus();
+  }
+  view.dispatch({
+    selection: { anchor },
+    scrollIntoView: true,
+  });
+}
+
+function dispatchOutsideTransaction(
+  view: EditorView,
+  transaction: TransactionSpec,
+  focusEditor = false
+) {
+  const scrollTop = view.scrollDOM.scrollTop;
+  const scrollLeft = view.scrollDOM.scrollLeft;
+  view.dispatch({ ...transaction, scrollIntoView: false });
+  if (focusEditor) {
+    view.focus();
+  }
+  requestAnimationFrame(() => {
+    view.scrollDOM.scrollTop = scrollTop;
+    view.scrollDOM.scrollLeft = scrollLeft;
+  });
+}
+
+function hashString(value: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function createTableKey(lines: ReturnType<typeof collectTableLines>): string {
+  const first = lines[0];
+  const last = lines[lines.length - 1];
+  const signature = lines.map((line) => line.text).join("\n");
+  return `${first.from}-${last.to}-${hashString(signature)}`;
+}
+
+function collectTableBoundaries(state: EditorState): TableBoundaryInfo[] {
+  const tables: TableBoundaryInfo[] = [];
+
+  syntaxTree(state).iterate({
+    enter: (node) => {
+      if (node.name !== "Table") {
+        return;
+      }
+      const lines = collectTableLines(state, node.from, node.to);
+      if (lines.length === 0) {
+        return;
+      }
+      const data = collectTableData(state, node.node, lines);
+      tables.push({
+        key: createTableKey(lines),
+        startLineNumber: lines[0].number,
+        endLineNumber: lines[lines.length - 1].number,
+        totalRows: data.rows.length + 1,
+      });
+    },
+  });
+
+  return tables;
+}
+
+function isLikelyTableBoundaryCandidateLine(lineText: string): boolean {
+  const text = lineText.trim();
+  if (text.length === 0 || !text.includes("|")) {
+    return false;
+  }
+  if (/^\|?[-:\s]+(\|[-:\s]+)+\|?$/u.test(text)) {
+    return true;
+  }
+  return /^\|.*\|$/u.test(text);
 }
 
 function collectTableData(
@@ -1700,8 +1947,6 @@ function buildDecorations(
     return builder.finish();
   }
 
-  let tableId = 0;
-
   syntaxTree(state).iterate({
     enter: (node) => {
       if (node.name !== "Table") {
@@ -1718,7 +1963,7 @@ function buildDecorations(
       const lastLine = lines[lines.length - 1];
 
       const info: TableInfo = {
-        id: tableId,
+        key: createTableKey(lines),
         from: node.from,
         to: node.to,
         startLineFrom: firstLine.from,
@@ -1735,8 +1980,6 @@ function buildDecorations(
           block: true,
         })
       );
-
-      tableId += 1;
     },
   });
 
@@ -1973,7 +2216,61 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
     provide: (field) => EditorView.decorations.from(field),
   });
 
-  return [theme, decorations];
+  const focusTableFromOutside = (view: EditorView, direction: "up" | "down"): boolean => {
+    const main = view.state.selection.main;
+    if (!main.empty) {
+      return false;
+    }
+    const currentLine = view.state.doc.lineAt(main.head).number;
+    const adjacentLine = direction === "down" ? currentLine + 1 : currentLine - 1;
+    if (adjacentLine < 1 || adjacentLine > view.state.doc.lines) {
+      return false;
+    }
+    if (!isLikelyTableBoundaryCandidateLine(view.state.doc.line(adjacentLine).text)) {
+      return false;
+    }
+    const boundaries = collectTableBoundaries(view.state);
+    const target =
+      direction === "down"
+        ? boundaries.find((table) => currentLine === table.startLineNumber - 1)
+        : boundaries.find((table) => currentLine === table.endLineNumber + 1);
+    if (!target) {
+      return false;
+    }
+    const wrapper = view.dom.querySelector<HTMLElement>(
+      `.cm6-table-editor[data-table-id="${target.key}"]`
+    );
+    if (!wrapper) {
+      return false;
+    }
+
+    wrapper.dispatchEvent(
+      new CustomEvent<FocusCellRequest>(focusCellRequestEvent, {
+        detail: {
+          row: direction === "down" ? 0 : target.totalRows - 1,
+          col: 0,
+        },
+      })
+    );
+    return true;
+  };
+
+  const tableBoundaryNavigation = keymap.of([
+    {
+      key: "ArrowDown",
+      run(view) {
+        return focusTableFromOutside(view, "down");
+      },
+    },
+    {
+      key: "ArrowUp",
+      run(view) {
+        return focusTableFromOutside(view, "up");
+      },
+    },
+  ]);
+
+  return [theme, decorations, Prec.highest(tableBoundaryNavigation)];
 }
 
 export * from "./types";

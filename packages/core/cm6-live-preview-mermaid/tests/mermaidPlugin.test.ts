@@ -34,7 +34,7 @@ test("creates replace decoration for mermaid fenced code in rich mode", () => {
   const plugin = mermaidLivePreviewPlugin();
   const ctx = createContext(["```mermaid", "graph TD", "A-->B", "```"].join("\n"));
   const decorations = plugin.decorate(ctx);
-  assert.equal(decorations.length, 3);
+  assert.equal(decorations.length, 2);
   assert.ok(decorations.some((decoration) => decoration.from < decoration.to));
   assert.ok(decorations.some((decoration) => decoration.from === decoration.to));
 });
@@ -72,6 +72,6 @@ test("does not switch to raw mode when cursor is at closing fence end", () => {
   const closingFenceEnd = doc.lastIndexOf("```") + 3;
   const ctx = createContext(doc, { cursorPos: closingFenceEnd });
   const decorations = plugin.decorate(ctx);
-  assert.equal(decorations.length, 3);
+  assert.equal(decorations.length, 2);
   assert.ok(decorations.some((decoration) => decoration.from < decoration.to));
 });

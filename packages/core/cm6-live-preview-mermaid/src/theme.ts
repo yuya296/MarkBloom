@@ -4,7 +4,8 @@ export function mermaidLivePreviewTheme() {
   return EditorView.baseTheme({
     ".cm-lp-mermaid": {
       display: "block",
-      margin: "0.6rem 0",
+      // Keep block widget geometry measurable by CodeMirror (margin is excluded from offsetHeight).
+      margin: "0",
       padding: "0.75rem",
       border: "1px solid var(--editor-border, #d1d5db)",
       borderRadius: "8px",
@@ -36,8 +37,12 @@ export function mermaidLivePreviewTheme() {
       fontSize: "12px",
       cursor: "pointer",
     },
-    ".cm-line.cm-lp-mermaid-fence-line-hidden": {
-      display: "none",
+    ".cm-line.cm-lp-mermaid-fence-line-mask": {
+      background: "transparent !important",
+      backgroundImage: "none !important",
+      borderRadius: "0 !important",
+      paddingTop: "0 !important",
+      paddingBottom: "0 !important",
     },
   });
 }

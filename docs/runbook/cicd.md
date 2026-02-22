@@ -22,6 +22,7 @@
 - 実行内容（最小）
   - `pnpm install --frozen-lockfile`
   - `node scripts/check-compatibility.mjs`
+  - `node scripts/check-widget-measure-contract.mjs`
   - `pnpm -r lint`
   - `pnpm -r typecheck`
   - `pnpm -r build`

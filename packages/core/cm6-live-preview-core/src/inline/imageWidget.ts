@@ -1,5 +1,6 @@
-import { Decoration, WidgetType } from "@codemirror/view";
+import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 
+// cm-widget-measure: dynamic
 class ImageWidget extends WidgetType {
   constructor(private readonly src: string, private readonly alt: string) {
     super();
@@ -18,6 +19,15 @@ class ImageWidget extends WidgetType {
     img.alt = this.alt;
     img.loading = "lazy";
     img.decoding = "async";
+    const requestMeasure = () => {
+      const view = EditorView.findFromDOM(span);
+      if (!view) {
+        return;
+      }
+      view.requestMeasure();
+    };
+    img.addEventListener("load", requestMeasure, { once: true });
+    img.addEventListener("error", requestMeasure, { once: true });
     span.appendChild(img);
 
     return span;

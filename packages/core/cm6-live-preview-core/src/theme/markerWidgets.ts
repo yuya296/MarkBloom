@@ -1,6 +1,7 @@
 import { EditorState } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 
+// cm-widget-measure: static
 class MarkerWidget extends WidgetType {
   constructor(private readonly text: string, private readonly className: string) {
     super();
@@ -27,6 +28,7 @@ export function markerReplace(text: string, className: string): Decoration {
 
 type ListMarkerKind = "bullet" | "ordered";
 
+// cm-widget-measure: static
 class ListMarkerWidget extends WidgetType {
   constructor(
     private readonly text: string,
@@ -58,6 +60,7 @@ export function listMarkerReplace(
   });
 }
 
+// cm-widget-measure: static
 class TaskCheckboxWidget extends WidgetType {
   constructor(
     private readonly checked: boolean,

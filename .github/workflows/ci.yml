@@ -61,6 +61,10 @@ jobs:
         if: steps.changes.outputs.ci == 'true'
         run: pnpm -r lint
 
+      - name: Widget Measure Contract
+        if: steps.changes.outputs.ci == 'true'
+        run: node scripts/check-widget-measure-contract.mjs
+
       - name: Typecheck
         if: steps.changes.outputs.ci == 'true'
         run: pnpm -r typecheck
