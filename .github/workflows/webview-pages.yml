@@ -134,7 +134,7 @@ jobs:
 
       - name: Create or update PR preview comment
         if: steps.source.outputs.same_repo == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PREVIEW_URL: https://yuya296.github.io/MarkBloom/pr-${{ github.event.pull_request.number }}/
         with:
