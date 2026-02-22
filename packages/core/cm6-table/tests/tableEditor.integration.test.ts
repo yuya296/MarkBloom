@@ -455,6 +455,40 @@ test("enter commits current cell to markdown", async () => {
   }
 });
 
+test("enter commit keeps focus on table navigation", async () => {
+  const harness = await createTableEditorHarness(
+    ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
+  );
+  try {
+    let wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    const editor = harness.parent.querySelector<HTMLTextAreaElement>(".cm-table-overlay-input");
+    assert.ok(wrapper);
+    assert.ok(editor);
+
+    clickCell(wrapper, 0, 0);
+    dispatchKey(wrapper, "Enter");
+    await flushEditorUpdates();
+
+    editor.value = "kept-focus";
+    dispatchKey(editor, "Enter");
+    await flushEditorUpdates();
+
+    wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+    assert.equal(document.activeElement, wrapper);
+
+    dispatchKey(wrapper, "ArrowDown");
+    await flushEditorUpdates();
+
+    const selected = selectedCell(wrapper);
+    assert.ok(selected);
+    assert.equal(selected.dataset.row, "1");
+    assert.equal(selected.dataset.col, "0");
+  } finally {
+    harness.teardown();
+  }
+});
+
 test("ime composing enter does not commit", async () => {
   const harness = await createTableEditorHarness(
     ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")

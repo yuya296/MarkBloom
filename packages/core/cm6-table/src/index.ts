@@ -931,15 +931,46 @@ class TableWidget extends WidgetType {
       editor.style.textAlign = toCssTextAlign(data.alignments[cell.col] ?? null);
     };
 
+    const restoreTableFocusAfterCommit = (targetCell: CellSelection) => {
+      requestAnimationFrame(() => {
+        const head = view.state.selection.main.head;
+        const lineNumber = view.state.doc.lineAt(head).number;
+        const boundary = collectTableBoundaries(view.state).find(
+          (table) =>
+            lineNumber >= table.startLineNumber && lineNumber <= table.endLineNumber
+        );
+        if (!boundary) {
+          view.focus();
+          return;
+        }
+        const wrapperEl = view.dom.querySelector<HTMLElement>(
+          `.cm6-table-editor[data-table-id="${boundary.key}"]`
+        );
+        if (!wrapperEl) {
+          view.focus();
+          return;
+        }
+        const row = Math.min(Math.max(targetCell.row, 0), boundary.totalRows - 1);
+        wrapperEl.dispatchEvent(
+          new CustomEvent<FocusCellRequest>(focusCellRequestEvent, {
+            detail: { row, col: targetCell.col },
+          })
+        );
+      });
+    };
+
     const stopEditing = (commit: boolean, nextSelection: CellSelection | null = null) => {
       if (!isEditing) {
         return;
       }
       const current = selection && selection.kind === "cell" ? selection : null;
+      let restoreFocusOnCurrentWrapper = true;
       if (commit && current) {
         setCellText(current, toMarkdownText(editor.value));
         updateCellDisplay(current);
         dispatchCommit();
+        restoreTableFocusAfterCommit(nextSelection ?? current);
+        restoreFocusOnCurrentWrapper = false;
       }
       isEditing = false;
       wrapper.dataset.mode = "nav";
@@ -949,7 +980,9 @@ class TableWidget extends WidgetType {
       if (nextSelection) {
         setSelection(nextSelection, false);
       }
-      wrapper.focus({ preventScroll: true });
+      if (restoreFocusOnCurrentWrapper) {
+        wrapper.focus({ preventScroll: true });
+      }
     };
 
     const startEditing = (cell: CellSelection) => {
