@@ -1386,9 +1386,13 @@ class TableWidget extends WidgetType {
       }
       const target = view.state.doc.line(lineNumber);
       selection = null;
+      TableWidget.selectionMapForView(view).delete(this.tableInfo.key);
       applySelectionClasses();
       clearHoveredHandles();
       closeMenu();
+      if (document.activeElement === wrapper) {
+        wrapper.blur();
+      }
       dispatchOutsideSelection(view, target.from, true);
       return true;
     };
@@ -1783,6 +1787,7 @@ class TableWidget extends WidgetType {
         }
         if (!isEditing) {
           selection = null;
+          TableWidget.selectionMapForView(view).delete(this.tableInfo.key);
           applySelectionClasses();
           clearHoveredHandles();
         }
@@ -1823,13 +1828,16 @@ function dispatchOutsideUpdate(
 }
 
 function dispatchOutsideSelection(view: EditorView, anchor: number, focusEditor = false) {
-  if (focusEditor) {
-    view.focus();
-  }
   view.dispatch({
     selection: { anchor },
     scrollIntoView: true,
   });
+  if (focusEditor) {
+    view.focus();
+    requestAnimationFrame(() => {
+      view.focus();
+    });
+  }
 }
 
 function dispatchOutsideTransaction(

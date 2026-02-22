@@ -1,12 +1,20 @@
 import { Annotation, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { collectMermaidBlocksFromState } from "./blocks";
+import { collectMermaidBlocksFromState, type MermaidBlockInfo } from "./blocks";
 import {
   shouldMoveCursorPastMermaidBottom,
   shouldMoveCursorToMermaidTop,
 } from "./navigationLogic";
 
 const mermaidCursorAdjusted = Annotation.define<boolean>();
+
+function nextCaretPositionAfterBlock(view: EditorView, block: MermaidBlockInfo): number {
+  const endLine = view.state.doc.lineAt(block.replaceRange.to);
+  if (endLine.number < view.state.doc.lines) {
+    return view.state.doc.line(endLine.number + 1).from;
+  }
+  return block.replaceRange.to;
+}
 
 export function mermaidCursorNavigation(): Extension {
   return EditorView.updateListener.of((update) => {
@@ -45,7 +53,7 @@ export function mermaidCursorNavigation(): Extension {
       }
       if (shouldMoveCursorPastMermaidBottom(prevHead, currentHead, block)) {
         update.view.dispatch({
-          selection: { anchor: block.replaceRange.to + 1 },
+          selection: { anchor: nextCaretPositionAfterBlock(update.view, block) },
           annotations: mermaidCursorAdjusted.of(true),
           scrollIntoView: true,
         });
