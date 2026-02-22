@@ -137,3 +137,31 @@ test("sanitizes unsafe elements and attributes from rendered SVG", async () => {
     restoreMermaid();
   }
 });
+
+test("moving down out of mermaid lands at next line start (not boundary char)", async () => {
+  const doc = ["before", "```mermaid", "graph TD", "A-->B", "```", "after"].join("\n");
+  const api = {
+    initialize() {},
+    render: async () => ({ svg: "<svg data-id='nav'></svg>" }),
+  };
+  const restoreMermaid = installMockMermaid(api);
+  const harness = await createMermaidEditorHarness(doc, doc.indexOf("graph TD"));
+
+  try {
+    await flushEditorUpdates(5);
+    const closingFenceEnd = doc.lastIndexOf("```") + 3;
+    const expectedAfterFrom = doc.indexOf("after");
+    assert.ok(expectedAfterFrom >= 0);
+
+    harness.view.dispatch({
+      selection: { anchor: closingFenceEnd },
+      scrollIntoView: false,
+    });
+    await flushEditorUpdates(3);
+
+    assert.equal(harness.view.state.selection.main.head, expectedAfterFrom);
+  } finally {
+    harness.teardown();
+    restoreMermaid();
+  }
+});
