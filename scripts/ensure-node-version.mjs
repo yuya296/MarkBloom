@@ -1,4 +1,4 @@
-const MIN_NODE = { major: 20, minor: 19, patch: 0 };
+const MIN_NODE = { major: 22, minor: 0, patch: 0 };
 
 function parseVersion(raw) {
   const normalized = raw.replace(/^v/, "");
