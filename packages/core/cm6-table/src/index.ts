@@ -128,6 +128,7 @@ class TableWidget extends WidgetType {
     EditorView,
     Map<string, SelectionState>
   >();
+  private static readonly focusRestoreGenerationByView = new WeakMap<EditorView, number>();
   private static readonly rowHandleOutsideOffset = 10;
   private static readonly colHandleOutsideOffset = 9;
   private static readonly rowHandleVisualOffsetY = -1;
@@ -139,6 +140,16 @@ class TableWidget extends WidgetType {
       TableWidget.selectionByView.set(view, selectionMap);
     }
     return selectionMap;
+  }
+
+  private static getFocusRestoreGeneration(view: EditorView): number {
+    return TableWidget.focusRestoreGenerationByView.get(view) ?? 0;
+  }
+
+  private static bumpFocusRestoreGeneration(view: EditorView): number {
+    const next = TableWidget.getFocusRestoreGeneration(view) + 1;
+    TableWidget.focusRestoreGenerationByView.set(view, next);
+    return next;
   }
 
   private static createDragIndicatorIcon(): SVGElement {
@@ -242,6 +253,9 @@ class TableWidget extends WidgetType {
     let draggingColHandle: HTMLButtonElement | null = null;
 
     const getTotalRows = () => data.rows.length + 1;
+    const cancelPendingFocusRestore = () => {
+      TableWidget.bumpFocusRestoreGeneration(view);
+    };
 
     const clampCell = (nextRow: number, nextCol: number): CellSelection => {
       const row = Math.min(Math.max(nextRow, 0), getTotalRows() - 1);
@@ -932,7 +946,11 @@ class TableWidget extends WidgetType {
     };
 
     const restoreTableFocusAfterCommit = (targetCell: CellSelection) => {
+      const generation = TableWidget.bumpFocusRestoreGeneration(view);
       const tryRestore = (attempt: number) => {
+        if (generation !== TableWidget.getFocusRestoreGeneration(view)) {
+          return;
+        }
         const boundaries = collectTableBoundaries(view.state);
         const preferredLine = Math.min(
           Math.max(this.tableInfo.startLineNumber, 1),
@@ -1001,6 +1019,7 @@ class TableWidget extends WidgetType {
     };
 
     const startEditing = (cell: CellSelection) => {
+      cancelPendingFocusRestore();
       closeMenu();
       setSelection(cell, false);
       isEditing = true;
@@ -1453,6 +1472,7 @@ class TableWidget extends WidgetType {
     wrapper.addEventListener(
       "pointerdown",
       (event) => {
+        cancelPendingFocusRestore();
         const target = event.target;
         if (!(target instanceof Element)) {
           return;
@@ -1541,6 +1561,7 @@ class TableWidget extends WidgetType {
     wrapper.addEventListener(
       "keydown",
       (event) => {
+        cancelPendingFocusRestore();
         if (isEditing) {
           return;
         }
@@ -1645,6 +1666,7 @@ class TableWidget extends WidgetType {
     editor.addEventListener(
       "keydown",
       (event) => {
+        cancelPendingFocusRestore();
         if (!isEditing || !selection || selection.kind !== "cell") {
           return;
         }
@@ -1722,10 +1744,19 @@ class TableWidget extends WidgetType {
     document.addEventListener(
       "pointerdown",
       (event) => {
+        cancelPendingFocusRestore();
         const target = event.target;
         if (!(target instanceof Node) || !wrapper.contains(target)) {
           closeMenu();
         }
+      },
+      { signal, capture: true }
+    );
+
+    document.addEventListener(
+      "keydown",
+      () => {
+        cancelPendingFocusRestore();
       },
       { signal, capture: true }
     );

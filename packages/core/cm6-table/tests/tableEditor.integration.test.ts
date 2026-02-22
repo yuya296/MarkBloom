@@ -521,6 +521,36 @@ test("enter commit keeps table focus after entering from outside cursor move", a
   }
 });
 
+test("click immediately after enter commit is not overridden by delayed focus restore", async () => {
+  const harness = await createTableEditorHarness(
+    ["| A | B |", "| --- | --- |", "| 1 | 2 |", "| 3 | 4 |"].join("\n")
+  );
+  try {
+    let wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    const editor = harness.parent.querySelector<HTMLTextAreaElement>(".cm-table-overlay-input");
+    assert.ok(wrapper);
+    assert.ok(editor);
+
+    clickCell(wrapper, 1, 0);
+    dispatchKey(wrapper, "Enter");
+    await flushEditorUpdates();
+    editor.value = "race";
+    dispatchKey(editor, "Enter");
+
+    wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+    clickCell(wrapper, 2, 0);
+    await flushEditorUpdates();
+
+    const selected = selectedCell(wrapper);
+    assert.ok(selected);
+    assert.equal(selected.dataset.row, "2");
+    assert.equal(selected.dataset.col, "0");
+  } finally {
+    harness.teardown();
+  }
+});
+
 test("ime composing enter does not commit", async () => {
   const harness = await createTableEditorHarness(
     ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
