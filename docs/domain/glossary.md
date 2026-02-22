@@ -15,6 +15,7 @@
 - MarkBloom: VS Code 上で Markdown を編集するための拡張と Webview UI。
 - vscode-extension: MarkBloom の VS Code 拡張パッケージ。
 - Table Action Menu: 行/列操作のためのコンテキストメニュー（挿入/削除/整列）。
+- Table Boundary Navigation: テーブル直前/直後の通常行とテーブル内（ヘッダ/最終行）を上下キーで相互遷移する挙動。
 - Rich: `renderState` が `rich` の表示状態。
 - Raw: `renderState` が `raw` の表示状態。
 - doc: Markdown ソース文字列（真実）。
@@ -35,6 +36,8 @@
 - LivePreviewPluginContext: plugin に渡される実行コンテキスト。`state` と raw 判定 helper（selection overlap / block reveal overlap）を含む。
 - Mermaid Live Preview Plugin: `@yuya296/cm6-live-preview-mermaid` が提供する plugin。` ```mermaid ` フェンスを図 widget に変換する。
 - Mermaid Dual Render (raw): Mermaid code block が raw 判定時に source markdown を表示したまま図 widget も併置する表示方式。
+- Widget Measure Contract: `WidgetType` 実装に `cm-widget-measure` 宣言（`static` / `dynamic`）を付け、`dynamic` の場合は `requestMeasure` 系トリガー実装を必須にする運用契約。
+- Dynamic Measure Trigger: dynamic widget のサイズ変化後に `EditorView.requestMeasure()` を再要求する仕組み（例: async描画完了、`ResizeObserver`、画像 `load`/`error`）。
 - Typography Theme: Markdown の見た目（見出し/強調/引用/リンクなど）を整えるテーマ。
 - CodeMirror 6 (CM6): 拡張可能なエディタライブラリ。
 - Extension: CM6 の機能単位。配列で合成する。

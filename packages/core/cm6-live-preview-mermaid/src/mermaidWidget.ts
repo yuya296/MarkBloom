@@ -1,4 +1,4 @@
-import { Decoration, WidgetType } from "@codemirror/view";
+import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 
 export type MermaidWidgetMode = "replace" | "append";
 export type MermaidThemeMode = "auto" | "light" | "dark";
@@ -11,12 +11,15 @@ type MermaidWidgetOptions = {
   mermaidTheme: MermaidThemeMode;
 };
 
+// cm-widget-measure: dynamic
 class MermaidWidget extends WidgetType {
   private static initializedTheme: MermaidRuntimeTheme | null = null;
   private static sequence = 0;
   private static mermaidApi: MermaidApi | null | undefined;
   private static renderGenerations = new WeakMap<HTMLElement, number>();
   private static renderFrames = new WeakMap<HTMLElement, number>();
+  private static resizeObservers = new WeakMap<HTMLElement, ResizeObserver>();
+  private static pendingMeasureFrames = new WeakMap<EditorView, number>();
   private static readonly blockedSvgElements = new Set([
     "script",
     "foreignobject",
@@ -58,6 +61,7 @@ class MermaidWidget extends WidgetType {
     container.className = "cm-lp-mermaid-content";
     container.textContent = "Rendering Mermaid...";
     wrapper.appendChild(container);
+    MermaidWidget.attachMeasureObserver(wrapper, container);
     this.scheduleRender(source, container, wrapper);
     return wrapper;
   }
@@ -88,6 +92,10 @@ class MermaidWidget extends WidgetType {
       this.attachOpenInNewTabButton(wrapper, container);
     }
     return true;
+  }
+
+  destroy(dom: HTMLElement): void {
+    MermaidWidget.detachMeasureObserver(dom);
   }
 
   private scheduleRender(source: string, container: HTMLElement, wrapper: HTMLElement) {
@@ -163,6 +171,7 @@ class MermaidWidget extends WidgetType {
         throw new Error("Rendered Mermaid output is not valid SVG");
       }
       container.replaceChildren(sanitizedSvg);
+      MermaidWidget.requestEditorMeasure(wrapper);
       bindFunctions?.(container);
       this.attachOpenInNewTabButton(wrapper, container);
     } catch (error) {
@@ -186,6 +195,41 @@ class MermaidWidget extends WidgetType {
       return "dark";
     }
     return document.documentElement.dataset.theme === "dark" ? "dark" : "default";
+  }
+
+  private static attachMeasureObserver(wrapper: HTMLElement, container: HTMLElement): void {
+    MermaidWidget.detachMeasureObserver(wrapper);
+    const observer = new ResizeObserver(() => {
+      MermaidWidget.requestEditorMeasure(wrapper);
+    });
+    observer.observe(wrapper);
+    observer.observe(container);
+    MermaidWidget.resizeObservers.set(wrapper, observer);
+  }
+
+  private static detachMeasureObserver(wrapper: HTMLElement): void {
+    const observer = MermaidWidget.resizeObservers.get(wrapper);
+    if (!observer) {
+      return;
+    }
+    observer.disconnect();
+    MermaidWidget.resizeObservers.delete(wrapper);
+  }
+
+  private static requestEditorMeasure(dom: HTMLElement): void {
+    const view = EditorView.findFromDOM(dom);
+    if (!view) {
+      return;
+    }
+    const pending = MermaidWidget.pendingMeasureFrames.get(view);
+    if (typeof pending === "number") {
+      cancelAnimationFrame(pending);
+    }
+    const frame = requestAnimationFrame(() => {
+      MermaidWidget.pendingMeasureFrames.delete(view);
+      view.requestMeasure();
+    });
+    MermaidWidget.pendingMeasureFrames.set(view, frame);
   }
 
   private attachOpenInNewTabButton(wrapper: HTMLElement, container: HTMLElement) {

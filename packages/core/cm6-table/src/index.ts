@@ -122,6 +122,7 @@ const toCssTextAlign = (alignment: TableAlignment | null) => {
   }
 };
 
+// cm-widget-measure: static
 class TableWidget extends WidgetType {
   private readonly abortController = new AbortController();
   private static readonly selectionByView = new WeakMap<

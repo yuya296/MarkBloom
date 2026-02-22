@@ -50,3 +50,4 @@
 ## Links
 - `docs/runbook/cicd.md`
 - `docs/runbook/devsecops.md`
+- `docs/runbook/widget-measure-contract.md`

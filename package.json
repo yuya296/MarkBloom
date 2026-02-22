@@ -4,8 +4,9 @@
   "type": "module",
   "packageManager": "pnpm@10.27.0",
   "scripts": {
-    "lint": "eslint . && pnpm lint:styles",
+    "lint": "eslint . && pnpm lint:styles && pnpm check:widget-measure",
     "lint:styles": "stylelint \"apps/webview-demo/src/**/*.scss\"",
+    "check:widget-measure": "node scripts/check-widget-measure-contract.mjs",
     "lint:core": "pnpm -C apps/webview-demo lint",
     "typecheck": "pnpm -r typecheck",
     "check:compatibility": "node scripts/check-compatibility.mjs",
