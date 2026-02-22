@@ -4,13 +4,14 @@
   "type": "module",
   "packageManager": "pnpm@10.27.0",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . && pnpm lint:styles",
+    "lint:styles": "stylelint \"apps/webview-demo/src/**/*.scss\"",
     "lint:core": "pnpm -C apps/webview-demo lint",
     "typecheck": "pnpm -r typecheck",
     "check:compatibility": "node scripts/check-compatibility.mjs",
     "build:core": "pnpm -F webview-demo build",
     "build": "pnpm -r build",
-    "test:e2e": "playwright test"
+    "test:e2e": "pnpm -C apps/webview-demo build && playwright test"
   },
   "pnpm": {
     "overrides": {
@@ -22,10 +23,12 @@
     }
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "1.55.0",
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
+    "postcss-scss": "^4.0.9",
+    "stylelint": "^16.25.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0"
