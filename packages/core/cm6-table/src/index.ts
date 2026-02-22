@@ -1878,6 +1878,17 @@ function collectTableBoundaries(state: EditorState): TableBoundaryInfo[] {
   return tables;
 }
 
+function isLikelyTableBoundaryCandidateLine(lineText: string): boolean {
+  const text = lineText.trim();
+  if (text.length === 0 || !text.includes("|")) {
+    return false;
+  }
+  if (/^\|?[-:\s]+(\|[-:\s]+)+\|?$/u.test(text)) {
+    return true;
+  }
+  return /^\|.*\|$/u.test(text);
+}
+
 function collectTableData(
   state: EditorState,
   node: SyntaxNode,
@@ -2211,6 +2222,13 @@ export function tableEditor(options: TableEditorOptions = {}): Extension {
       return false;
     }
     const currentLine = view.state.doc.lineAt(main.head).number;
+    const adjacentLine = direction === "down" ? currentLine + 1 : currentLine - 1;
+    if (adjacentLine < 1 || adjacentLine > view.state.doc.lines) {
+      return false;
+    }
+    if (!isLikelyTableBoundaryCandidateLine(view.state.doc.line(adjacentLine).text)) {
+      return false;
+    }
     const boundaries = collectTableBoundaries(view.state);
     const target =
       direction === "down"

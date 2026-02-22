@@ -17,45 +17,43 @@ async function disableLivePreview(page) {
 
 async function probeLineClickHit(page, lineText) {
   const layout = await page.evaluate((needle) => {
-    const view = document.querySelector(".cm-content")?.cmTile?.view;
-    if (!view) {
-      throw new Error("CodeMirror view not found");
-    }
-    const docText = view.state.doc.toString();
-    const index = docText.indexOf(needle);
-    if (index < 0) {
+    const lines = [...document.querySelectorAll(".cm-line")];
+    const target = lines.find((line) => line.textContent === needle);
+    if (!(target instanceof HTMLElement)) {
       throw new Error(`Line text not found: ${needle}`);
     }
-    const line = view.state.doc.lineAt(index + 1);
-    view.dispatch({ selection: { anchor: line.from }, scrollIntoView: true });
-    const coords = view.coordsAtPos(index + 1);
-    if (!coords) {
-      throw new Error(`coordsAtPos failed for: ${needle}`);
-    }
-    const x = Math.round(coords.left + 24);
+    target.scrollIntoView({ block: "center" });
+    const lineIndex = lines.indexOf(target);
+    const rect = target.getBoundingClientRect();
+    const x = Math.round(rect.left + 24);
     const yPoints = [
-      Math.round(coords.top + 2),
-      Math.round((coords.top + coords.bottom) / 2),
-      Math.round(coords.bottom - 2),
+      Math.round(rect.top + 2),
+      Math.round((rect.top + rect.bottom) / 2),
+      Math.round(rect.bottom - 2),
     ];
 
-    return { expectedLine: line.number, x, yPoints };
+    return { expectedLineIndex: lineIndex, x, yPoints };
   }, lineText);
 
   const hits = [];
   for (const y of layout.yPoints) {
     await page.mouse.click(layout.x, y);
-    const selectedLine = await page.evaluate(() => {
-      const view = document.querySelector(".cm-content")?.cmTile?.view;
-      if (!view) {
-        throw new Error("CodeMirror view not found");
+    const selectedLineIndex = await page.evaluate(() => {
+      const selection = window.getSelection();
+      const anchor = selection?.anchorNode;
+      const element =
+        anchor instanceof Element ? anchor : anchor?.parentElement ?? null;
+      const lineElement = element?.closest(".cm-line");
+      if (!lineElement) {
+        throw new Error("No selected .cm-line");
       }
-      return view.state.doc.lineAt(view.state.selection.main.head).number;
+      const lines = [...document.querySelectorAll(".cm-line")];
+      return lines.indexOf(lineElement);
     });
-    hits.push(selectedLine);
+    hits.push(selectedLineIndex);
   }
 
-  return { expectedLine: layout.expectedLine, hits };
+  return { expectedLineIndex: layout.expectedLineIndex, hits };
 }
 
 test("clicking upper/middle/lower area keeps caret on the intended line (live preview off)", async ({
@@ -72,9 +70,9 @@ test("clicking upper/middle/lower area keeps caret on the intended line (live pr
 
   for (const probe of probes) {
     expect(probe.hits).toEqual([
-      probe.expectedLine,
-      probe.expectedLine,
-      probe.expectedLine,
+      probe.expectedLineIndex,
+      probe.expectedLineIndex,
+      probe.expectedLineIndex,
     ]);
   }
 });

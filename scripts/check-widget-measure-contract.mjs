@@ -3,6 +3,7 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const PACKAGES_DIR = path.join(ROOT, "packages");
+const SKIP_DIRS = new Set(["node_modules", "dist", "build", "coverage"]);
 const DYNAMIC_TRIGGER_PATTERNS = [
   /\brequestMeasure\s*\(/u,
   /\brequestEditorMeasure\s*\(/u,
@@ -18,6 +19,9 @@ function listSourceFiles() {
       }
       const absolutePath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
+        if (SKIP_DIRS.has(entry.name)) {
+          continue;
+        }
         visit(absolutePath);
         continue;
       }
