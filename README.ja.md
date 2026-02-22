@@ -35,7 +35,7 @@ MarkBloom は、**Markdown を “真実のソース” のまま**、人間が 
 
 ## 開発要件
 
-- Node.js `20.19.0+`（または `22.12+`）
+- Node.js `22+`（推奨: `.nvmrc` の `24.x`）
 - pnpm `10.27.0`（Corepack 管理）
 
 最小 Node バージョン未満では、`pnpm -C apps/webview-demo dev` 実行時にバージョン不足エラーで即時停止します。
