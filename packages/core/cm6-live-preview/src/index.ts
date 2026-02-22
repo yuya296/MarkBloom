@@ -32,10 +32,10 @@ export function livePreviewPreset(options: LivePreviewPresetOptions = {}): Exten
     livePreviewOptions === false ? null : (livePreviewOptions ?? {});
 
   const result: Extension[] = [markdownSemantics(semantics), typographyTheme(typography)];
+  const mermaidOptions =
+    mermaid === true ? {} : mermaid && typeof mermaid === "object" ? mermaid : null;
 
   if (resolvedLivePreview) {
-    const mermaidOptions =
-      mermaid === true ? {} : mermaid && typeof mermaid === "object" ? mermaid : null;
     if (mermaidOptions) {
       const mermaidBundle = mermaidLivePreview(mermaidOptions);
       result.push(...mermaidBundle.extensions);
@@ -44,6 +44,10 @@ export function livePreviewPreset(options: LivePreviewPresetOptions = {}): Exten
     } else {
       result.push(livePreview(resolvedLivePreview));
     }
+  } else if (mermaidOptions) {
+    throw new Error(
+      "livePreviewPreset: mermaid option requires livePreview to be enabled"
+    );
   }
 
   const tableOptions =
