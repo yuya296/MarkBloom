@@ -1,0 +1,58 @@
+# ~/.codex/rules/pnpm.rules
+#
+# Policy:
+# - Routine workspace/package operations: allow
+# - Release/publish-affecting operations: prompt
+
+# =========================================================
+# Routine development operations (ALLOW)
+# =========================================================
+prefix_rule(
+    pattern = ["pnpm", [
+        "install",
+        "i",
+        "exec",
+        "run",
+        "-C",
+        "-r",
+        "test",
+        "build",
+        "typecheck",
+        "lint",
+        "list",
+        "why",
+        "outdated",
+    ]],
+    decision = "allow",
+    justification = "Routine pnpm development and verification commands are allowed.",
+    match = [
+        "pnpm install",
+        "pnpm -r typecheck",
+        "pnpm -C apps/webview-demo build",
+        "pnpm -C packages/core/cm6-table test",
+        "pnpm exec playwright test tests/e2e/cursor-click-position.spec.cjs",
+        "pnpm run lint",
+    ],
+)
+
+# =========================================================
+# Release / publish operations (PROMPT)
+# =========================================================
+prefix_rule(
+    pattern = ["pnpm", [
+        "publish",
+        "pack",
+        "version",
+        "dlx",
+        "create",
+    ]],
+    decision = "prompt",
+    justification = "Release/publish/scaffolding commands can affect distribution or create new artifacts and require approval.",
+    match = [
+        "pnpm publish",
+        "pnpm pack",
+        "pnpm version patch",
+        "pnpm dlx ...",
+        "pnpm create ...",
+    ],
+)
