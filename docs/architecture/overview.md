@@ -10,7 +10,7 @@
 | `cm6-live-preview-mermaid` | Live Preview pluginとして mermaid fenced code を図widget表示する |
 | `cm6-markdown-semantics` | Markdown要素を検出して範囲に semantic class を付与する |
 | `cm6-typography-theme` | semantic class に対する見た目（CSSテーマ）を提供する |
-| `cm6-live-preview` | 上記3つを束ね、プリセットとして配布する |
+| `cm6-live-preview` | core/semantics/theme を束ね、`mermaid` / `table` を preset option で合成する入口 |
 | `cm6-table` | table editor UI（2モード編集 + 行列ハンドル） |
 | `cm6-diff-gutter` | baseline との差分を行頭ガターで可視化する |
 | `cm6-markdown-smart-bol` | Markdown行の`Ctrl+A`をSmart BOL（見出し考慮の行頭移動）に拡張する |
@@ -38,20 +38,18 @@ graph TD
 ```mermaid
 graph TD
   webview-demo --> cm6-live-preview
-  webview-demo --> cm6-live-preview-mermaid
-  webview-demo --> cm6-table
   webview-demo --> cm6-diff-gutter
   webview-demo --> cm6-markdown-smart-bol
 
   vscode-extension --> cm6-live-preview
-  vscode-extension --> cm6-live-preview-mermaid
-  vscode-extension --> cm6-table
   vscode-extension --> cm6-diff-gutter
   vscode-extension --> cm6-markdown-smart-bol
 
   cm6-live-preview --> cm6-live-preview-core
   cm6-live-preview --> cm6-markdown-semantics
   cm6-live-preview --> cm6-typography-theme
+  cm6-live-preview --> cm6-live-preview-mermaid
+  cm6-live-preview --> cm6-table
   cm6-live-preview-mermaid --> cm6-live-preview-core
 ```
 

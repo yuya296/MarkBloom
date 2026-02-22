@@ -54,7 +54,7 @@ async function probeLineClickHit(page, lineText) {
     const yPoints = [
       Math.round(rect.top + 2),
       Math.round((rect.top + rect.bottom) / 2),
-      Math.round(rect.bottom - 2),
+      Math.round(rect.bottom - 6),
     ];
 
     return { expectedLineIndex: lineIndex, x, yPoints };
@@ -95,7 +95,7 @@ async function probeLastLineClickHit(page) {
     const yPoints = [
       Math.round(rect.top + 2),
       Math.round((rect.top + rect.bottom) / 2),
-      Math.round(rect.bottom - 2),
+      Math.round(rect.bottom - 6),
     ];
     return { expectedLineIndex: lineIndex, x, yPoints };
   });

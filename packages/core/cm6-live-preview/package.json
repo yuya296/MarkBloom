@@ -35,7 +35,9 @@
   },
   "dependencies": {
     "@yuya296/cm6-live-preview-core": "workspace:*",
+    "@yuya296/cm6-live-preview-mermaid": "workspace:*",
     "@yuya296/cm6-markdown-semantics": "workspace:*",
+    "@yuya296/cm6-table": "workspace:*",
     "@yuya296/cm6-typography-theme": "workspace:*"
   },
   "peerDependencies": {

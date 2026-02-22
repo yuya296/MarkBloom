@@ -75,15 +75,9 @@ importers:
       '@yuya296/cm6-live-preview':
         specifier: workspace:*
         version: link:../../packages/core/cm6-live-preview
-      '@yuya296/cm6-live-preview-mermaid':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-live-preview-mermaid
       '@yuya296/cm6-markdown-smart-bol':
         specifier: workspace:*
         version: link:../../packages/core/cm6-markdown-smart-bol
-      '@yuya296/cm6-table':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-table
     devDependencies:
       '@types/node':
         specifier: ^24.3.1
@@ -133,15 +127,9 @@ importers:
       '@yuya296/cm6-live-preview':
         specifier: workspace:*
         version: link:../../packages/core/cm6-live-preview
-      '@yuya296/cm6-live-preview-mermaid':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-live-preview-mermaid
       '@yuya296/cm6-markdown-smart-bol':
         specifier: workspace:*
         version: link:../../packages/core/cm6-markdown-smart-bol
-      '@yuya296/cm6-table':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-table
     devDependencies:
       sass:
         specifier: ^1.97.1
@@ -173,9 +161,15 @@ importers:
       '@yuya296/cm6-live-preview-core':
         specifier: workspace:*
         version: link:../cm6-live-preview-core
+      '@yuya296/cm6-live-preview-mermaid':
+        specifier: workspace:*
+        version: link:../cm6-live-preview-mermaid
       '@yuya296/cm6-markdown-semantics':
         specifier: workspace:*
         version: link:../cm6-markdown-semantics
+      '@yuya296/cm6-table':
+        specifier: workspace:*
+        version: link:../cm6-table
       '@yuya296/cm6-typography-theme':
         specifier: workspace:*
         version: link:../cm6-typography-theme

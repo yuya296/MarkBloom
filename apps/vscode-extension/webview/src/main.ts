@@ -2,8 +2,6 @@ import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { diffGutter, setDiffBaseline } from "@yuya296/cm6-diff-gutter";
 import { livePreviewPreset } from "@yuya296/cm6-live-preview";
-import { tableEditor as cm6TableEditor } from "@yuya296/cm6-table";
-import { mermaidLivePreview } from "@yuya296/cm6-live-preview-mermaid";
 import { createEditor, EditorHandle } from "./editor/createEditor";
 import { editorHighlightStyle } from "./editor/editorHighlightStyle";
 import { editorTheme } from "./editor/editorTheme";
@@ -142,22 +140,13 @@ const buildExtensions = ({
     extensions.push(EditorState.readOnly.of(true));
   }
 
-  if (livePreviewEnabled) {
-    const mermaid = mermaidLivePreview();
-    extensions.push(...mermaid.extensions);
-    extensions.push(
-      livePreviewPreset({
-        livePreview: {
-          blockRevealEnabled: true,
-          plugins: [mermaid.plugin],
-        },
-      })
-    );
-  }
-
-  if (tableEnabled) {
-    extensions.push(cm6TableEditor());
-  }
+  extensions.push(
+    livePreviewPreset({
+      livePreview: livePreviewEnabled ? { blockRevealEnabled: true } : false,
+      mermaid: livePreviewEnabled,
+      table: tableEnabled,
+    })
+  );
 
   return extensions;
 };
