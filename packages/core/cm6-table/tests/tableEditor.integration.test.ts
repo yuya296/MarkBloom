@@ -41,6 +41,7 @@ function clickCell(wrapper: Element, row: number, col: number) {
     `.cm-table-cell[data-row='${row}'][data-col='${col}']`
   );
   assert.ok(cell, `cell not found: row=${row}, col=${col}`);
+  cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
   cell.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
 }
 
@@ -132,7 +133,7 @@ test("initial state has a selected cell", async () => {
   }
 });
 
-test("arrow keys clamp the selection at table bounds", async () => {
+test("arrow keys keep selection clamped at document boundaries", async () => {
   const harness = await createTableEditorHarness(
     ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
   );
@@ -140,10 +141,195 @@ test("arrow keys clamp the selection at table bounds", async () => {
     const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
     assert.ok(wrapper);
 
-    dispatchKey(wrapper, "ArrowUp");
+    clickCell(wrapper, 0, 0);
     dispatchKey(wrapper, "ArrowUp");
     dispatchKey(wrapper, "ArrowLeft");
     const cell = selectedCell(wrapper);
+    assert.ok(cell);
+    assert.equal(cell.dataset.row, "0");
+    assert.equal(cell.dataset.col, "0");
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("arrow down from line before table focuses first header cell", async () => {
+  const harness = await createTableEditorHarness(
+    ["before", "| A | B |", "| --- | --- |", "| 1 | 2 |", "", "after"].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+
+    harness.view.dispatch({
+      selection: { anchor: harness.view.state.doc.line(1).from },
+      scrollIntoView: false,
+    });
+    dispatchKey(harness.view.contentDOM, "ArrowDown");
+    await flushEditorUpdates();
+
+    const cell = selectedCell(wrapper);
+    assert.ok(cell);
+    assert.equal(cell.dataset.row, "0");
+    assert.equal(cell.dataset.col, "0");
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("arrow up from header moves caret to line before table", async () => {
+  const harness = await createTableEditorHarness(
+    ["before", "| A | B |", "| --- | --- |", "| 1 | 2 |", "", "after"].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+
+    clickCell(wrapper, 0, 0);
+    dispatchKey(wrapper, "ArrowUp");
+    await flushEditorUpdates();
+
+    assert.equal(harness.view.state.selection.main.head, harness.view.state.doc.line(1).from);
+    assert.equal(selectedCell(wrapper), null);
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("arrow up from line after table focuses first cell on last row", async () => {
+  const harness = await createTableEditorHarness(
+    ["before", "| A | B |", "| --- | --- |", "| 1 | 2 |", "", "after"].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+
+    harness.view.dispatch({
+      selection: { anchor: harness.view.state.doc.line(5).from },
+      scrollIntoView: false,
+    });
+    dispatchKey(harness.view.contentDOM, "ArrowUp");
+    await flushEditorUpdates();
+
+    const cell = selectedCell(wrapper);
+    assert.ok(cell);
+    assert.equal(cell.dataset.row, "1");
+    assert.equal(cell.dataset.col, "0");
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("arrow down from last row moves caret to line after table", async () => {
+  const harness = await createTableEditorHarness(
+    ["before", "| A | B |", "| --- | --- |", "| 1 | 2 |", "", "after"].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+
+    clickCell(wrapper, 1, 0);
+    const before = selectedCell(wrapper);
+    assert.ok(before);
+    assert.equal(before.dataset.row, "1");
+    dispatchKey(wrapper, "ArrowDown");
+    await flushEditorUpdates();
+
+    assert.equal(harness.view.state.selection.main.head, harness.view.state.doc.line(5).from);
+    assert.equal(selectedCell(wrapper), null);
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("focusout clears all selection UI", async () => {
+  const harness = await createTableEditorHarness(
+    ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+
+    const colHandle = wrapper.querySelector<HTMLElement>(".cm-table-col-handle");
+    assert.ok(colHandle);
+    colHandle.click();
+    await flushEditorUpdates();
+    assert.equal(colHandle.dataset.selected, "true");
+
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    wrapper.dispatchEvent(new FocusEvent("focusout", { bubbles: true, relatedTarget: outside }));
+    await flushEditorUpdates();
+
+    assert.equal(wrapper.querySelector(".cm-table-cell-selected"), null);
+    const outline = wrapper.querySelector<HTMLElement>(".cm-table-selection-outline");
+    assert.ok(outline);
+    assert.equal(outline.dataset.open, "false");
+    assert.equal(wrapper.querySelector("[data-selected='true']"), null);
+    outside.remove();
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("arrow down at document end keeps selection on last row", async () => {
+  const harness = await createTableEditorHarness(
+    ["before", "| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+
+    clickCell(wrapper, 1, 0);
+    dispatchKey(wrapper, "ArrowDown");
+
+    const cell = selectedCell(wrapper);
+    assert.ok(cell);
+    assert.equal(cell.dataset.row, "1");
+    assert.equal(cell.dataset.col, "0");
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("outside navigation targets adjacent table only", async () => {
+  const harness = await createTableEditorHarness(
+    [
+      "before-1",
+      "| A | B |",
+      "| --- | --- |",
+      "| 1 | 2 |",
+      "",
+      "| X | Y |",
+      "| --- | --- |",
+      "| 9 | 8 |",
+      "after-2",
+    ].join("\n")
+  );
+  try {
+    const wrappers = harness.parent.querySelectorAll<HTMLElement>(".cm6-table-editor");
+    assert.equal(wrappers.length, 2);
+
+    harness.view.dispatch({
+      selection: { anchor: harness.view.state.doc.line(5).from },
+      scrollIntoView: false,
+    });
+    dispatchKey(harness.view.contentDOM, "ArrowUp");
+    await flushEditorUpdates();
+
+    let cell = selectedCell(wrappers[0]);
+    assert.ok(cell);
+    assert.equal(cell.dataset.row, "1");
+    assert.equal(cell.dataset.col, "0");
+
+    harness.view.dispatch({
+      selection: { anchor: harness.view.state.doc.line(5).from },
+      scrollIntoView: false,
+    });
+    dispatchKey(harness.view.contentDOM, "ArrowDown");
+    await flushEditorUpdates();
+
+    cell = selectedCell(wrappers[1]);
     assert.ok(cell);
     assert.equal(cell.dataset.row, "0");
     assert.equal(cell.dataset.col, "0");
@@ -511,6 +697,51 @@ test("editing first table does not mutate second table", async () => {
     const doc = harness.getDoc();
     assert.equal(doc.includes("| first-only | 2 |"), true);
     assert.equal(doc.includes("| 9 | 8 |"), true);
+  } finally {
+    harness.teardown();
+  }
+});
+
+test("inserting a table before existing ones does not leak selection across tables", async () => {
+  const source = [
+    "| A | B |",
+    "| --- | --- |",
+    "| 1 | 2 |",
+    "",
+    "| X | Y |",
+    "| --- | --- |",
+    "| 9 | 8 |",
+  ].join("\n");
+  const harness = await createTableEditorHarness(source);
+  try {
+    const wrappers = harness.parent.querySelectorAll<HTMLElement>(".cm6-table-editor");
+    assert.equal(wrappers.length, 2);
+
+    clickCell(wrappers[1], 1, 1);
+    const beforeSelected = selectedCell(wrappers[1]);
+    assert.ok(beforeSelected);
+    assert.equal(beforeSelected.dataset.col, "1");
+
+    harness.view.dispatch({
+      changes: {
+        from: 0,
+        to: 0,
+        insert: ["| N | M |", "| --- | --- |", "| 0 | 0 |", "", ""].join("\n"),
+      },
+      scrollIntoView: false,
+    });
+    await flushEditorUpdates();
+
+    const nextWrappers = harness.parent.querySelectorAll<HTMLElement>(".cm6-table-editor");
+    assert.equal(nextWrappers.length, 3);
+
+    const middleSelected = selectedCell(nextWrappers[1]);
+    assert.ok(middleSelected);
+    assert.equal(
+      middleSelected.dataset.col,
+      "0",
+      "selection from previous second table must not transfer to the shifted middle table"
+    );
   } finally {
     harness.teardown();
   }
