@@ -184,6 +184,7 @@ class MermaidWidget extends WidgetType {
         error instanceof Error
           ? `Mermaid render error: ${error.message}`
           : "Mermaid render error";
+      MermaidWidget.requestEditorMeasure(wrapper);
     }
   }
 
@@ -226,8 +227,12 @@ class MermaidWidget extends WidgetType {
       cancelAnimationFrame(pending);
     }
     const frame = requestAnimationFrame(() => {
-      MermaidWidget.pendingMeasureFrames.delete(view);
       view.requestMeasure();
+      const settleFrame = requestAnimationFrame(() => {
+        MermaidWidget.pendingMeasureFrames.delete(view);
+        view.requestMeasure();
+      });
+      MermaidWidget.pendingMeasureFrames.set(view, settleFrame);
     });
     MermaidWidget.pendingMeasureFrames.set(view, frame);
   }

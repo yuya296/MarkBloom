@@ -302,8 +302,18 @@ footer.footer {
   color: var(--editor-gutter-color);
 }
 
+.cm-editor .cm-scroller {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
 .cm-editor .cm-content {
-  padding: 12px;
+  padding: 0;
+}
+
+.cm-editor .cm-line {
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .cm-editor .mb-syntax-secondary {

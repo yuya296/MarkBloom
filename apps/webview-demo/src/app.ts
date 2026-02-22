@@ -13,6 +13,8 @@ type ExtensionOptions = {
   tabSize: number;
   livePreviewEnabled: boolean;
   blockRevealEnabled: boolean;
+  mermaidEnabled: boolean;
+  tableEnabled: boolean;
   diffBaselineText: string;
 };
 
@@ -33,6 +35,8 @@ function buildExtensions({
   tabSize,
   livePreviewEnabled,
   blockRevealEnabled,
+  mermaidEnabled,
+  tableEnabled,
   diffBaselineText,
 }: ExtensionOptions): Extension[] {
   const extensions: Extension[] = [];
@@ -68,8 +72,8 @@ function buildExtensions({
             imageRawShowsPreview: true,
           }
         : false,
-      mermaid: livePreviewEnabled,
-      table: true,
+      mermaid: livePreviewEnabled && mermaidEnabled,
+      table: tableEnabled,
     })
   );
 
@@ -90,6 +94,8 @@ export function setupApp() {
     wrap: document.getElementById("toggle-wrap"),
     livePreview: document.getElementById("toggle-live-preview"),
     blockReveal: document.getElementById("toggle-block-reveal"),
+    mermaid: document.getElementById("toggle-mermaid"),
+    table: document.getElementById("toggle-table"),
     themeToggle: document.getElementById("toggle-theme"),
     tabSize: document.getElementById("tab-size"),
     apply: document.getElementById("apply"),
@@ -101,6 +107,8 @@ export function setupApp() {
     !(controls.wrap instanceof HTMLInputElement) ||
     !(controls.livePreview instanceof HTMLInputElement) ||
     !(controls.blockReveal instanceof HTMLInputElement) ||
+    !(controls.mermaid instanceof HTMLInputElement) ||
+    !(controls.table instanceof HTMLInputElement) ||
     !(controls.themeToggle instanceof HTMLButtonElement) ||
     !(controls.tabSize instanceof HTMLInputElement) ||
     !(controls.apply instanceof HTMLButtonElement)
@@ -112,6 +120,8 @@ export function setupApp() {
   const wrapControl = controls.wrap;
   const livePreviewControl = controls.livePreview;
   const blockRevealControl = controls.blockReveal;
+  const mermaidControl = controls.mermaid;
+  const tableControl = controls.table;
   const themeToggleControl = controls.themeToggle;
   const tabSizeControl = controls.tabSize;
   const applyControl = controls.apply;
@@ -143,6 +153,8 @@ export function setupApp() {
       wrapLines: wrapControl.checked,
       livePreviewEnabled: livePreviewControl.checked,
       blockRevealEnabled: blockRevealControl.checked,
+      mermaidEnabled: mermaidControl.checked,
+      tableEnabled: tableControl.checked,
       tabSize: Number(tabSizeControl.value),
       diffBaselineText: initialText,
     }),
@@ -155,6 +167,7 @@ export function setupApp() {
       }
     },
   });
+  (window as Window & { __MB_EDITOR_VIEW__?: EditorView }).__MB_EDITOR_VIEW__ = editor.view;
 
   const applyExtensions = () => {
     editor.setExtensions(
@@ -163,6 +176,8 @@ export function setupApp() {
         wrapLines: wrapControl.checked,
         livePreviewEnabled: livePreviewControl.checked,
         blockRevealEnabled: blockRevealControl.checked,
+        mermaidEnabled: mermaidControl.checked,
+        tableEnabled: tableControl.checked,
         tabSize: Number(tabSizeControl.value),
         diffBaselineText: initialText,
       })
