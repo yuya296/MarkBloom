@@ -38,10 +38,10 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
@@ -92,11 +92,11 @@ jobs:
 
       - name: Checkout
         if: steps.source.outputs.same_repo == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         if: steps.source.outputs.same_repo == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
@@ -134,7 +134,7 @@ jobs:
 
       - name: Create or update PR preview comment
         if: steps.source.outputs.same_repo == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PREVIEW_URL: https://yuya296.github.io/MarkBloom/pr-${{ github.event.pull_request.number }}/
         with:
@@ -213,7 +213,7 @@ jobs:
 
       - name: Checkout gh-pages
         if: steps.source.outputs.same_repo == 'true' && steps.gh_pages.outputs.exists == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: gh-pages
           fetch-depth: 0
