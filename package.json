@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.27.0",
   "scripts": {
@@ -30,7 +30,7 @@
     "@playwright/test": "1.58.2",
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
-    "globals": "^17.0.0",
+    "globals": "^17.3.0",
     "postcss-scss": "^4.0.9",
     "stylelint": "^16.25.0",
     "tsup": "^8.5.0",
