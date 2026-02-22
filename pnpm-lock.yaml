@@ -75,15 +75,9 @@ importers:
       '@yuya296/cm6-live-preview':
         specifier: workspace:*
         version: link:../../packages/core/cm6-live-preview
-      '@yuya296/cm6-live-preview-mermaid':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-live-preview-mermaid
       '@yuya296/cm6-markdown-smart-bol':
         specifier: workspace:*
         version: link:../../packages/core/cm6-markdown-smart-bol
-      '@yuya296/cm6-table':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-table
     devDependencies:
       '@types/node':
         specifier: ^24.3.1
@@ -133,15 +127,9 @@ importers:
       '@yuya296/cm6-live-preview':
         specifier: workspace:*
         version: link:../../packages/core/cm6-live-preview
-      '@yuya296/cm6-live-preview-mermaid':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-live-preview-mermaid
       '@yuya296/cm6-markdown-smart-bol':
         specifier: workspace:*
         version: link:../../packages/core/cm6-markdown-smart-bol
-      '@yuya296/cm6-table':
-        specifier: workspace:*
-        version: link:../../packages/core/cm6-table
     devDependencies:
       sass:
         specifier: ^1.97.1
@@ -173,16 +161,31 @@ importers:
       '@yuya296/cm6-live-preview-core':
         specifier: workspace:*
         version: link:../cm6-live-preview-core
+      '@yuya296/cm6-live-preview-mermaid':
+        specifier: workspace:*
+        version: link:../cm6-live-preview-mermaid
       '@yuya296/cm6-markdown-semantics':
         specifier: workspace:*
         version: link:../cm6-markdown-semantics
+      '@yuya296/cm6-table':
+        specifier: workspace:*
+        version: link:../cm6-table
       '@yuya296/cm6-typography-theme':
         specifier: workspace:*
         version: link:../cm6-typography-theme
     devDependencies:
+      '@codemirror/lang-markdown':
+        specifier: 6.5.0
+        version: 6.5.0
+      '@codemirror/language':
+        specifier: 6.12.1
+        version: 6.12.1
       '@codemirror/state':
         specifier: 6.5.3
         version: 6.5.3
+      '@codemirror/view':
+        specifier: 6.39.8
+        version: 6.39.8
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)

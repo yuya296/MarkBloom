@@ -38,5 +38,6 @@ Thumbs.db
 .svelte-kit/
 .nuxt/
 .playwright-browsers
+.playwright-cli
 test-results/
 .pnpm-store/

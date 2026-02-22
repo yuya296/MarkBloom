@@ -35,14 +35,22 @@
   },
   "dependencies": {
     "@yuya296/cm6-live-preview-core": "workspace:*",
+    "@yuya296/cm6-live-preview-mermaid": "workspace:*",
     "@yuya296/cm6-markdown-semantics": "workspace:*",
+    "@yuya296/cm6-table": "workspace:*",
     "@yuya296/cm6-typography-theme": "workspace:*"
   },
   "peerDependencies": {
-    "@codemirror/state": "^6.5.3"
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8"
   },
   "devDependencies": {
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.1",
     "@codemirror/state": "^6.5.3",
+    "@codemirror/view": "^6.39.8",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   }

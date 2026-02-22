@@ -1,4 +1,5 @@
 const { expect, test } = require("@playwright/test");
+const BOTTOM_PROBE_PADDING_PX = 6;
 
 async function disableLivePreview(page) {
   await page.evaluate(() => {
@@ -16,7 +17,7 @@ async function disableLivePreview(page) {
 }
 
 async function probeLineClickHit(page, lineText) {
-  const layout = await page.evaluate((needle) => {
+  const layout = await page.evaluate(({ needle, bottomProbePaddingPx }) => {
     const scroller = document.querySelector(".cm-scroller");
     if (!(scroller instanceof HTMLElement)) {
       throw new Error("Missing .cm-scroller");
@@ -54,11 +55,11 @@ async function probeLineClickHit(page, lineText) {
     const yPoints = [
       Math.round(rect.top + 2),
       Math.round((rect.top + rect.bottom) / 2),
-      Math.round(rect.bottom - 2),
+      Math.round(rect.bottom - bottomProbePaddingPx),
     ];
 
     return { expectedLineIndex: lineIndex, x, yPoints };
-  }, lineText);
+  }, { needle: lineText, bottomProbePaddingPx: BOTTOM_PROBE_PADDING_PX });
 
   const hits = [];
   for (const y of layout.yPoints) {
@@ -82,7 +83,7 @@ async function probeLineClickHit(page, lineText) {
 }
 
 async function probeLastLineClickHit(page) {
-  const layout = await page.evaluate(() => {
+  const layout = await page.evaluate((bottomProbePaddingPx) => {
     const lines = [...document.querySelectorAll(".cm-line")];
     const lastLine = lines.at(-1);
     if (!(lastLine instanceof HTMLElement)) {
@@ -95,10 +96,10 @@ async function probeLastLineClickHit(page) {
     const yPoints = [
       Math.round(rect.top + 2),
       Math.round((rect.top + rect.bottom) / 2),
-      Math.round(rect.bottom - 2),
+      Math.round(rect.bottom - bottomProbePaddingPx),
     ];
     return { expectedLineIndex: lineIndex, x, yPoints };
-  });
+  }, BOTTOM_PROBE_PADDING_PX);
 
   const hits = [];
   for (const y of layout.yPoints) {
