@@ -29,7 +29,7 @@
 - CodeMirrorの見た目は`EditorView.theme`で定義（`editorTheme.ts`など）。
 
 ### Dev Workflow
-- 前提: Node.js `20.19.0+`（または `22.12+`）
+- 前提: Node.js `22+`（推奨: `.nvmrc` の `24.x`）
 - 起動: `pnpm -C apps/webview-demo dev`
 - PM2起動: `pm2 start ecosystem.config.cjs`
 - 主要Lint/型チェック: 各パッケージの`package.json`参照。
