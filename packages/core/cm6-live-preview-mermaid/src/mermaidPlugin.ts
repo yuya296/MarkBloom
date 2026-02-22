@@ -3,6 +3,7 @@ import type {
   LivePreviewPlugin,
 } from "@yuya296/cm6-live-preview-core";
 import {
+  mermaidBlockReplace,
   mermaidBlockWidget,
   type MermaidThemeMode,
 } from "./mermaidWidget";
@@ -52,19 +53,16 @@ export function mermaidLivePreviewPlugin(
         decorations.push({
           from: block.replaceRange.from,
           to: block.replaceRange.to,
-          decoration: Decoration.replace({
-            block: true,
-            inclusive: false,
-          }),
-        });
-        decorations.push({
-          from: block.replaceRange.from,
-          to: block.replaceRange.from,
-          decoration: mermaidBlockWidget(block.source, {
+          decoration: mermaidBlockReplace(block.source, {
             className,
             errorClassName,
             mermaidTheme,
           }),
+        });
+        decorations.push({
+          from: block.openingLineFrom,
+          to: block.openingLineFrom,
+          decoration: Decoration.line({ class: "cm-lp-mermaid-fence-line-mask" }),
         });
       }
 

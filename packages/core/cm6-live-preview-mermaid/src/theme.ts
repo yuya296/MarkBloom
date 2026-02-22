@@ -37,5 +37,12 @@ export function mermaidLivePreviewTheme() {
       fontSize: "12px",
       cursor: "pointer",
     },
+    ".cm-line.cm-lp-mermaid-fence-line-mask": {
+      background: "transparent !important",
+      backgroundImage: "none !important",
+      borderRadius: "0 !important",
+      paddingTop: "0 !important",
+      paddingBottom: "0 !important",
+    },
   });
 }
