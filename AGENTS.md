@@ -30,6 +30,7 @@
 
 ### Dev Workflow
 - 前提: Node.js `22+`（推奨: `.nvmrc` の `24.x`）
+- 初回セットアップ: `nvm use && corepack enable && pnpm install`
 - 起動: `pnpm -C apps/webview-demo dev`
 - PM2起動: `pm2 start ecosystem.config.cjs`
 - 主要Lint/型チェック: 各パッケージの`package.json`参照。

@@ -20,6 +20,14 @@
 - `pnpm audit` を定期実行
 - 重大な脆弱性は publish 前に解消
 
+## Dependabot 運用
+- `.github/dependabot.yml` で自動更新を有効化する
+  - npm 依存 (`package-ecosystem: npm`): weekly
+  - GitHub Actions (`package-ecosystem: github-actions`): weekly
+- Dependabot PR のレビュー時は次を確認する
+  - CI が green（`22` / `24` matrix を含む）
+  - major 更新は release note と破壊的変更の有無を確認する
+
 ## OSS ライセンス
 - 依存ライセンスを定期確認（例: `pnpm licenses list` など）
 - ライセンスが未許可の場合は依存更新 or 除外

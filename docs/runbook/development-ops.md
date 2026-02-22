@@ -1,8 +1,24 @@
 # 開発運用ルール (Development Ops)
 
 ## ブランチ運用
-- `main` のみを使用
+- `main` は保護ブランチとして扱い、直接作業しない
+- 作業ブランチを作成して開発する
+  - `feature/*`: 機能追加
+  - `fix/*`: 機能修正
+  - `docs/*`: ドキュメント修正
+  - `ci/*`: CI修正
 - 普段の push では publish しない
+
+## 初回セットアップ
+1) Node を `.nvmrc` に合わせる
+   - `nvm use`
+2) Corepack / pnpm を有効化する
+   - `corepack enable`
+   - `corepack prepare pnpm@10.27.0 --activate`
+3) 依存をインストールする
+   - `pnpm install`
+4) 開発サーバを起動する
+   - `pnpm -C apps/webview-demo dev`
 
 ## バージョン管理 (SemVer)
 - release line ごとに独立 SemVer を採用する

@@ -45,13 +45,17 @@ If Node is below the minimum version, `pnpm -C apps/webview-demo dev` fails earl
 ## Dependency model
 
 - App layer (`apps/*`) depends on core layer (`@yuya296/cm6-*`).
+- `apps/vscode-extension` and `apps/webview-demo` both use:
+  - `@yuya296/cm6-live-preview`
+  - `@yuya296/cm6-diff-gutter`
+  - `@yuya296/cm6-markdown-smart-bol`
 - `@yuya296/cm6-live-preview` composes:
   - `@yuya296/cm6-live-preview-core`
   - `@yuya296/cm6-markdown-semantics`
   - `@yuya296/cm6-typography-theme`
-- `apps/vscode-extension` and `apps/webview-demo` both use:
-  - `@yuya296/cm6-live-preview`
+  - `@yuya296/cm6-live-preview-mermaid`
   - `@yuya296/cm6-table`
+- `table` / `mermaid` are enabled via `livePreviewPreset` options in app wiring.
 
 For diagrams and release topology, see `docs/architecture/overview.md`.
 
