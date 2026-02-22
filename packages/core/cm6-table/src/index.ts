@@ -1779,7 +1779,13 @@ function dispatchOutsideUpdate(
 }
 
 function dispatchOutsideSelection(view: EditorView, anchor: number, focusEditor = false) {
-  dispatchOutsideTransaction(view, { selection: { anchor } }, focusEditor);
+  if (focusEditor) {
+    view.focus();
+  }
+  view.dispatch({
+    selection: { anchor },
+    scrollIntoView: true,
+  });
 }
 
 function dispatchOutsideTransaction(
