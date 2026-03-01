@@ -36,6 +36,11 @@ import {
   setTableCellText,
 } from "./tableEditing";
 import {
+  computeColumnHandlePosition,
+  computeOutlineBox,
+  computeRowHandlePosition,
+} from "./tableLayout";
+import {
   buildTableMarkdown,
   parseAlignmentsFromLines,
   toDisplayText,
@@ -441,16 +446,12 @@ class TableWidget extends WidgetType {
       const wrapperRect = wrapper.getBoundingClientRect();
       const startRect = startCell.getBoundingClientRect();
       const endRect = endCell.getBoundingClientRect();
+      const box = computeOutlineBox(wrapperRect, startRect, endRect);
 
-      const left = Math.min(startRect.left, endRect.left) - wrapperRect.left;
-      const top = Math.min(startRect.top, endRect.top) - wrapperRect.top;
-      const right = Math.max(startRect.right, endRect.right) - wrapperRect.left;
-      const bottom = Math.max(startRect.bottom, endRect.bottom) - wrapperRect.top;
-
-      selectionOutline.style.left = `${left}px`;
-      selectionOutline.style.top = `${top}px`;
-      selectionOutline.style.width = `${Math.max(0, right - left)}px`;
-      selectionOutline.style.height = `${Math.max(0, bottom - top)}px`;
+      selectionOutline.style.left = `${box.left}px`;
+      selectionOutline.style.top = `${box.top}px`;
+      selectionOutline.style.width = `${box.width}px`;
+      selectionOutline.style.height = `${box.height}px`;
       selectionOutline.dataset.open = "true";
     };
 
@@ -464,11 +465,13 @@ class TableWidget extends WidgetType {
           return;
         }
         const rect = cell.getBoundingClientRect();
-        const left = rect.left - wrapperRect.left + rect.width / 2;
-        const top =
-          rect.top - wrapperRect.top - TableWidget.colHandleOutsideOffset;
-        button.style.left = `${left}px`;
-        button.style.top = `${top}px`;
+        const position = computeColumnHandlePosition(
+          wrapperRect,
+          rect,
+          TableWidget.colHandleOutsideOffset
+        );
+        button.style.left = `${position.left}px`;
+        button.style.top = `${position.top}px`;
       });
 
       rowHandleButtons.forEach((button, row) => {
@@ -479,14 +482,14 @@ class TableWidget extends WidgetType {
           return;
         }
         const rect = cell.getBoundingClientRect();
-        const left = rect.left - wrapperRect.left - TableWidget.rowHandleOutsideOffset;
-        const top =
-          rect.top -
-          wrapperRect.top +
-          rect.height / 2 +
-          TableWidget.rowHandleVisualOffsetY;
-        button.style.left = `${left}px`;
-        button.style.top = `${top}px`;
+        const position = computeRowHandlePosition(
+          wrapperRect,
+          rect,
+          TableWidget.rowHandleOutsideOffset,
+          TableWidget.rowHandleVisualOffsetY
+        );
+        button.style.left = `${position.left}px`;
+        button.style.top = `${position.top}px`;
       });
     };
 
