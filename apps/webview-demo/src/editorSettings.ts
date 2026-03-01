@@ -37,7 +37,7 @@ export function normalizeTabSize(raw: string): NormalizedTabSize {
   }
 
   const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed) || parsed < 0) {
+  if (!Number.isFinite(parsed)) {
     return { value: DEFAULT_TAB_SIZE, isValid: false };
   }
 

@@ -17,6 +17,10 @@ test("normalizeTabSize clamps low values to the minimum", () => {
   assert.deepEqual(normalizeTabSize("1"), { value: 2, isValid: false });
 });
 
+test("normalizeTabSize clamps negative values to the minimum", () => {
+  assert.deepEqual(normalizeTabSize("-1"), { value: 2, isValid: false });
+});
+
 test("normalizeTabSize clamps high values to the maximum", () => {
   assert.deepEqual(normalizeTabSize("999"), { value: 8, isValid: false });
 });

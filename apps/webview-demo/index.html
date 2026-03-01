@@ -23,7 +23,7 @@
             class="icon-button"
             type="button"
             aria-label="Open settings"
-            aria-haspopup="menu"
+            aria-haspopup="dialog"
             aria-controls="settings-panel"
             aria-expanded="false"
           >
@@ -31,7 +31,13 @@
               settings
             </span>
           </button>
-          <div id="settings-panel" class="settings-panel" role="menu" hidden>
+          <div
+            id="settings-panel"
+            class="settings-panel"
+            role="dialog"
+            aria-label="Editor settings"
+            hidden
+          >
             <label class="control-item">
               <input id="toggle-line-numbers" type="checkbox" />
               Line numbers
