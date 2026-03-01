@@ -149,7 +149,8 @@ const buildExtensions = ({
             imageRawShowsPreview: true,
           }
         : false,
-      mermaid: livePreviewEnabled,
+      // Temporarily disable Mermaid preview due to instability.
+      mermaid: false,
       table: tableEnabled,
     })
   );
