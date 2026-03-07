@@ -7,7 +7,6 @@ import {
   isMermaidApi,
   loadMermaidApi,
   resolveRuntimeTheme,
-  type MermaidApi,
   type MermaidThemeMode,
 } from "./runtime";
 import { parseAndSanitizeSvg } from "./sanitizeSvg";
