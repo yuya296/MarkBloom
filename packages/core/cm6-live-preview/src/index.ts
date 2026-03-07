@@ -32,6 +32,14 @@ export function resolveTablePresetOptions(table?: TablePresetOption): TableEdito
 }
 
 export function resolvePresetLivePreviewOptions(
+  livePreviewOptions: false,
+  extraPlugins?: readonly LivePreviewPlugin[]
+): null;
+export function resolvePresetLivePreviewOptions(
+  livePreviewOptions: LivePreviewOptions | undefined,
+  extraPlugins?: readonly LivePreviewPlugin[]
+): LivePreviewOptions;
+export function resolvePresetLivePreviewOptions(
   livePreviewOptions: false | LivePreviewOptions | undefined,
   extraPlugins: readonly LivePreviewPlugin[] = []
 ): LivePreviewOptions | null {
@@ -57,7 +65,10 @@ export function livePreviewPreset(options: LivePreviewPresetOptions = {}): Exten
     table,
   } = options;
 
-  const resolvedLivePreview = resolvePresetLivePreviewOptions(livePreviewOptions);
+  const resolvedLivePreview =
+    livePreviewOptions === false
+      ? null
+      : resolvePresetLivePreviewOptions(livePreviewOptions);
 
   const result: Extension[] = [markdownSemantics(semantics), typographyTheme(typography)];
   const mermaidOptions = resolveMermaidPresetOptions(mermaid);
@@ -67,7 +78,7 @@ export function livePreviewPreset(options: LivePreviewPresetOptions = {}): Exten
       const mermaidBundle = mermaidLivePreview(mermaidOptions);
       result.push(...mermaidBundle.extensions);
       result.push(
-        livePreview(resolvePresetLivePreviewOptions(resolvedLivePreview, [mermaidBundle.plugin]) ?? {})
+        livePreview(resolvePresetLivePreviewOptions(resolvedLivePreview, [mermaidBundle.plugin]))
       );
     } else {
       result.push(livePreview(resolvedLivePreview));
