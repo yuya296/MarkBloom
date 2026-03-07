@@ -10,7 +10,7 @@ test("removes blocked svg elements and unsafe attributes", () => {
   globalThis.DOMParser = domParser;
   try {
     const svg = parseAndSanitizeSvg(
-      "<svg onload='evil()'><script>evil()</script><g onclick='evil()'></g><a href='javascript:evil()'></a></svg>",
+      "<svg onload='evil()'><script>evil()</script><g onclick='evil()'></g><a id='js' href='javascript:evil()'></a><a id='data' href='data:image/svg+xml,%3Csvg%3E%3C/svg%3E'></a><a id='ok-http' href='https://example.com'></a><a id='ok-frag' href='#node'></a></svg>",
       dom.window.document
     );
 
@@ -18,7 +18,10 @@ test("removes blocked svg elements and unsafe attributes", () => {
     assert.equal(svg.querySelector("script"), null);
     assert.equal(svg.getAttribute("onload"), null);
     assert.equal(svg.querySelector("g")?.getAttribute("onclick"), null);
-    assert.equal(svg.querySelector("a")?.getAttribute("href"), null);
+    assert.equal(svg.querySelector("#js")?.getAttribute("href"), null);
+    assert.equal(svg.querySelector("#data")?.getAttribute("href"), null);
+    assert.equal(svg.querySelector("#ok-http")?.getAttribute("href"), "https://example.com");
+    assert.equal(svg.querySelector("#ok-frag")?.getAttribute("href"), "#node");
   } finally {
     globalThis.DOMParser = originalParser;
   }

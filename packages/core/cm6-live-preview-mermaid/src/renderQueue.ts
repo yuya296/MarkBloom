@@ -24,6 +24,10 @@ export class ConnectedRenderQueue {
 
     const resume = () => {
       if (!wrapper.isConnected) {
+        if (!container.isConnected) {
+          this.renderFrames.delete(container);
+          return;
+        }
         const nextFrame = requestFrame(resume);
         this.renderFrames.set(container, nextFrame);
         return;

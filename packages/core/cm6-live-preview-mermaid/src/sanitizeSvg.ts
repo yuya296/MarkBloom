@@ -8,6 +8,23 @@ const blockedSvgElements = new Set([
   "meta",
 ]);
 
+const allowedHrefProtocols = new Set(["http:", "https:", "mailto:", "tel:"]);
+
+function isSafeSvgHref(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) {
+    return true;
+  }
+  if (normalized.startsWith("#")) {
+    return true;
+  }
+  const protocolMatch = normalized.match(/^([a-z][a-z0-9+.-]*:)/);
+  if (!protocolMatch) {
+    return true;
+  }
+  return allowedHrefProtocols.has(protocolMatch[1]);
+}
+
 export function sanitizeSvgElementTree(root: Element) {
   const allElements = [root, ...root.querySelectorAll("*")];
   for (const element of allElements) {
@@ -30,12 +47,10 @@ export function sanitizeSvgAttributes(element: Element) {
       continue;
     }
 
-    if (
-      (attributeName === "href" || attributeName === "xlink:href") &&
-      (attributeValue.startsWith("javascript:") ||
-        attributeValue.startsWith("data:text/html"))
-    ) {
-      element.removeAttribute(attribute.name);
+    if (attributeName === "href" || attributeName === "xlink:href") {
+      if (!isSafeSvgHref(attributeValue)) {
+        element.removeAttribute(attribute.name);
+      }
     }
   }
 }
