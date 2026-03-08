@@ -7,10 +7,17 @@
   </head>
   <body>
     <div id="app">
+      <header class="toolbar">
+        <div class="toolbar-actions">
+          <button id="open-file" type="button">Open</button>
+          <button id="save-file" type="button">Save</button>
+        </div>
+      </header>
       <main>
         <div id="editor" class="editor"></div>
       </main>
       <footer class="footer">
+        <span id="file-info">File: sample.md</span>
         <span id="status">Length: 0</span>
         <span id="change-info">No changes yet.</span>
       </footer>

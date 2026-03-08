@@ -19,6 +19,7 @@ export type CreateEditorOptions = {
 export type EditorHandle = {
   view: EditorView;
   getText: () => string;
+  setText: (nextText: string) => void;
   setExtensions: (nextExtensions?: Extension[]) => void;
   destroy: () => void;
 };
@@ -155,6 +156,19 @@ export function createEditor({
   return {
     view,
     getText: () => view.state.doc.toString(),
+    setText(nextText: string) {
+      const currentText = view.state.doc.toString();
+      if (currentText === nextText) {
+        return;
+      }
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: nextText,
+        },
+      });
+    },
     setExtensions(nextExtensions: Extension[] = []) {
       view.dispatch({
         effects: dynamicExtensions.reconfigure(nextExtensions),

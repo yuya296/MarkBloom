@@ -2,6 +2,11 @@
 
 MarkBloom の mac ネイティブアプリ（Tauri 2）です。
 
+## Features
+
+- Markdown のローカルファイルを開く（Open）
+- 編集内容をローカルファイルへ保存（Save）
+
 ## Development
 
 ```sh
