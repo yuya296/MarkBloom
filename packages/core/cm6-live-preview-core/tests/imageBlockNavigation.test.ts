@@ -56,12 +56,17 @@ test("resolves top adjustment when entering from above and start state is rich",
   assert.equal(resolveImageBlockAdjustedHead(5, 30, block, "down", false), 10);
 });
 
-test("skips image block adjustment when movement starts in raw mode", () => {
+test("skips image block adjustment inside raw mode when not at image top", () => {
   const block = { replaceRange: { from: 10, to: 30 } };
-  assert.equal(resolveImageBlockAdjustedHead(5, 30, block, "down", true), null);
+  assert.equal(resolveImageBlockAdjustedHead(15, 30, block, "down", true), null);
 });
 
 test("resolves bottom adjustment when navigating down from inside block", () => {
   const block = { replaceRange: { from: 10, to: 30 } };
   assert.equal(resolveImageBlockAdjustedHead(10, 30, block, "down", false), 31);
+});
+
+test("allows bottom escape from image top even when raw is active at start", () => {
+  const block = { replaceRange: { from: 10, to: 30 } };
+  assert.equal(resolveImageBlockAdjustedHead(10, 30, block, "down", true), 31);
 });

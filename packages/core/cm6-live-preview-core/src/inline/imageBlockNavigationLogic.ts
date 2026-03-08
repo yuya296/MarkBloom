@@ -33,12 +33,16 @@ export function resolveImageBlockAdjustedHead(
   if (pendingDirection !== "down") {
     return null;
   }
-  // If navigation starts in raw mode, keep plain markdown cursor movement.
-  if (wasRawModeAtStart) {
-    return null;
-  }
   if (shouldMoveCursorToImageTop(prevHead, currentHead, block)) {
     return block.replaceRange.from;
+  }
+  // Allow escaping to the next line when cursor is at the image-block top.
+  // This covers the "entered from above, then ArrowDown again" sequence.
+  const isAtImageTop = prevHead === block.replaceRange.from;
+  // If navigation starts in raw mode, keep plain markdown cursor movement
+  // unless we are at the synthetic image-block top anchor.
+  if (wasRawModeAtStart && !isAtImageTop) {
+    return null;
   }
   if (shouldMoveCursorPastImageBottom(prevHead, currentHead, block)) {
     return block.replaceRange.to + 1;
