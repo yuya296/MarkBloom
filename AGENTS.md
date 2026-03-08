@@ -5,6 +5,11 @@
 - ADRが必要なら追加/更新
 - Domain/Glossaryに用語追加
 - Overview図が変わるなら更新
+- GitHubでPRを作成し、以下をすべて確認
+  - レビュー指摘コメントにすべて対応していること
+    - 対応不要なら理由を記載してResolve
+    - 対応必要なら対応内容とcommit hashをコメントしてResolve
+  - CIが通っていること
 
 ## Repository Overview (Quick Start)
 
