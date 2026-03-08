@@ -29,16 +29,12 @@ const imageBlockRangesField = StateField.define<readonly ImageBlockInfo[]>({
 });
 
 export function imageBlockCursorNavigation(): Extension {
-  let pendingDirection: "up" | "down" | null = null;
+  let pendingDirection: "down" | null = null;
 
   return [
     imageBlockRangesField,
     EditorView.domEventHandlers({
       keydown(event) {
-        if (event.key === "ArrowUp") {
-          pendingDirection = "up";
-          return false;
-        }
         if (event.key === "ArrowDown") {
           pendingDirection = "down";
           return false;
