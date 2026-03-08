@@ -88,28 +88,39 @@ fn allow_markdown_path(path: String, state: State<AllowedMarkdownPaths>) -> Resu
 }
 
 #[tauri::command]
-fn read_markdown_file(path: String, state: State<AllowedMarkdownPaths>) -> Result<String, String> {
+async fn read_markdown_file(
+  path: String,
+  state: State<'_, AllowedMarkdownPaths>,
+) -> Result<String, String> {
   let normalized = canonicalize_existing_path(&path)?;
   ensure_allowed_path(&normalized, &state)?;
-  let metadata = fs::metadata(&normalized).map_err(|error| format!("Failed to read metadata: {error}"))?;
-  if metadata.len() > MAX_MARKDOWN_FILE_SIZE {
-    return Err("File is too large (max 10 MB).".to_string());
-  }
-  fs::read_to_string(&normalized).map_err(|error| format!("Failed to read file: {error}"))
+  tauri::async_runtime::spawn_blocking(move || {
+    let metadata = fs::metadata(&normalized).map_err(|error| format!("Failed to read metadata: {error}"))?;
+    if metadata.len() > MAX_MARKDOWN_FILE_SIZE {
+      return Err("File is too large (max 10 MB).".to_string());
+    }
+    fs::read_to_string(&normalized).map_err(|error| format!("Failed to read file: {error}"))
+  })
+  .await
+  .map_err(|error| format!("Failed to join read task: {error}"))?
 }
 
 #[tauri::command]
-fn write_markdown_file(
+async fn write_markdown_file(
   path: String,
   content: String,
-  state: State<AllowedMarkdownPaths>,
+  state: State<'_, AllowedMarkdownPaths>,
 ) -> Result<(), String> {
   if content.len() as u64 > MAX_MARKDOWN_FILE_SIZE {
     return Err("Content is too large (max 10 MB).".to_string());
   }
   let normalized = canonicalize_write_path(&path)?;
   ensure_allowed_path(&normalized, &state)?;
-  fs::write(&normalized, content).map_err(|error| format!("Failed to write file: {error}"))
+  tauri::async_runtime::spawn_blocking(move || {
+    fs::write(&normalized, content).map_err(|error| format!("Failed to write file: {error}"))
+  })
+  .await
+  .map_err(|error| format!("Failed to join write task: {error}"))?
 }
 
 #[tauri::command]

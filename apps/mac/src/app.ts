@@ -78,7 +78,7 @@ export function setupApp() {
       status.textContent = `Length: ${text.length}`;
     }
     if (changeInfo) {
-      changeInfo.textContent = hasChanged ? `Last change at ${new Date().toLocaleTimeString()}` : message;
+      changeInfo.textContent = hasChanged ? "Editing..." : message;
     }
   };
 

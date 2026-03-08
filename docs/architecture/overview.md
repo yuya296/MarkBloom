@@ -46,9 +46,9 @@ graph TD
   vscode-extension --> cm6-diff-gutter
   vscode-extension --> cm6-markdown-smart-bol
 
-  mac --> cm6-live-preview
-  mac --> cm6-diff-gutter
-  mac --> cm6-markdown-smart-bol
+  macApp --> cm6-live-preview
+  macApp --> cm6-diff-gutter
+  macApp --> cm6-markdown-smart-bol
 
   cm6-live-preview --> cm6-live-preview-core
   cm6-live-preview --> cm6-markdown-semantics
