@@ -2,7 +2,10 @@ import { Annotation, StateField, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { inlineElementConfigs } from "../config";
 import { NodeName } from "../core/syntaxNodeNames";
-import { collectStandaloneImageBlocksFromState } from "./imageBlocks";
+import {
+  collectStandaloneImageBlocksFromState,
+  type ImageBlockInfo,
+} from "./imageBlocks";
 import {
   shouldMoveCursorPastImageBottom,
   shouldMoveCursorToImageTop,
@@ -14,9 +17,7 @@ const imageRawModeTrigger =
   inlineElementConfigs.find((config) => config.node === NodeName.Image)?.rawModeTrigger ??
   "nearby";
 
-const imageBlockRangesField = StateField.define<
-  readonly { replaceRange: { from: number; to: number } }[]
->({
+const imageBlockRangesField = StateField.define<readonly ImageBlockInfo[]>({
   create(state) {
     return collectStandaloneImageBlocksFromState(state);
   },
