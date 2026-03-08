@@ -273,6 +273,7 @@ class TableWidget extends WidgetType {
     let colDropMarker: ColumnDropMarker = null;
     let draggingColPointerId: number | null = null;
     let draggingColHandle: HTMLButtonElement | null = null;
+    let hasTableFocus = false;
 
     const getTotalRows = () => data.rows.length + 1;
     const cancelPendingFocusRestore = () => {
@@ -284,6 +285,9 @@ class TableWidget extends WidgetType {
         kind: "cell",
         ...clampCellSelection(nextRow, nextCol, getTotalRows(), columnCount),
       };
+    };
+    const defaultCellSelection = (): CellSelection => {
+      return clampCell(data.rows.length > 0 ? 1 : 0, 0);
     };
 
     const getCellText = (cell: CellSelection): string => getTableCellText(data, cell);
@@ -423,7 +427,7 @@ class TableWidget extends WidgetType {
 
     const updateRangeOutline = () => {
       selectionOutline.dataset.open = "false";
-      if (!selection || selection.kind === "cell") {
+      if (!hasTableFocus || !selection || selection.kind === "cell") {
         return;
       }
 
@@ -864,7 +868,7 @@ class TableWidget extends WidgetType {
       rowHandleButtons.forEach((button) => button.removeAttribute("data-selected"));
       columnHandleButtons.forEach((button) => button.removeAttribute("data-selected"));
 
-      if (!selection) {
+      if (!selection || !hasTableFocus) {
         wrapper.removeAttribute("data-selection");
         updateRangeOutline();
         return;
@@ -903,8 +907,7 @@ class TableWidget extends WidgetType {
 
     const ensureCellSelection = (): CellSelection => {
       if (!selection) {
-        const fallbackRow = data.rows.length > 0 ? 1 : 0;
-        const next = clampCell(fallbackRow, 0);
+        const next = defaultCellSelection();
         setSelection(next, false);
         return next;
       }
@@ -1359,7 +1362,7 @@ class TableWidget extends WidgetType {
         return false;
       }
       const target = view.state.doc.line(lineNumber);
-      selection = null;
+      hasTableFocus = false;
       applySelectionClasses();
       clearHoveredHandles();
       closeMenu();
@@ -1749,27 +1752,37 @@ class TableWidget extends WidgetType {
     );
 
     wrapper.addEventListener(
+      "focusin",
+      () => {
+        hasTableFocus = true;
+        if (isEditing) {
+          return;
+        }
+        if (selection) {
+          applySelectionClasses();
+          return;
+        }
+        const cached = TableWidget.selectionMapForView(view).get(this.tableInfo.key);
+        setSelection(cached ?? defaultCellSelection(), false);
+      },
+      { signal }
+    );
+
+    wrapper.addEventListener(
       "focusout",
       (event) => {
         const related = event.relatedTarget;
         if (related instanceof Node && wrapper.contains(related)) {
           return;
         }
-        if (!isEditing) {
-          selection = null;
-          applySelectionClasses();
-          clearHoveredHandles();
-        }
+        hasTableFocus = false;
+        applySelectionClasses();
+        clearHoveredHandles();
       },
       { signal }
     );
 
-    const cached = TableWidget.selectionMapForView(view).get(this.tableInfo.key);
-    if (cached) {
-      setSelection(cached, false);
-    } else {
-      setSelection({ kind: "cell", row: data.rows.length > 0 ? 1 : 0, col: 0 }, false);
-    }
+    applySelectionClasses();
     requestAnimationFrame(() => {
       updateHandlePositions();
     });

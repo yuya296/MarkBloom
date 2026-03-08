@@ -24,12 +24,16 @@ CM6拡張として `packages/core/cm6-table` で提供する。
 - IME入力中に確定キーが誤動作しない
 - 行/列ハンドルから選択し、選択状態で右クリックメニューを開ける
 - Markdown本文にUI専用要素（ハンドル/仮想ヘッダ）を混入させない
+- 選択ハイライト（Visual Selection）はテーブルフォーカス中のみ表示し、初期表示では非表示とする
 
 ## 4. 設計
 - データモデル: `TableData` (`header`, `rows`, `alignments`)
 - 編集UI:
   - Navigation: セル移動・選択
   - Editing: 単一`textarea`を選択セル上に配置
+- 選択モデル:
+  - Logical Selection: 内部状態として保持する選択（セル/行/列）
+  - Visual Selection: フォーカス中のみDOMに表示される選択ハイライト
 - 同期:
   - 編集コミット時に `buildTableMarkdown` で再構築して `view.dispatch`
   - ドキュメント更新後はWidget再構築
