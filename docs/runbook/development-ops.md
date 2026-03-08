@@ -73,4 +73,3 @@
 - `docs/runbook/cicd.md`
 - `docs/runbook/devsecops.md`
 - `docs/runbook/widget-measure-contract.md`
-- `docs/runbook/cm6-cursor-state-timing.md`

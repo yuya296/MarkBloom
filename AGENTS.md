@@ -54,7 +54,6 @@
 
 ### Change Checklist (Keep It Short)
 - 機能変更: 影響パッケージの責務を確認し、該当モジュールに最小変更。
-- 型定義: 既存モジュールに公開型（export type）がある場合は、インライン再定義せず再利用する。
 - 作業後（毎回）: `pnpm -C apps/webview-demo build` と `pm2 start ecosystem.config.cjs --update-env` で確認。
 - 並行開発: 同一branchを複数worktreeで同時起動しない（PM2識別子はbranch基準）。
 - UI/テーマ変更: `webview-demo`のCSS変数とテーマ拡張の両方を確認。
