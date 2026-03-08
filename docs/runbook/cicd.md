@@ -66,9 +66,9 @@
   - `bump` (choice): 次バージョンの上げ方（`patch` / `minor` / `major`）
 - 実行内容:
   - 現在の lockstep version 検証（必要なら `version` 入力と一致確認）
+  - `node scripts/check-compatibility.mjs`（bump 前の core version で検証）
   - `bump` 入力に従って `packages/core/cm6-*` の `package.json` version を一括更新
   - tag重複チェック（publish前）
-  - `node scripts/check-compatibility.mjs`
   - npm での未公開チェック（dry-run / 本番の両方で実施）
   - `pnpm -r --filter "@yuya296/cm6-*" build`
   - dry-run: `pnpm -r --filter "@yuya296/cm6-*" publish --dry-run` 実行後に version 更新を復元

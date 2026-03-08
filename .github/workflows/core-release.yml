@@ -105,6 +105,9 @@ jobs:
           console.log(`Resolved current core version: ${current}`);
           NODE
 
+      - name: Check compatibility matrix
+        run: node scripts/check-compatibility.mjs
+
       - name: Determine next core version
         id: next_core_version
         env:
@@ -179,9 +182,6 @@ jobs:
             echo "Tag already exists: ${TAG_NAME}"
             exit 1
           fi
-
-      - name: Check compatibility matrix
-        run: node scripts/check-compatibility.mjs
 
       - name: Verify versions are unpublished
         env:
