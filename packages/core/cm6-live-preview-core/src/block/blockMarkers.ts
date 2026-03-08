@@ -166,7 +166,8 @@ function pushBlockMarkerDecoration(
   push: PushDecoration,
   marker: BlockMarker,
   state: BlockRawState,
-  hiddenDecoration: Decoration
+  hiddenDecoration: Decoration,
+  hiddenMarkerDecoration: Decoration
 ) {
   const config = blockMarkerConfigs.find((entry) => entry.id === marker.id);
   if (!config) {
@@ -184,7 +185,7 @@ function pushBlockMarkerDecoration(
       return;
     }
     if (!marker.listKind || !marker.rawText) {
-      push(marker.from, marker.to, hiddenDecoration);
+      push(marker.from, marker.to, hiddenMarkerDecoration);
       return;
     }
     push(
@@ -196,6 +197,10 @@ function pushBlockMarkerDecoration(
   }
 
   if (style === "hide") {
+    if (marker.id === "heading" || marker.id === "quote") {
+      push(marker.from, marker.to, hiddenMarkerDecoration);
+      return;
+    }
     push(marker.from, marker.to, hiddenDecoration);
     return;
   }
@@ -207,6 +212,7 @@ export function addBlockMarkerDecorations(
   lineText: string,
   state: BlockRawState,
   hiddenDecoration: Decoration,
+  hiddenMarkerDecoration: Decoration,
   fenceMarkersByLine: Map<number, BlockMarker[]>
 ) {
   const isTaskListLine = blockMarkerPattern.taskList.test(lineText);
@@ -215,7 +221,13 @@ export function addBlockMarkerDecorations(
     if (isTaskListLine && marker.id === "list") {
       continue;
     }
-    pushBlockMarkerDecoration(push, marker, state, hiddenDecoration);
+    pushBlockMarkerDecoration(
+      push,
+      marker,
+      state,
+      hiddenDecoration,
+      hiddenMarkerDecoration
+    );
   }
 }
 

@@ -17,6 +17,9 @@ export type { Range } from "./core/types";
 
 export function livePreviewBaseTheme(): Extension {
   return EditorView.baseTheme({
+    ".cm-content .cm-lp-marker-hidden": {
+      display: "none",
+    },
     ".cm-content .cm-lp-image": {
       display: "inline-block",
       maxWidth: "100%",
