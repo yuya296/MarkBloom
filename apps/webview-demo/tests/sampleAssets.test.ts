@@ -4,8 +4,6 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-const imagePattern = /!\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
-
 function isExternalOrAbsolute(src: string): boolean {
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(src) || src.startsWith("/");
 }
@@ -15,6 +13,7 @@ test("sample markdown relative images exist under public/assets", () => {
   const projectRoot = path.resolve(testDir, "..");
   const samplePath = path.join(projectRoot, "assets", "sample.md");
   const source = fs.readFileSync(samplePath, "utf8");
+  const imagePattern = /!\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 
   const relativeSources: string[] = [];
   let match = imagePattern.exec(source);
