@@ -1776,10 +1776,8 @@ class TableWidget extends WidgetType {
           return;
         }
         hasTableFocus = false;
-        if (!isEditing) {
-          applySelectionClasses();
-          clearHoveredHandles();
-        }
+        applySelectionClasses();
+        clearHoveredHandles();
       },
       { signal }
     );

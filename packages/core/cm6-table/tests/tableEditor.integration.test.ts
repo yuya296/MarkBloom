@@ -283,6 +283,36 @@ test("focusout clears all selection UI", async () => {
   }
 });
 
+test("focusout while editing also clears selection UI", async () => {
+  const harness = await createTableEditorHarness(
+    ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    const editor = harness.parent.querySelector<HTMLTextAreaElement>(".cm-table-overlay-input");
+    assert.ok(wrapper);
+    assert.ok(editor);
+
+    wrapper.focus();
+    await flushEditorUpdates();
+    dispatchKey(wrapper, "Enter");
+    await flushEditorUpdates();
+    assert.equal(wrapper.dataset.mode, "edit");
+    assert.ok(selectedCell(wrapper));
+
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    wrapper.dispatchEvent(new FocusEvent("focusout", { bubbles: true, relatedTarget: outside }));
+    await flushEditorUpdates();
+
+    assert.equal(selectedCell(wrapper), null);
+    assert.equal(wrapper.querySelector("[data-selected='true']"), null);
+    outside.remove();
+  } finally {
+    harness.teardown();
+  }
+});
+
 test("arrow down at document end keeps selection on last row", async () => {
   const harness = await createTableEditorHarness(
     ["before", "| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
@@ -603,13 +633,16 @@ test("blur commits editing to markdown", async () => {
     assert.ok(wrapper);
     assert.ok(editor);
 
+    wrapper.focus();
+    await flushEditorUpdates();
     dispatchKey(wrapper, "Enter");
     await flushEditorUpdates();
     editor.value = "blur-commit";
+    assert.ok(selectedCell(wrapper), "editing start should keep a visible selected cell");
 
     const outside = document.createElement("button");
     document.body.appendChild(outside);
-    editor.dispatchEvent(new FocusEvent("blur", { bubbles: true, relatedTarget: outside }));
+    outside.focus();
     await flushEditorUpdates();
 
     assert.equal(harness.getDoc().includes("blur-commit"), true);
