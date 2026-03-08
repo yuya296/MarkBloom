@@ -117,13 +117,18 @@ test("renderMode none keeps markdown table lines visible", async () => {
   }
 });
 
-test("initial state has a selected cell", async () => {
+test("initial state stays unselected until focus enters table", async () => {
   const harness = await createTableEditorHarness(
     ["| A | B |", "| --- | --- |", "| 1 | 2 |", "| 3 | 4 |"].join("\n")
   );
   try {
     const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
     assert.ok(wrapper);
+    assert.equal(selectedCell(wrapper), null);
+
+    wrapper.focus();
+    await flushEditorUpdates();
+
     const cell = selectedCell(wrapper);
     assert.ok(cell);
     assert.ok(Number.isFinite(Number(cell.dataset.row)));
@@ -249,6 +254,8 @@ test("focusout clears all selection UI", async () => {
   try {
     const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
     assert.ok(wrapper);
+    wrapper.focus();
+    await flushEditorUpdates();
 
     const colHandle = wrapper.querySelector<HTMLElement>(".cm-table-col-handle");
     assert.ok(colHandle);
@@ -258,7 +265,7 @@ test("focusout clears all selection UI", async () => {
 
     const outside = document.createElement("button");
     document.body.appendChild(outside);
-    wrapper.dispatchEvent(new FocusEvent("focusout", { bubbles: true, relatedTarget: outside }));
+    outside.focus();
     await flushEditorUpdates();
 
     assert.equal(wrapper.querySelector(".cm-table-cell-selected"), null);
@@ -266,6 +273,10 @@ test("focusout clears all selection UI", async () => {
     assert.ok(outline);
     assert.equal(outline.dataset.open, "false");
     assert.equal(wrapper.querySelector("[data-selected='true']"), null);
+
+    wrapper.focus();
+    await flushEditorUpdates();
+    assert.equal(wrapper.querySelector<HTMLElement>("[data-selected='true']")?.dataset.selected, "true");
     outside.remove();
   } finally {
     harness.teardown();
@@ -831,6 +842,10 @@ test("inserting a table before existing ones does not leak selection across tabl
 
     const nextWrappers = harness.parent.querySelectorAll<HTMLElement>(".cm6-table-editor");
     assert.equal(nextWrappers.length, 3);
+
+    assert.equal(selectedCell(nextWrappers[1]), null);
+    nextWrappers[1].focus();
+    await flushEditorUpdates();
 
     const middleSelected = selectedCell(nextWrappers[1]);
     assert.ok(middleSelected);
