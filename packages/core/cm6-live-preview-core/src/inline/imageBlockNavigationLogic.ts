@@ -1,7 +1,7 @@
 import type { ImageBlockInfo } from "./imageBlocks";
 
 type ImageBoundaryBlock = Pick<ImageBlockInfo, "replaceRange">;
-type PendingDirection = "up" | "down";
+type PendingDirection = "down";
 
 export function shouldMoveCursorToImageTop(
   prevHead: number,

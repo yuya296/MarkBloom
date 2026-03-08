@@ -38,7 +38,10 @@ export function isInlineRawByTriggers(
   node: { from: number; to: number },
   rawModeTrigger: RawModeTrigger | RawModeTrigger[]
 ): boolean {
-  const triggers = normalizeTriggers(rawModeTrigger);
+  // This helper is for inline elements. Ignore block-specific triggers.
+  const triggers = normalizeTriggers(rawModeTrigger).filter(
+    (trigger) => trigger === "always" || trigger === "nearby"
+  );
 
   if (triggers.includes("always")) {
     return true;
