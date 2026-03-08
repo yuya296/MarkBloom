@@ -48,6 +48,7 @@ test("does not force top move during normal in-image movement", () => {
 test("moves cursor past image bottom when down-navigation lands on boundary", () => {
   const block = { replaceRange: { from: 10, to: 30 } };
   assert.equal(shouldMoveCursorPastImageBottom(10, 30, block), true);
+  assert.equal(shouldMoveCursorPastImageBottom(30, 30, block), true);
   assert.equal(shouldMoveCursorPastImageBottom(31, 30, block), false);
 });
 
@@ -69,4 +70,14 @@ test("resolves bottom adjustment when navigating down from inside block", () => 
 test("allows bottom escape from image top even when raw is active at start", () => {
   const block = { replaceRange: { from: 10, to: 30 } };
   assert.equal(resolveImageBlockAdjustedHead(10, 30, block, "down", true), 31);
+});
+
+test("resolves bottom adjustment when cursor is stuck at image boundary", () => {
+  const block = { replaceRange: { from: 10, to: 30 } };
+  assert.equal(resolveImageBlockAdjustedHead(30, 30, block, "down", false), 31);
+});
+
+test("allows boundary-stuck bottom escape even when raw is active at start", () => {
+  const block = { replaceRange: { from: 10, to: 30 } };
+  assert.equal(resolveImageBlockAdjustedHead(30, 30, block, "down", true), 31);
 });

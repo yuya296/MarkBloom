@@ -1,5 +1,5 @@
 import { Annotation, StateField, type Extension } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import { inlineElementConfigs } from "../config";
 import { NodeName } from "../core/syntaxNodeNames";
 import {
@@ -33,26 +33,55 @@ export function imageBlockCursorNavigation(): Extension {
 
   return [
     imageBlockRangesField,
-    EditorView.domEventHandlers({
-      keydown(event) {
-        if (event.key === "ArrowDown") {
+    keymap.of([
+      {
+        key: "ArrowDown",
+        run(view) {
           pendingDirection = "down";
+          const selection = view.state.selection.main;
+          if (
+            view.state.selection.ranges.length !== 1 ||
+            selection.from !== selection.to
+          ) {
+            return false;
+          }
+          const head = selection.head;
+          const blocks = view.state.field(imageBlockRangesField);
+          for (const block of blocks) {
+            if (head !== block.replaceRange.to) {
+              continue;
+            }
+            const wasRawModeAtStart = isInlineRawByTriggers(
+              view.state,
+              block.replaceRange,
+              imageRawModeTrigger
+            );
+            const adjustedHead = resolveImageBlockAdjustedHead(
+              head,
+              head,
+              block,
+              "down",
+              wasRawModeAtStart
+            );
+            if (adjustedHead === null || adjustedHead === head) {
+              continue;
+            }
+            const nextHead = Math.min(adjustedHead, view.state.doc.length);
+            pendingDirection = null;
+            view.dispatch({
+              selection: { anchor: nextHead },
+              annotations: imageCursorAdjusted.of(true),
+              scrollIntoView: true,
+            });
+            return true;
+          }
           return false;
-        }
-        pendingDirection = null;
-        return false;
+        },
       },
-      keyup() {
-        pendingDirection = null;
-        return false;
-      },
-      blur() {
-        pendingDirection = null;
-        return false;
-      },
-    }),
+    ]),
     EditorView.updateListener.of((update) => {
       if (!update.selectionSet) {
+        pendingDirection = null;
         return;
       }
       if (!pendingDirection) {
@@ -82,12 +111,15 @@ export function imageBlockCursorNavigation(): Extension {
 
       const prevHead = prevSelection.head;
       const currentHead = currentSelection.head;
-      if (prevHead === currentHead) {
+      const blocks = update.state.field(imageBlockRangesField);
+      const isStuckAtImageBottomBoundary = blocks.some(
+        (block) =>
+          prevHead === block.replaceRange.to && currentHead === block.replaceRange.to
+      );
+      if (prevHead === currentHead && !isStuckAtImageBottomBoundary) {
         pendingDirection = null;
         return;
       }
-
-      const blocks = update.state.field(imageBlockRangesField);
       for (const block of blocks) {
         const wasRawModeAtStart = isInlineRawByTriggers(
           update.startState,

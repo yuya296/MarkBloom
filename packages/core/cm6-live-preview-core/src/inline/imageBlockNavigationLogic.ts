@@ -18,7 +18,7 @@ export function shouldMoveCursorPastImageBottom(
 ): boolean {
   return (
     prevHead >= block.replaceRange.from &&
-    prevHead < block.replaceRange.to &&
+    prevHead <= block.replaceRange.to &&
     currentHead === block.replaceRange.to
   );
 }
@@ -39,9 +39,13 @@ export function resolveImageBlockAdjustedHead(
   // Allow escaping to the next line when cursor is at the image-block top.
   // This covers the "entered from above, then ArrowDown again" sequence.
   const isAtImageTop = prevHead === block.replaceRange.from;
+  // Some browsers/edit flows can keep the cursor at the image boundary "to"
+  // after ArrowDown. Treat this as a stuck-at-bottom state and allow escape.
+  const isStuckAtImageBottomBoundary =
+    prevHead === block.replaceRange.to && currentHead === block.replaceRange.to;
   // If navigation starts in raw mode, keep plain markdown cursor movement
-  // unless we are at the synthetic image-block top anchor.
-  if (wasRawModeAtStart && !isAtImageTop) {
+  // unless we are at the synthetic image-block top anchor or bottom boundary.
+  if (wasRawModeAtStart && !isAtImageTop && !isStuckAtImageBottomBoundary) {
     return null;
   }
   if (shouldMoveCursorPastImageBottom(prevHead, currentHead, block)) {
