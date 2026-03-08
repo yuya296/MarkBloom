@@ -3,7 +3,7 @@ import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 
 type ListMarkerKind = "bullet" | "ordered";
 
-export function listMarkerReplace(
+export function listMarkerDecoration(
   kind: ListMarkerKind,
   rawText: string
 ): Decoration {

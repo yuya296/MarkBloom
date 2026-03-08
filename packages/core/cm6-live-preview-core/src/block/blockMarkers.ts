@@ -11,7 +11,7 @@ import {
   type RawModeTrigger,
 } from "../config";
 import type { LivePreviewOptions } from "../options";
-import { listMarkerReplace, taskCheckboxReplace } from "../theme/markerWidgets";
+import { listMarkerDecoration, taskCheckboxReplace } from "../theme/markerWidgets";
 
 const blockMarkerPattern = {
   heading: /^\s{0,3}(#{1,6})(?=\s|$)/,
@@ -191,7 +191,7 @@ function pushBlockMarkerDecoration(
     push(
       marker.from,
       marker.to,
-      listMarkerReplace(marker.listKind, marker.rawText)
+      listMarkerDecoration(marker.listKind, marker.rawText)
     );
     return;
   }
