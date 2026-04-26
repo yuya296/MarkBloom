@@ -35,11 +35,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
-    "@codemirror/state": "^6.5.3",
+    "@codemirror/state": "^6.5.4",
     "@codemirror/view": "^6.39.16"
   },
   "devDependencies": {
-    "@codemirror/state": "^6.5.3",
+    "@codemirror/state": "^6.5.4",
     "@codemirror/view": "^6.39.16",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
