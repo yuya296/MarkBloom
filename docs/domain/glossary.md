@@ -12,6 +12,8 @@
 - Row Header Handle: 行ホバー時に表示し、行全選択やメニュー起点になるハンドルUI。
 - Navigation Mode: テーブル内のセル移動・行列選択を行うモード。直接テキスト入力はしない。
 - Editing Mode: 単一のオーバーレイ入力でセル編集を行うモード。Enterで確定、Escでキャンセルする。
+- Logical Selection: テーブル内部で保持する現在の選択対象（セル/行/列）。未フォーカス時も保持可能。
+- Visual Selection: DOM上で枠線・ハンドル選択として表示される選択状態。テーブルフォーカス中のみ表示する。
 - MarkBloom: VS Code 上で Markdown を編集するための拡張と Webview UI。
 - vscode-extension: MarkBloom の VS Code 拡張パッケージ。
 - Table Action Menu: 行/列操作のためのコンテキストメニュー（挿入/削除/整列）。
