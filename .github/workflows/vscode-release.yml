@@ -106,7 +106,7 @@ jobs:
 
       - name: Create GitHub Release
         if: inputs.dry_run == false && inputs.create_release == true
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.tag_name.outputs.value }}
           name: VS Code Release v${{ steps.extension_version.outputs.value }}
