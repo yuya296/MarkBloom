@@ -7,7 +7,7 @@ use std::{
   sync::Mutex,
 };
 
-use tauri::State;
+use tauri::{Manager, RunEvent, State, WindowEvent};
 use url::Url;
 
 const MAX_MARKDOWN_FILE_SIZE: u64 = 10 * 1024 * 1024;
@@ -135,7 +135,7 @@ fn open_external_url(url: String) -> Result<(), String> {
 }
 
 fn main() {
-  tauri::Builder::default()
+  let app = tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
     .manage(AllowedMarkdownPaths::default())
     .invoke_handler(tauri::generate_handler![
@@ -144,6 +144,28 @@ fn main() {
       write_markdown_file,
       open_external_url
     ])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    .on_window_event(|window, event| {
+      // macOS: hide the window instead of quitting when the user closes it
+      // (Cmd+W or red traffic light). The app stays alive in the menu bar
+      // and can be reopened via Dock click (RunEvent::Reopen).
+      if cfg!(target_os = "macos") {
+        if let WindowEvent::CloseRequested { api, .. } = event {
+          api.prevent_close();
+          let _ = window.hide();
+        }
+      }
+    })
+    .build(tauri::generate_context!())
+    .expect("error while building tauri application");
+
+  app.run(|app_handle, event| {
+    if cfg!(target_os = "macos") {
+      if let RunEvent::Reopen { .. } = event {
+        if let Some(window) = app_handle.get_webview_window("main") {
+          let _ = window.show();
+          let _ = window.set_focus();
+        }
+      }
+    }
+  });
 }
