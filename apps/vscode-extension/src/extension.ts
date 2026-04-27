@@ -307,7 +307,7 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
       http-equiv="Content-Security-Policy"
       content="default-src 'none'; img-src ${webview.cspSource} https: data:; style-src ${webview.cspSource} 'unsafe-inline' https:; font-src ${webview.cspSource} https: data:; script-src 'nonce-${nonce}';"
     />
-    ${cssUris.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n    ")}
+    ${cssUris.map((href) => `<link rel="stylesheet" href="${href.toString()}">`).join("\n    ")}
     <title>MarkBloom Editor</title>
   </head>
   <body>
@@ -364,7 +364,7 @@ class MarkBloomEditorProvider implements vscode.CustomTextEditorProvider {
         <span id="change-info">No changes yet.</span>
       </footer>
     </div>
-    <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+    <script type="module" nonce="${nonce}" src="${scriptUri.toString()}"></script>
   </body>
 </html>`;
   }

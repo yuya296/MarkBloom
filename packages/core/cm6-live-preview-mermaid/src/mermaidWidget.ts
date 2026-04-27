@@ -69,6 +69,13 @@ class MermaidWidget extends WidgetType {
     if (!wrapper.classList.contains(this.options.className)) {
       return false;
     }
+    // The wrapper class includes `cm-lp-mermaid-${mode}` (see toDOM).
+    // If the new widget has a different mode (replace ↔ append), we must
+    // not reuse the old DOM — return false so CodeMirror destroys the
+    // previous widget and calls toDOM with the new mode.
+    if (!wrapper.classList.contains(`cm-lp-mermaid-${this.options.mode}`)) {
+      return false;
+    }
     const container = wrapper.querySelector<HTMLElement>(".cm-lp-mermaid-content");
     const source = this.source.trim();
     if (!container) {

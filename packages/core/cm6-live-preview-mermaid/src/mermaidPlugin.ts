@@ -33,9 +33,20 @@ export function mermaidLivePreviewPlugin(
         .map((range) => range.head);
 
       for (const block of blocks) {
+        // collapsed selection (caret) is intentionally excluded from
+        // ctx.isSelectionOverlap, so handle "caret strictly inside the
+        // block" here. Open interval (from, to):
+        // - `head === from` is treated as outside (caret right before the
+        //   opening fence; no need to enter raw mode yet).
+        // - `head === to` is treated as outside; the boundary right after
+        //   the closing fence is owned by `isCursorAtBottomBoundary`.
+        const cursorInsideBlock = cursorHeads.some(
+          (head) => head > block.rawJudgeRange.from && head < block.rawJudgeRange.to
+        );
         const isRaw =
           ctx.isSelectionOverlap(block.rawJudgeRange) ||
           ctx.isBlockRevealOverlap(block.rawJudgeRange) ||
+          cursorInsideBlock ||
           cursorHeads.some((head) => isCursorAtBottomBoundary(head, block));
         if (isRaw) {
           decorations.push({
