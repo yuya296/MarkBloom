@@ -75,3 +75,36 @@ test("does not switch to raw mode when cursor is at closing fence end", () => {
   assert.equal(decorations.length, 2);
   assert.ok(decorations.some((decoration) => decoration.from < decoration.to));
 });
+
+test("switches to raw mode when caret sits on the opening fence text", () => {
+  const plugin = mermaidLivePreviewPlugin();
+  const doc = ["```mermaid", "graph TD", "A-->B", "```", "after"].join("\n");
+  // caret 5 chars into "```mermaid" (between "`" and "mermaid")
+  const ctx = createContext(doc, { cursorPos: 5 });
+  const decorations = plugin.decorate(ctx);
+  assert.equal(decorations.length, 1);
+  assert.equal(decorations[0].from, decorations[0].to);
+});
+
+test("switches to raw mode when caret is on a body line inside the block", () => {
+  const plugin = mermaidLivePreviewPlugin();
+  const doc = ["```mermaid", "graph TD", "A-->B", "```", "after"].join("\n");
+  // caret on "graph TD" line
+  const cursorPos = doc.indexOf("graph TD") + 3;
+  const ctx = createContext(doc, { cursorPos });
+  const decorations = plugin.decorate(ctx);
+  assert.equal(decorations.length, 1);
+  assert.equal(decorations[0].from, decorations[0].to);
+});
+
+test("does not switch to raw mode when caret is exactly at block start (before opening fence)", () => {
+  const plugin = mermaidLivePreviewPlugin();
+  const doc = ["before", "```mermaid", "graph TD", "A-->B", "```", "after"].join("\n");
+  // caret at the position right before the opening fence (block.from)
+  const cursorPos = doc.indexOf("```mermaid");
+  const ctx = createContext(doc, { cursorPos });
+  const decorations = plugin.decorate(ctx);
+  // rich (replace + line mask)
+  assert.equal(decorations.length, 2);
+  assert.ok(decorations.some((decoration) => decoration.from < decoration.to));
+});

@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",
-    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-dialog": "^2.7.0",
     "@codemirror/commands": "^6.10.1",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.1",
@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.9.1",
-    "sass": "^1.97.3",
+    "sass": "^1.99.0",
     "vite": "^7.3.2"
   }
 }
