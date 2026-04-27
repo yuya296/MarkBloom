@@ -13,7 +13,7 @@ export function openMermaidPreview(
 ): boolean {
   const openWindow =
     options.openWindow ??
-    (() => window.open("", "_blank", "noopener,noreferrer") as WindowLike | null);
+    (() => window.open("", "_blank", "noopener,noreferrer"));
   const warn = options.warn ?? console.warn;
 
   const previewWindow = openWindow();

@@ -79,9 +79,7 @@ export async function loadMermaidApi(options: {
 } = {}): Promise<MermaidApi | null> {
   const globalScope =
     options.globalScope ??
-    (globalThis as typeof globalThis & {
-      mermaid?: unknown;
-    });
+    (globalThis);
   const importer = options.importer ?? (() => import("mermaid"));
 
   if (!options.skipGlobal) {
