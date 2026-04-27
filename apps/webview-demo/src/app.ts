@@ -218,6 +218,7 @@ export function setupApp() {
       }
     },
   });
+  (window as Window & { __MB_EDITOR_VIEW__?: typeof editor.view }).__MB_EDITOR_VIEW__ = editor.view;
 
   const applyExtensions = () => {
     editor.setExtensions(buildExtensions(getExtensionOptions()));
