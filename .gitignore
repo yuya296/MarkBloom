@@ -39,6 +39,10 @@ Thumbs.db
 .nuxt/
 .playwright-browsers
 .playwright-cli
+.playwright-mcp/
 test-results/
 .pnpm-store/
 /.worktrees/
+
+# Claude Code (local agent settings)
+.claude/
