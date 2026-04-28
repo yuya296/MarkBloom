@@ -1488,6 +1488,18 @@ class TableWidget extends WidgetType {
         event.stopPropagation();
         closeMenu();
         setSelection({ kind: "cell", row, col });
+        // Bring the CM caret into the table so that subsequent widget
+        // keydown handlers (and any external observers) see a CM
+        // selection consistent with the focused cell. Without this, a
+        // user who clicks a table cell while their CM caret is far away
+        // and then presses ArrowDown would teleport the caret to the
+        // table boundary line (issue #110).
+        const liveBoundary = getCurrentBoundary();
+        const cmHeadLine = view.state.doc.lineAt(view.state.selection.main.head).number;
+        if (cmHeadLine < liveBoundary.startLineNumber || cmHeadLine > liveBoundary.endLineNumber) {
+          const targetLine = view.state.doc.line(liveBoundary.startLineNumber);
+          dispatchOutsideSelection(view, targetLine.from);
+        }
       },
       { signal }
     );

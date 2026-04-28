@@ -247,6 +247,54 @@ test("arrow down from last row moves caret to line after table", async () => {
   }
 });
 
+test("clicking a cell while CM caret is far away pulls the caret into the table (issue #110)", async () => {
+  const harness = await createTableEditorHarness(
+    [
+      "before",
+      "| A | B |",
+      "| --- | --- |",
+      "| 1 | 2 |",
+      "",
+      "after",
+      "trailing 1",
+      "trailing 2",
+      "trailing 3",
+    ].join("\n")
+  );
+  try {
+    const wrapper = harness.parent.querySelector<HTMLElement>(".cm6-table-editor");
+    assert.ok(wrapper);
+
+    // Place CM caret far away from the table (the last line).
+    const farLine = harness.view.state.doc.lines;
+    const farLineFrom = harness.view.state.doc.line(farLine).from;
+    harness.view.dispatch({ selection: { anchor: farLineFrom } });
+    await flushEditorUpdates();
+    assert.equal(harness.view.state.selection.main.head, farLineFrom);
+
+    // Click the last cell of the table.
+    clickCell(wrapper, 1, 1);
+    await flushEditorUpdates();
+
+    // CM caret should now be inside the table boundary (start line).
+    const tableStartLine = 2;
+    const expected = harness.view.state.doc.line(tableStartLine).from;
+    assert.equal(
+      harness.view.state.selection.main.head,
+      expected,
+      "CM caret should be pulled to the table start line after a cell click"
+    );
+
+    // ArrowDown from the last cell should jump to the line right after the
+    // table (line 5 in this fixture), not anywhere else.
+    dispatchKey(wrapper, "ArrowDown");
+    await flushEditorUpdates();
+    assert.equal(harness.view.state.selection.main.head, harness.view.state.doc.line(5).from);
+  } finally {
+    harness.teardown();
+  }
+});
+
 test("focusout clears all selection UI", async () => {
   const harness = await createTableEditorHarness(
     ["| A | B |", "| --- | --- |", "| 1 | 2 |"].join("\n")
