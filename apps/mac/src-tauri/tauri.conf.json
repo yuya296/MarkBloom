@@ -16,7 +16,9 @@
         "title": "MarkBloom",
         "width": 1120,
         "height": 860,
-        "resizable": true
+        "resizable": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {

@@ -324,6 +324,8 @@ export function setupApp() {
           width: 1120,
           height: 860,
           resizable: true,
+          titleBarStyle: "overlay",
+          hiddenTitle: true,
           ...(position ? { x: position.x, y: position.y } : {}),
         });
         await win.once("tauri://error", (event) => {
