@@ -53,7 +53,8 @@
 - App Package: `apps/` 配下の実行可能プロダクト単位（例: webview-demo / vscode-extension / mac）。
 - Tauri App: Rust backend + WebView frontend で構成するデスクトップアプリ。MarkBloom では `apps/mac` を指す。
 - Tauri Capability: Tauri 2 で window ごとの操作許可を定義する権限制御ファイル。
-- App Menu Command: macOS のアプリメニューバーから実行される操作コマンド。MarkBloom mac では File(New/Open/Save/CloseWindow) / Edit(Undo/Redo/Find/Replace) / View(Toggle Line Wrap) を指す。ウィンドウ内 UI は本文エディタのみで、操作はメニューバーに集約する。
+- App Menu Command: macOS のアプリメニューバーから実行される操作コマンド。MarkBloom mac では File(New/Open/Save/CloseWindow) / Edit(Undo/Redo/Find/Replace) / View(Toggle Line Wrap) を指す。ウィンドウ内 UI は本文エディタのみで、操作はメニューバーに集約する。アプリメニューはプロセス全体に1つで、フォーカスされたウィンドウの状態を反映するため focus 変更時に再構築する（ADR-0019）。
+- Editor Window: `apps/mac` のドキュメント編集ウィンドウ。`main` ラベルの初期ウィンドウと、`Cmd+N` で動的に作る `untitled-*` ラベルの追加ウィンドウからなる。各ウィンドウは独立した webview = 独立した state（file path / baseline / wrapLines 等）を持つ。
 - Dirty State (mac): `apps/mac` で baseline と現在テキストが不一致の編集状態。Open/New 実行時に確認ダイアログの判定に使う。
 - mac App Bundle: macOS で配布する `.app` 形式の成果物。
 - Core Package: `packages/core/` 配下の共有ライブラリ単位（`@yuya296/cm6-*`）。

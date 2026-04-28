@@ -145,13 +145,16 @@ fn main() {
       open_external_url
     ])
     .on_window_event(|window, event| {
-      // macOS: hide the window instead of quitting when the user closes it
-      // (Cmd+W or red traffic light). The app stays alive in the menu bar
-      // and can be reopened via Dock click (RunEvent::Reopen).
+      // macOS: only the `main` window is hidden on close (so Dock reopen
+      // can bring it back). Dynamically-created editor windows (e.g. on
+      // Cmd+N) are destroyed normally so users can actually close
+      // documents (issue #104).
       if cfg!(target_os = "macos") {
         if let WindowEvent::CloseRequested { api, .. } = event {
-          api.prevent_close();
-          let _ = window.hide();
+          if window.label() == "main" {
+            api.prevent_close();
+            let _ = window.hide();
+          }
         }
       }
     })

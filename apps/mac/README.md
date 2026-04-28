@@ -6,14 +6,14 @@ MarkBloom の mac ネイティブアプリ（Tauri 2）です。
 
 - Markdown のローカルファイルを開く（Open）
 - 編集内容をローカルファイルへ保存（Save）
-- 新規ファイルを作成（New File）
+- `Cmd+N` で **独立した新規エディタウィンドウ** を開く（File > New File）
 - 検索/置換パネルを開く（Find / Replace）
 - Line Wrap を切り替え（View > Toggle Line Wrap）
 - Undo / Redo
 
 ウィンドウ内は本文エディタのみで、操作は macOS のメニューバーに集約しています。
 ファイル名と未保存マーク（`•`）はウィンドウタイトルに表示します。
-`Cmd+W` でウィンドウを閉じてもアプリは終了せず、Dock アイコンをクリックするとウィンドウが復活します（アプリ終了は `Cmd+Q`）。
+`Cmd+W` で main ウィンドウを閉じても hide されるだけ（Dock アイコンクリックで復帰）、`Cmd+N` で開いた追加ウィンドウは destroy されます。アプリ終了は `Cmd+Q`。
 
 ## Shortcuts (macOS)
 
