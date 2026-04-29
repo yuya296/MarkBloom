@@ -51,24 +51,58 @@
   box-sizing: border-box;
 }
 
+// Paint html/body up to the very top so the macOS title bar area
+// (which we own via `titleBarStyle: "Overlay" + hiddenTitle: true`)
+// gets our color and never falls back to the OS active/inactive tint.
+html,
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at 15% 10%, #ffffff, #fbfaf7 55%, #f4f2ec);
+  background: var(--app-surface);
   color: var(--app-text);
 }
 
+// Overlay title bar: macOS still draws the traffic-light buttons in
+// the top-left corner, but it does not paint a title bar background.
+// We reserve a strip across the full window width and ask Tauri to
+// treat the right portion as a drag region (drag / double-click-to-
+// zoom work as in any native window).
+$mac-title-bar-height: 28px;
+$mac-traffic-light-area: 78px;
+
 #app {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background: var(--app-surface);
 }
 
+// Pin the title bar strip to the top of the window so it never scrolls
+// away with the editor content, and keep it above CodeMirror in the
+// stacking order so traffic lights stay clickable.
+.app-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: $mac-title-bar-height;
+  display: flex;
+  background: var(--app-surface);
+  z-index: 10;
+}
+
+.app-titlebar-traffic-light-spacer {
+  flex: 0 0 $mac-traffic-light-area;
+}
+
+.app-titlebar-drag-area {
+  flex: 1 1 auto;
+}
+
+// Push editor content below the fixed title bar so the macOS traffic
+// lights don't overlap document text.
 .editor {
-  flex: 1;
   width: 100%;
   background: var(--app-surface);
-  padding: 8px;
+  padding: $mac-title-bar-height 8px 8px;
 }
 
 .cm-editor,
