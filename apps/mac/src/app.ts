@@ -6,6 +6,7 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import { CheckMenuItem } from "@tauri-apps/api/menu/checkMenuItem";
 import { Menu, Submenu } from "@tauri-apps/api/menu";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { diffGutter } from "@yuya296/cm6-diff-gutter";
 import { livePreviewPreset, resolveImageBasePath } from "@yuya296/cm6-live-preview";
@@ -299,32 +300,39 @@ export function setupApp() {
     }
   };
 
-  const showWindowIfHidden = async () => {
+  const handleNewFile = () => {
     if (!isTauri()) {
       return;
     }
-    try {
-      const win = getCurrentWindow();
-      if (!(await win.isVisible())) {
-        await win.show();
+    void (async () => {
+      try {
+        const label = `untitled-${Date.now().toString(36)}-${Math.floor(Math.random() * 1000)
+          .toString(36)
+          .padStart(2, "0")}`;
+        // Cascade the new window slightly down-right of the current one so
+        // multiple New File presses produce a visible stack.
+        let position: { x: number; y: number } | undefined;
+        try {
+          const pos = await getCurrentWindow().outerPosition();
+          position = { x: pos.x + 28, y: pos.y + 28 };
+        } catch {
+          // best-effort; fall back to OS-default placement
+        }
+        const win = new WebviewWindow(label, {
+          url: "/",
+          title: "untitled.md — MarkBloom",
+          width: 1120,
+          height: 860,
+          resizable: true,
+          ...(position ? { x: position.x, y: position.y } : {}),
+        });
+        await win.once("tauri://error", (event) => {
+          console.error("Failed to create new editor window", event);
+        });
+      } catch (error) {
+        console.error(error);
       }
-      await win.setFocus();
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleNewFile = () => {
-    if (!confirmDiscardIfDirty("create a new file")) {
-      return;
-    }
-    const text = "";
-    currentFilePath = null;
-    currentFileLabel = "untitled.md";
-    resetBaseline(text);
-    handle.setText(text);
-    applyWindowTitle();
-    void showWindowIfHidden();
+    })();
   };
 
   const handleFindReplace = () => {
@@ -357,13 +365,32 @@ export function setupApp() {
     redo: handleRedo,
   };
 
-  void setupAppMenu({
-    actions: menuActions,
-    initialWrapLines: wrapLines,
-    onToggleWrapLines: handleToggleWrapLines,
-  }).catch((error) => {
-    console.error("Failed to set up app menu", error);
-  });
+  const installMenuForThisWindow = () => {
+    void setupAppMenu({
+      actions: menuActions,
+      initialWrapLines: wrapLines,
+      onToggleWrapLines: handleToggleWrapLines,
+    }).catch((error) => {
+      console.error("Failed to set up app menu", error);
+    });
+  };
+
+  installMenuForThisWindow();
+
+  // When this window gains focus, rebuild the app menu so its state
+  // (e.g. View > Toggle Line Wrap checked) and action handlers reflect
+  // *this* window — Tauri's app menu is process-global. (issue #104)
+  if (isTauri()) {
+    void getCurrentWindow()
+      .onFocusChanged(({ payload: focused }) => {
+        if (focused) {
+          installMenuForThisWindow();
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to subscribe to window focus", error);
+      });
+  }
 
   applyWindowTitle();
 
