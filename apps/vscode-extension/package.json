@@ -109,7 +109,7 @@
     "@yuya296/cm6-markdown-smart-bol": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^25.3.3",
+    "@types/node": "^25.6.0",
     "@types/vscode": "^1.109.0",
     "sass": "^1.99.0",
     "typescript": "^5.9.3",
