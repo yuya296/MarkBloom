@@ -59,6 +59,26 @@ function moveToMarkdownSmartBol(view: Parameters<Command>[0], extendSelection: b
   return true;
 }
 
+type NavigatorLike = {
+  userAgent?: string;
+  platform?: string;
+  userAgentData?: { platform?: string };
+};
+
+export function getDefaultSmartBolShortcuts(
+  nav?: NavigatorLike
+): readonly MarkdownSmartBolShortcut[] {
+  const resolved =
+    nav === undefined && typeof navigator !== "undefined" ? (navigator as NavigatorLike) : nav;
+  const platform = resolved?.userAgentData?.platform ?? resolved?.platform ?? "";
+  const userAgent = resolved?.userAgent ?? "";
+  const isMac = /Mac|iPhone|iPad|iPod/u.test(`${platform} ${userAgent}`);
+  if (isMac) {
+    return [{ mac: "Ctrl-a" }, { mac: "Cmd-ArrowLeft" }];
+  }
+  return [{ key: "Home" }];
+}
+
 export function markdownSmartBol(options: MarkdownSmartBolOptions = {}): Extension {
   const run: Command = (view) => moveToMarkdownSmartBol(view, false);
   const shift: Command = (view) => moveToMarkdownSmartBol(view, true);
