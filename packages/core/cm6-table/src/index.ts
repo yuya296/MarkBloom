@@ -33,7 +33,6 @@ import {
 } from "./tableModel";
 import {
   buildTableCommitChange,
-  clampCellSelection,
   getTableCellText,
   setTableCellText,
 } from "./tableEditing";
@@ -60,6 +59,16 @@ import {
   focusCellRequestEvent,
   tableEditAnnotation,
 } from "./tableEditorConstants";
+import {
+  clampCell as clampCellPure,
+  defaultCellSelection as defaultCellSelectionPure,
+  moveCellByOffset as moveCellByOffsetPure,
+} from "./tableCellSelection";
+import { createDragIndicatorIcon } from "./tableHandleIcon";
+import {
+  remapSelectionForColReorder as remapSelectionForColReorderPure,
+  remapSelectionForRowReorder as remapSelectionForRowReorderPure,
+} from "./tableReorder";
 
 export type { TableAlignment, TableData, TableEditorOptions };
 
@@ -161,23 +170,6 @@ class TableWidget extends WidgetType {
     return next;
   }
 
-  private static createDragIndicatorIcon(): SVGElement {
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("aria-hidden", "true");
-    svg.classList.add("cm-table-handle-icon");
-
-    const path = document.createElementNS(ns, "path");
-    path.setAttribute(
-      "d",
-      "M11 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm8 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-    );
-
-    svg.appendChild(path);
-    return svg;
-  }
-
   constructor(private readonly data: TableData, private readonly tableInfo: TableInfo) {
     super();
     this.signature = tableDataSignature(data);
@@ -268,15 +260,10 @@ class TableWidget extends WidgetType {
       TableWidget.bumpFocusRestoreGeneration(view);
     };
 
-    const clampCell = (nextRow: number, nextCol: number): CellSelection => {
-      return {
-        kind: "cell",
-        ...clampCellSelection(nextRow, nextCol, getTotalRows(), columnCount),
-      };
-    };
-    const defaultCellSelection = (): CellSelection => {
-      return clampCell(data.rows.length > 0 ? 1 : 0, 0);
-    };
+    const clampCell = (nextRow: number, nextCol: number): CellSelection =>
+      clampCellPure(nextRow, nextCol, getTotalRows(), columnCount);
+    const defaultCellSelection = (): CellSelection =>
+      defaultCellSelectionPure(data.rows.length, getTotalRows(), columnCount);
 
     const getCellText = (cell: CellSelection): string => getTableCellText(data, cell);
 
@@ -538,105 +525,29 @@ class TableWidget extends WidgetType {
       colDropMarker = { colIndex, side };
     };
 
-    const remapRowIndex = (
-      sourceIndex: number,
-      targetInsertIndex: number,
-      index: number
-    ): number => {
-      const clampedSource = Math.max(0, Math.min(sourceIndex, data.rows.length - 1));
-      const clampedIndex = Math.max(0, Math.min(index, data.rows.length - 1));
-      let finalInsert = Math.max(0, Math.min(targetInsertIndex, data.rows.length));
-      if (clampedSource < finalInsert) {
-        finalInsert -= 1;
-      }
-      if (clampedIndex === clampedSource) {
-        return finalInsert;
-      }
-      if (clampedSource < finalInsert) {
-        return clampedIndex > clampedSource && clampedIndex <= finalInsert
-          ? clampedIndex - 1
-          : clampedIndex;
-      }
-      return clampedIndex >= finalInsert && clampedIndex < clampedSource
-        ? clampedIndex + 1
-        : clampedIndex;
-    };
-
     const remapSelectionForRowReorder = (
       current: SelectionState | null,
       sourceIndex: number,
       targetInsertIndex: number
-    ): SelectionState | null => {
-      if (!current) {
-        return null;
-      }
-      if (current.kind === "row") {
-        return {
-          kind: "row",
-          row: remapRowIndex(sourceIndex, targetInsertIndex, current.row),
-        };
-      }
-      if (current.kind === "cell") {
-        if (current.row === 0) {
-          return current;
-        }
-        const bodyRowIndex = current.row - 1;
-        return {
-          kind: "cell",
-          row: remapRowIndex(sourceIndex, targetInsertIndex, bodyRowIndex) + 1,
-          col: current.col,
-        };
-      }
-      return current;
-    };
-
-    const remapColIndex = (
-      sourceIndex: number,
-      targetInsertIndex: number,
-      index: number
-    ): number => {
-      const clampedSource = Math.max(0, Math.min(sourceIndex, columnCount - 1));
-      const clampedIndex = Math.max(0, Math.min(index, columnCount - 1));
-      let finalInsert = Math.max(0, Math.min(targetInsertIndex, columnCount));
-      if (clampedSource < finalInsert) {
-        finalInsert -= 1;
-      }
-      if (clampedIndex === clampedSource) {
-        return finalInsert;
-      }
-      if (clampedSource < finalInsert) {
-        return clampedIndex > clampedSource && clampedIndex <= finalInsert
-          ? clampedIndex - 1
-          : clampedIndex;
-      }
-      return clampedIndex >= finalInsert && clampedIndex < clampedSource
-        ? clampedIndex + 1
-        : clampedIndex;
-    };
+    ): SelectionState | null =>
+      remapSelectionForRowReorderPure(
+        current,
+        sourceIndex,
+        targetInsertIndex,
+        data.rows.length
+      );
 
     const remapSelectionForColReorder = (
       current: SelectionState | null,
       sourceIndex: number,
       targetInsertIndex: number
-    ): SelectionState | null => {
-      if (!current) {
-        return null;
-      }
-      if (current.kind === "column") {
-        return {
-          kind: "column",
-          col: remapColIndex(sourceIndex, targetInsertIndex, current.col),
-        };
-      }
-      if (current.kind === "cell") {
-        return {
-          kind: "cell",
-          row: current.row,
-          col: remapColIndex(sourceIndex, targetInsertIndex, current.col),
-        };
-      }
-      return current;
-    };
+    ): SelectionState | null =>
+      remapSelectionForColReorderPure(
+        current,
+        sourceIndex,
+        targetInsertIndex,
+        columnCount
+      );
 
     const commitRowDrop = (sourceIndex: number, marker: RowDropMarker) => {
       if (!marker) {
@@ -1148,7 +1059,7 @@ class TableWidget extends WidgetType {
       handle.dataset.colIndex = String(col);
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select column ${col + 1}`);
-      const icon = TableWidget.createDragIndicatorIcon();
+      const icon = createDragIndicatorIcon();
       icon.classList.add("cm-table-col-handle-icon");
       handle.appendChild(icon);
       handle.addEventListener(
@@ -1252,7 +1163,7 @@ class TableWidget extends WidgetType {
       handle.style.color = rowHandleBaseColor;
       handle.tabIndex = -1;
       handle.setAttribute("aria-label", `Select row ${rowIndex + 1}`);
-      const icon = TableWidget.createDragIndicatorIcon();
+      const icon = createDragIndicatorIcon();
       icon.classList.add("cm-table-row-handle-icon");
       handle.appendChild(icon);
       handle.addEventListener(
@@ -1336,14 +1247,8 @@ class TableWidget extends WidgetType {
       rowHandleButtons[rowIndex] = handle;
     });
 
-    const moveCellByOffset = (current: CellSelection, delta: number): CellSelection => {
-      const totalCells = getTotalRows() * columnCount;
-      const flat = current.row * columnCount + current.col;
-      const nextFlat = (flat + delta + totalCells) % totalCells;
-      const nextRow = Math.floor(nextFlat / columnCount);
-      const nextCol = nextFlat % columnCount;
-      return { kind: "cell", row: nextRow, col: nextCol };
-    };
+    const moveCellByOffset = (current: CellSelection, delta: number): CellSelection =>
+      moveCellByOffsetPure(current, delta, getTotalRows(), columnCount);
 
     const moveSelectionOutsideTable = (lineNumber: number): boolean => {
       if (lineNumber < 1 || lineNumber > view.state.doc.lines) {
