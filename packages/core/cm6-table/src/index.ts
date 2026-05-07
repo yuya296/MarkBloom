@@ -1,12 +1,10 @@
 import { syntaxTree } from "@codemirror/language";
 import {
-  Annotation,
   Prec,
   RangeSetBuilder,
   StateField,
   type EditorState,
   type Extension,
-  type TransactionSpec,
 } from "@codemirror/state";
 import {
   Decoration,
@@ -15,7 +13,12 @@ import {
   WidgetType,
   keymap,
 } from "@codemirror/view";
-import type { TableAlignment, TableData } from "./types";
+import type {
+  TableAlignment,
+  TableData,
+  TableEditorOptions,
+  TableInfo,
+} from "./types";
 import {
   cloneTableData,
   deleteColumnAt,
@@ -51,23 +54,14 @@ import {
   isLikelyTableBoundaryCandidateLine,
   type TableBoundaryInfo,
 } from "./tableDetection";
+import { dispatchOutsideSelection, dispatchOutsideUpdate } from "./tableDispatch";
+import {
+  defaultTableEditorOptions,
+  focusCellRequestEvent,
+  tableEditAnnotation,
+} from "./tableEditorConstants";
 
-export type { TableAlignment, TableData };
-
-export type TableEditorOptions = {
-  enabled?: boolean;
-  renderMode?: "widget" | "none";
-};
-
-type TableInfo = {
-  key: string;
-  from: number;
-  to: number;
-  startLineFrom: number;
-  endLineTo: number;
-  startLineNumber: number;
-  endLineNumber: number;
-};
+export type { TableAlignment, TableData, TableEditorOptions };
 
 type CellSelection = {
   kind: "cell";
@@ -113,12 +107,6 @@ type FocusCellRequest = {
   col: number;
 };
 
-const tableEditAnnotation = Annotation.define<boolean>();
-const focusCellRequestEvent = "cm6-table-focus-cell-request";
-const defaultOptions: Required<TableEditorOptions> = {
-  enabled: true,
-  renderMode: "widget",
-};
 
 function tableDataSignature(data: TableData): string {
   const cols = getColumnCount(data);
@@ -1811,43 +1799,6 @@ class TableWidget extends WidgetType {
   }
 }
 
-function dispatchOutsideUpdate(
-  view: EditorView,
-  transaction: {
-    changes: { from: number; to: number; insert: string };
-    annotations: Annotation<unknown>;
-  }
-) {
-  dispatchOutsideTransaction(view, transaction);
-}
-
-function dispatchOutsideSelection(view: EditorView, anchor: number, focusEditor = false) {
-  if (focusEditor) {
-    view.focus();
-  }
-  view.dispatch({
-    selection: { anchor },
-    scrollIntoView: true,
-  });
-}
-
-function dispatchOutsideTransaction(
-  view: EditorView,
-  transaction: TransactionSpec,
-  focusEditor = false
-) {
-  const scrollTop = view.scrollDOM.scrollTop;
-  const scrollLeft = view.scrollDOM.scrollLeft;
-  view.dispatch({ ...transaction, scrollIntoView: false });
-  if (focusEditor) {
-    view.focus();
-  }
-  requestAnimationFrame(() => {
-    view.scrollDOM.scrollTop = scrollTop;
-    view.scrollDOM.scrollLeft = scrollLeft;
-  });
-}
-
 function buildDecorations(
   state: EditorState,
   options: Required<TableEditorOptions>
@@ -1898,7 +1849,7 @@ function buildDecorations(
 }
 
 export function tableEditor(options: TableEditorOptions = {}): Extension {
-  const resolved = { ...defaultOptions, ...options };
+  const resolved = { ...defaultTableEditorOptions, ...options };
 
   const theme = EditorView.baseTheme({
     ".cm-content .cm6-table-editor": {

@@ -15,3 +15,18 @@ export type TableData = {
   rows: TableRow[];
   alignments: TableAlignment[];
 };
+
+export type TableEditorOptions = {
+  enabled?: boolean;
+  renderMode?: "widget" | "none";
+};
+
+export type TableInfo = {
+  key: string;
+  from: number;
+  to: number;
+  startLineFrom: number;
+  endLineTo: number;
+  startLineNumber: number;
+  endLineNumber: number;
+};
