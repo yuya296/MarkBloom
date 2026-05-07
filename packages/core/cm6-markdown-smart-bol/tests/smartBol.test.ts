@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getMarkdownSmartBolOffset } from "../src/index";
+import { getDefaultSmartBolShortcuts, getMarkdownSmartBolOffset } from "../src/index";
 
 test("heading: move after # markers", () => {
   assert.equal(getMarkdownSmartBolOffset("# Heading"), 2);
@@ -48,4 +48,39 @@ test("blockquote task list markers prioritize task side", () => {
 test("fallback to indentation for non target lines", () => {
   assert.equal(getMarkdownSmartBolOffset("plain text"), 0);
   assert.equal(getMarkdownSmartBolOffset("    plain text"), 4);
+});
+
+test("getDefaultSmartBolShortcuts returns Mac shortcuts when platform reports Mac", () => {
+  const shortcuts = getDefaultSmartBolShortcuts({ platform: "MacIntel", userAgent: "" });
+  assert.deepEqual(shortcuts, [{ mac: "Ctrl-a" }, { mac: "Cmd-ArrowLeft" }]);
+});
+
+test("getDefaultSmartBolShortcuts honors userAgentData over platform", () => {
+  const shortcuts = getDefaultSmartBolShortcuts({
+    platform: "Win32",
+    userAgent: "",
+    userAgentData: { platform: "Mac" },
+  });
+  assert.deepEqual(shortcuts, [{ mac: "Ctrl-a" }, { mac: "Cmd-ArrowLeft" }]);
+});
+
+test("getDefaultSmartBolShortcuts detects iOS via userAgent", () => {
+  const shortcuts = getDefaultSmartBolShortcuts({
+    platform: "",
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+  });
+  assert.deepEqual(shortcuts, [{ mac: "Ctrl-a" }, { mac: "Cmd-ArrowLeft" }]);
+});
+
+test("getDefaultSmartBolShortcuts returns Home for non-Mac platforms", () => {
+  assert.deepEqual(getDefaultSmartBolShortcuts({ platform: "Win32", userAgent: "" }), [
+    { key: "Home" },
+  ]);
+  assert.deepEqual(getDefaultSmartBolShortcuts({ platform: "Linux x86_64", userAgent: "" }), [
+    { key: "Home" },
+  ]);
+});
+
+test("getDefaultSmartBolShortcuts returns Home for an empty navigator (no platform info)", () => {
+  assert.deepEqual(getDefaultSmartBolShortcuts({}), [{ key: "Home" }]);
 });

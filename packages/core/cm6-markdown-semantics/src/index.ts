@@ -1,5 +1,5 @@
 import { syntaxTree } from "@codemirror/language";
-import { RangeSetBuilder, type Extension } from "@codemirror/state";
+import { RangeSetBuilder, type Extension, type Line, type Text } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import type { SyntaxNode } from "@lezer/common";
 
@@ -91,6 +91,32 @@ export function slugifyHeading(text: string): string {
 
 export function stripHeadingMarkers(raw: string): string {
   return raw.replace(/^\s{0,3}#{1,6}\s+/, "").replace(/\s+#*\s*$/, "");
+}
+
+// ATX 見出し (`#`〜`######`) のみを対象に id (slug) と一致する行を返す。
+// 同一 slug が複数あるときは GFM と同じく `-1`, `-2` … のサフィックスで区別する。
+// Setext 見出しは Lezer の構文木側でしか判別できないため対象外。
+export function findHeadingLineForId(doc: Text, targetId: string): Line | null {
+  const used = new Map<string, number>();
+  for (let i = 1; i <= doc.lines; i += 1) {
+    const line = doc.line(i);
+    const match = line.text.match(/^\s{0,3}#{1,6}\s+(.+)$/);
+    if (!match) {
+      continue;
+    }
+    const headingText = match[1].replace(/\s+#*\s*$/, "");
+    const base = slugifyHeading(headingText);
+    if (!base) {
+      continue;
+    }
+    const count = used.get(base) ?? 0;
+    used.set(base, count + 1);
+    const id = count === 0 ? base : `${base}-${count}`;
+    if (id === targetId) {
+      return line;
+    }
+  }
+  return null;
 }
 
 function extractHeadingText(view: EditorView, from: number, to: number): string {

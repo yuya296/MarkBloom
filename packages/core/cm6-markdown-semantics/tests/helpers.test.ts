@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Text } from "@codemirror/state";
 import type { SyntaxNode } from "@lezer/common";
 import {
   extractLinkHrefFromText,
+  findHeadingLineForId,
   getBlockquoteLevel,
   getListLevel,
   getTaskStateClassFromText,
@@ -63,4 +65,36 @@ test("counts blockquote nesting from current node and ancestors", () => {
   assert.equal(getBlockquoteLevel(createNode("Blockquote")), 1);
   assert.equal(getBlockquoteLevel(createNode("Blockquote", ["Blockquote", "Blockquote"])), 3);
   assert.equal(getBlockquoteLevel(null), 0);
+});
+
+test("findHeadingLineForId locates ATX heading by slug", () => {
+  const doc = Text.of([
+    "# Hello World",
+    "",
+    "body",
+    "## Hello World",
+    "",
+    "## 世界",
+  ]);
+  const first = findHeadingLineForId(doc, "hello-world");
+  assert.ok(first);
+  assert.equal(first?.number, 1);
+
+  const dup = findHeadingLineForId(doc, "hello-world-1");
+  assert.ok(dup);
+  assert.equal(dup?.number, 4);
+
+  const multilingual = findHeadingLineForId(doc, "世界");
+  assert.ok(multilingual);
+  assert.equal(multilingual?.number, 6);
+
+  assert.equal(findHeadingLineForId(doc, "missing"), null);
+});
+
+test("findHeadingLineForId ignores non-heading lines and respects trailing hashes", () => {
+  const doc = Text.of(["# title ##", "not a heading", "####### too deep"]);
+  const titled = findHeadingLineForId(doc, "title");
+  assert.ok(titled);
+  assert.equal(titled?.number, 1);
+  assert.equal(findHeadingLineForId(doc, "too-deep"), null);
 });

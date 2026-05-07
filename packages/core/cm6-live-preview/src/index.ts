@@ -8,6 +8,7 @@ import { markdownSemantics, type MarkdownSemanticsOptions } from "@yuya296/cm6-m
 import { tableEditor, type TableEditorOptions } from "@yuya296/cm6-table";
 import { typographyTheme, type TypographyThemeOptions } from "@yuya296/cm6-typography-theme";
 export { resolveImageBasePath } from "./imageBasePath";
+export { findHeadingLineForId } from "@yuya296/cm6-markdown-semantics";
 import type { LivePreviewPlugin } from "@yuya296/cm6-live-preview-core";
 
 type MermaidPresetOption = boolean | MermaidLivePreviewPluginOptions;
