@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   clampCell,
   defaultCellSelection,
+  ensureCellSelection,
   moveCellByOffset,
 } from "../src/tableCellSelection";
 
@@ -51,4 +52,65 @@ test("moveCellByOffset handles delta larger than total cells (fixes negative-mod
 test("moveCellByOffset returns current selection when grid is empty", () => {
   const cur = { kind: "cell" as const, row: 0, col: 0 };
   assert.deepEqual(moveCellByOffset(cur, 1, 0, 0), cur);
+});
+
+test("ensureCellSelection returns default cell when current is null", () => {
+  assert.deepEqual(ensureCellSelection(null, 2, 3, 2), {
+    kind: "cell",
+    row: 1,
+    col: 0,
+  });
+});
+
+test("ensureCellSelection clamps existing cell selection to grid bounds", () => {
+  // 範囲外を渡してもクランプされる
+  assert.deepEqual(
+    ensureCellSelection({ kind: "cell", row: 5, col: 9 }, 2, 3, 2),
+    { kind: "cell", row: 2, col: 1 }
+  );
+});
+
+test("ensureCellSelection promotes row selection to first cell of that body row", () => {
+  // row=1 は body の 2 番目 → header の次にあたるので row=2, col=0
+  assert.deepEqual(ensureCellSelection({ kind: "row", row: 1 }, 3, 4, 2), {
+    kind: "cell",
+    row: 2,
+    col: 0,
+  });
+});
+
+test("ensureCellSelection promotes column selection to first body row of that column", () => {
+  // body 行があるので row=1, col は維持
+  assert.deepEqual(ensureCellSelection({ kind: "column", col: 1 }, 2, 3, 2), {
+    kind: "cell",
+    row: 1,
+    col: 1,
+  });
+});
+
+test("ensureCellSelection from column falls back to header when no body rows", () => {
+  // body 行 0 のときは header (row=0) を選ぶ
+  assert.deepEqual(ensureCellSelection({ kind: "column", col: 0 }, 0, 1, 2), {
+    kind: "cell",
+    row: 0,
+    col: 0,
+  });
+});
+
+test("ensureCellSelection clamps out-of-range row selection during promotion", () => {
+  // row=99 が来ても row+1=100 は totalRows-1 にクランプされる
+  assert.deepEqual(ensureCellSelection({ kind: "row", row: 99 }, 2, 3, 2), {
+    kind: "cell",
+    row: 2,
+    col: 0,
+  });
+});
+
+test("ensureCellSelection clamps out-of-range column selection during promotion", () => {
+  // col=99 はクランプされて columnCount-1
+  assert.deepEqual(ensureCellSelection({ kind: "column", col: 99 }, 2, 3, 2), {
+    kind: "cell",
+    row: 1,
+    col: 1,
+  });
 });

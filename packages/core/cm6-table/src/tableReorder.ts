@@ -5,6 +5,8 @@
 // `targetInsertIndex`: 挿入したい位置 (元の配列での「この位置の前」を指す)
 // `index`: 追従計算したい既存の選択座標
 
+import type { SelectionState } from "./tableSelectionTypes";
+
 // reorder 後のインデックスを再計算する。範囲外は最も近い有効インデックスへクランプ。
 export function remapReorderIndex(
   sourceIndex: number,
@@ -33,17 +35,6 @@ export function remapReorderIndex(
     ? clampedIndex + 1
     : clampedIndex;
 }
-
-import type { TableCellSelection } from "./tableCellSelection";
-
-// SelectionState (内部型) と同一構造の最小定義。
-// CellSelection は tableCellSelection.ts と共有することで型の乖離を防ぐ。
-// RowSelection / ColumnSelection は #134 phase 3 で selection 全体を別ファイルに
-// 移すまで本ファイル内ローカル型で保持する。
-type CellSelection = TableCellSelection;
-type RowSelection = { kind: "row"; row: number };
-type ColumnSelection = { kind: "column"; col: number };
-type SelectionState = CellSelection | RowSelection | ColumnSelection;
 
 // 行 reorder に対して selection を追従。
 // - row selection: そのまま remap

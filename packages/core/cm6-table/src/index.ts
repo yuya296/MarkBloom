@@ -62,33 +62,19 @@ import {
 import {
   clampCell as clampCellPure,
   defaultCellSelection as defaultCellSelectionPure,
+  ensureCellSelection as ensureCellSelectionPure,
   moveCellByOffset as moveCellByOffsetPure,
 } from "./tableCellSelection";
 import { createDragIndicatorIcon } from "./tableHandleIcon";
+import { findHoveredCellInEvent, isTableHandleElement } from "./tableHoverTarget";
 import {
   remapSelectionForColReorder as remapSelectionForColReorderPure,
   remapSelectionForRowReorder as remapSelectionForRowReorderPure,
 } from "./tableReorder";
+import type { CellSelection, SelectionState } from "./tableSelectionTypes";
 
 export type { TableAlignment, TableData, TableEditorOptions };
 
-type CellSelection = {
-  kind: "cell";
-  row: number;
-  col: number;
-};
-
-type RowSelection = {
-  kind: "row";
-  row: number;
-};
-
-type ColumnSelection = {
-  kind: "column";
-  col: number;
-};
-
-type SelectionState = CellSelection | RowSelection | ColumnSelection;
 
 type MenuState =
   | {
@@ -377,28 +363,6 @@ class TableWidget extends WidgetType {
       );
     };
 
-    const isHandleElement = (node: unknown) =>
-      node instanceof Element &&
-      !!node.closest(".cm-table-col-handle, .cm-table-row-handle");
-
-    const findHoveredCellInEvent = (
-      event: PointerEvent | MouseEvent
-    ): HTMLTableCellElement | null => {
-      const path = event.composedPath();
-      for (const node of path) {
-        if (isHandleElement(node)) {
-          return null;
-        }
-        if (!(node instanceof Element)) {
-          continue;
-        }
-        const cell = node.closest<HTMLTableCellElement>(".cm-table-cell");
-        if (cell) {
-          return cell;
-        }
-      }
-      return null;
-    };
 
     const updateRangeOutline = () => {
       selectionOutline.dataset.open = "false";
@@ -805,18 +769,17 @@ class TableWidget extends WidgetType {
     };
 
     const ensureCellSelection = (): CellSelection => {
+      const next = ensureCellSelectionPure(
+        selection,
+        data.rows.length,
+        getTotalRows(),
+        columnCount
+      );
+      // 旧実装: selection が null の場合のみ「保存」していた副作用を踏襲する。
       if (!selection) {
-        const next = defaultCellSelection();
         setSelection(next, false);
-        return next;
       }
-      if (selection.kind === "cell") {
-        return clampCell(selection.row, selection.col);
-      }
-      if (selection.kind === "row") {
-        return clampCell(selection.row + 1, 0);
-      }
-      return clampCell(data.rows.length > 0 ? 1 : 0, selection.col);
+      return next;
     };
 
     const positionEditor = (cell: CellSelection) => {
@@ -1279,7 +1242,7 @@ class TableWidget extends WidgetType {
     };
 
     const updateHoveredHandlesFromPointerEvent = (event: PointerEvent | MouseEvent) => {
-      if (isHandleElement(event.target)) {
+      if (isTableHandleElement(event.target)) {
         return;
       }
       const cell = findHoveredCellInEvent(event);
@@ -1337,7 +1300,7 @@ class TableWidget extends WidgetType {
     wrapper.addEventListener(
       "pointerleave",
       (event) => {
-        if (isHandleElement(event.relatedTarget)) {
+        if (isTableHandleElement(event.relatedTarget)) {
           return;
         }
         clearHoveredHandles();
