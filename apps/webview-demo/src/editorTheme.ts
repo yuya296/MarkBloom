@@ -1,6 +1,11 @@
 import type { Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
+// CodeMirror 標準の DOM ノード (gutters / cursor / panels / activeLine など) を
+// `EditorView.theme` で装飾する。色は CSS 変数 (`var(--editor-*)`) 経由で参照し、
+// 変数の実値は `style.scss` の `:root` / `[data-theme="dark"]` で切り替える。
+// `.cm-editor` のフォント/サイズや mb- semantic class、cm-lp-* widget の見た目は
+// `style.scss` 側に置く (詳細はそちらの責務分担コメントを参照)。
 export function editorTheme(): Extension {
   return EditorView.theme({
     "&": {

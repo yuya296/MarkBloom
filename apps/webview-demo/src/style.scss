@@ -1,5 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=swap");
 
+// テーマ層の責務分担:
+// - このファイル: CSS 変数の宣言 (:root / [data-theme="dark"])、エディタ外の UI、
+//   およびエディタ内 DOM のうち mb- semantic class や cm-lp-* widget といった
+//   独自クラスへの装飾。`.cm-editor` 直下のレイアウト/フォント指定もここで行う。
+// - editorTheme.ts: CodeMirror 標準の `.cm-*` ノード (gutters / cursor / panels など)
+//   を EditorView.theme 経由で装飾。色値は CSS 変数 var(--editor-*) を参照する。
+// - editorHighlightStyle.ts: HighlightStyle で `.cm-mb-syntax-*` クラスへ装飾を適用。
+// 色値の実値はこのファイルの CSS 変数定義が単一の正本。
+
 :root {
   color-scheme: light;
   font-family: "Noto Sans JP", "Noto Sans", "Yu Gothic", "YuGothic", "Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic Pro", sans-serif;
@@ -296,10 +305,8 @@ footer.footer {
   outline: none;
 }
 
-.cm-editor .cm-gutters {
-  background: var(--editor-gutter-bg);
-  color: var(--editor-gutter-color);
-}
+// .cm-gutters の背景/文字色は editorTheme.ts (EditorView.theme) 側で定義する。
+// CSS 変数 (--editor-gutter-*) は :root / [data-theme="dark"] で切り替える。
 
 .cm-editor .cm-content {
   padding: 12px;
